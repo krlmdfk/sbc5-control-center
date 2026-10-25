@@ -1,4 +1,12 @@
+<p align="center">
+  <a href="https://github.com/krlmdfk/sbc5-control-center">
+    <img src="branding/icon-256.png" alt="SBC5 Control Center" width="128">
+  </a>
+</p>
+
 # SBC5 Control Center — Documentation / Dokumentacja
+
+**[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**
 
 > **English:** This document describes the current installation, configuration, operation, diagnostics, and recovery procedures. Release history is maintained exclusively in `CHANGELOG.md`.
 >

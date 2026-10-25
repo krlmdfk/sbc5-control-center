@@ -1,5 +1,7 @@
 # SBC5 Control Center Integration {{VERSION}}
 
+[![SBC5 Control Center App](https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/branding/icon-256.png)](https://github.com/krlmdfk/sbc5-control-center)
+
 ## English
 
 {{SUMMARY_EN}}
@@ -7,7 +9,8 @@
 ### Requirement
 
 This integration **requires the SBC5 Control Center App/runtime to be installed and running**:
-https://github.com/krlmdfk/sbc5-control-center
+
+**[Open main SBC5 Control Center App repository →](https://github.com/krlmdfk/sbc5-control-center)**
 
 - Home Assistant >= {{HA_CORE_MIN}}
 - HACS-managed integration
@@ -23,7 +26,8 @@ https://github.com/krlmdfk/sbc5-control-center
 ### Wymaganie
 
 Integracja **wymaga zainstalowanej i uruchomionej aplikacji/runtime SBC5 Control Center**:
-https://github.com/krlmdfk/sbc5-control-center
+
+**[Otwórz główne repozytorium SBC5 Control Center →](https://github.com/krlmdfk/sbc5-control-center)**
 
 - Home Assistant >= {{HA_CORE_MIN}}
 - Integracja zarządzana przez HACS

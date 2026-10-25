@@ -1,95 +1,121 @@
-# SBC5 Control Center — Current Information / Informacje
+<p align="center">
+  <a href="https://github.com/krlmdfk/sbc5-control-center">
+    <img src="branding/icon-256.png" alt="SBC5 Control Center" width="128">
+  </a>
+</p>
 
-**English** · [Polski](#polski)
+# SBC5 Control Center — Information / Informacje
 
-## English
-
-SBC5 Control Center is a local Raspberry Pi 5 control, cooling, diagnostics and optimization platform for Home Assistant OS.
-
-| Parameter | Value |
+| Parameter / Parametr | Value / Wartość |
 |---|---|
-| App version | **2.8.25** |
+| App version / Wersja aplikacji | **2.8.25** |
 | Card UI | **2.8.25** |
-| Status | **stable** |
-| Architecture | `aarch64` |
+| Status / Stan | **stable** |
+| Architecture / Architektura | `aarch64` |
 | Home Assistant OS | `>= 18.3` |
 | Home Assistant Core | `>= 2026.10.1` |
-| License | Apache-2.0 |
+| License / Licencja | Apache-2.0 |
 
-### Components and dependency
-
-- **Main App/runtime:** [krlmdfk/sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)
-- **HACS integration:** [krlmdfk/sbc5-control-center-integration](https://github.com/krlmdfk/sbc5-control-center-integration)
-
-The HACS integration is a companion component and **requires the SBC5 Control Center App/runtime to be installed and running**. The App provides Raspberry Pi 5 host telemetry and control services; the integration exposes them through Home Assistant entities and the device registry.
-
-### Runtime model
-
-- CPU temperature, RPM and PWM: lightweight **5 s** path;
-- Adaptive PWM and AI evaluator: **10 s** cycle;
-- native bridge full telemetry: **15 s**;
-- compact AI transport: evaluated every **15 s**, published on change with stable-state keepalive;
-- compatibility host relay: **30 s**;
-- system diagnostics: **60 s**;
-- static hardware and firmware identity: **300 s**;
-- Supervisor profile reconciliation: **30 s**.
-
-Fast cooling-control paths remain independent from heavier diagnostics. Transport entities are excluded from Recorder while history-relevant values use dedicated numeric entities.
-
-### Core capabilities
-
-SBC5 Control Center provides Active Cooler control, Adaptive PWM, local AI Cooling, CPU/OC and GPU/V3D/ISP profiles, managed `config.txt`, Raspberry Pi 5 hardware telemetry, Restart Manager, firmware/device identification and verified local updates.
-
-Real boot-configuration changes request a Raspberry Pi restart. Version/comment-only changes are compared semantically and do not request a host reboot.
-
-### User interface
-
-The Lovelace card is mobile-first. Large sections are collapsed by default and expanded through the **SBC5 Control Center**, **AI Cooling** and **CPU Clock** tiles. CPU/OC is positioned below the CPU/PWM temperature chart and above GPU/V3D/ISP.
+**[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**
 
 ---
 
-<a id="polski"></a>
+## English
+
+### Purpose
+
+SBC5 Control Center combines Active Cooler control, Adaptive PWM, local AI Cooling, CPU/OC and GPU/V3D/ISP profiles, managed `config.txt`, hardware telemetry, Restart Manager and local updates in one runtime running locally on Raspberry Pi 5 with Home Assistant OS.
+
+### Current operating model
+
+- CPU temperature, RPM and PWM: lightweight path every **5 s**;
+- Adaptive PWM and AI evaluator: **10 s** cycle;
+- full native bridge telemetry: **15 s**;
+- compact AI transport: evaluation every **15 s**, publish on change plus stable-state keepalive;
+- host compatibility relay: **30 s**;
+- system diagnostics: **60 s**;
+- static hardware and firmware identity: **300 s**;
+- Supervisor profile synchronization: **30 s**.
+
+Fast cooling-control paths remain independent from heavier diagnostics. Host/AI transport entities are excluded from Recorder, while values intended for history use dedicated numeric entities.
+
+### Cooling
+
+Active Cooler supports the factory profile and configurable `custom1`. Adaptive PWM uses `custom1(T)` as the absolute base and applies bounded trim, deadband, anti-windup, Sign Guard and rate limiting. Emergency 100% output remains immediate.
+
+AI Cooling runs locally and is secondary to the classical controller. The model distinguishes `idle`, `low`, `medium` and `high` workload buckets, qualifies samples and can operate in a limited Assist mode.
+
+### CPU, GPU and `config.txt`
+
+CPU/OC and GPU/V3D/ISP profiles maintain persistent desired state synchronized between Ingress, Lovelace, `config.txt` and native Home Assistant configuration. A real boot-parameter change requests a full Raspberry Pi restart. Managed files are compared semantically, so changing only an App version/comment must not trigger a host restart.
+
+### Lovelace interface
+
+The main card is mobile-first. Dense sections are collapsed by default and expanded from tiles: **SBC5 Control Center**, **AI Cooling**, **CPU Clock**, **CPU / Overclocking**, and **GPU / V3D / ISP**. Performance order is CPU/PWM chart → CPU / Overclocking → GPU/V3D/ISP.
+
+### Device identity
+
+Home Assistant's device registry receives Raspberry Pi model, board revision, hardware version, serial number, MAC address and SBC5 version. Diagnostic entities also expose operating system, kernel, architecture, Raspberry Pi firmware and EEPROM bootloader information.
+
+### Updates and Restart Manager
+
+Local ZIP packages are verified against a manifest and SHA-256. A full update may require a Home Assistant restart, while a complete Raspberry Pi restart is requested only when the effective boot configuration actually changed.
+
+### Companion HACS integration
+
+Native Home Assistant entities are distributed through the companion repository:
+
+**[SBC5 Control Center — HACS Integration](https://github.com/krlmdfk/sbc5-control-center-integration)**
+
+The HACS integration requires this App/runtime to be installed and running.
+
+---
 
 ## Polski
 
-SBC5 Control Center jest lokalną platformą sterowania, chłodzenia, diagnostyki i optymalizacji Raspberry Pi 5 dla Home Assistant OS.
+### Przeznaczenie
 
-| Parametr | Wartość |
-|---|---|
-| Wersja aplikacji | **2.8.25** |
-| Card UI | **2.8.25** |
-| Stan | **stable** |
-| Architektura | `aarch64` |
-| Home Assistant OS | `>= 18.3` |
-| Home Assistant Core | `>= 2026.10.1` |
-| Licencja | Apache-2.0 |
-
-### Składniki i zależność
-
-- **Główna aplikacja/runtime:** [krlmdfk/sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)
-- **Integracja HACS:** [krlmdfk/sbc5-control-center-integration](https://github.com/krlmdfk/sbc5-control-center-integration)
-
-Integracja HACS jest komponentem towarzyszącym i **wymaga zainstalowanej oraz uruchomionej aplikacji/runtime SBC5 Control Center**. Aplikacja dostarcza telemetrię hosta Raspberry Pi 5 i usługi sterujące, a integracja udostępnia je jako encje i urządzenie w Home Assistant.
+SBC5 Control Center łączy obsługę Active Coolera, Adaptive PWM, lokalne AI Cooling, profile CPU/OC i GPU/V3D/ISP, zarządzanie `config.txt`, telemetrię sprzętową, Restart Manager oraz lokalne aktualizacje w jednym runtime działającym lokalnie na Raspberry Pi 5 z Home Assistant OS.
 
 ### Aktualny model pracy
 
 - temperatura CPU, RPM i PWM: lekka ścieżka co **5 s**;
 - Adaptive PWM i evaluator AI: cykl **10 s**;
-- pełna telemetria native bridge: **15 s**;
-- kompaktowy transport AI: ocena co **15 s**, publikacja po zmianie i keepalive przy stabilnym stanie;
-- relay zgodności hosta: **30 s**;
+- pełna telemetria natywnego bridge: **15 s**;
+- kompaktowy transport AI: ocena co **15 s**, publikacja po zmianie i keepalive przy stanie stabilnym;
+- duży relay zgodności hosta: **30 s**;
 - diagnostyka systemowa: **60 s**;
 - statyczna identyfikacja sprzętu i firmware: **300 s**;
 - synchronizacja profili Supervisor: **30 s**.
 
-Szybkie ścieżki sterowania chłodzeniem pozostają niezależne od cięższej diagnostyki. Encje transportowe są wyłączone z Recorder, a wartości przeznaczone do historii mają osobne encje liczbowe.
+Szybkie ścieżki sterowania chłodzeniem pozostają niezależne od cięższej diagnostyki. Encje transportowe host/AI są wyłączone z Recorder, a dane przeznaczone do historii mają osobne encje liczbowe.
 
-### Główne możliwości
+### Chłodzenie
 
-SBC5 Control Center obsługuje Active Cooler, Adaptive PWM, lokalne AI Cooling, profile CPU/OC i GPU/V3D/ISP, zarządzany `config.txt`, telemetrię Raspberry Pi 5, Restart Manager, identyfikację urządzenia/firmware oraz weryfikowane aktualizacje lokalne.
+Active Cooler obsługuje profil fabryczny oraz konfigurowalny `custom1`. Adaptive PWM używa krzywej `custom1(T)` jako bezwzględnej bazy i stosuje ograniczony trim, deadband, anti-windup, Sign Guard oraz limiter szybkości zmian. Awaryjne sterowanie 100% pozostaje natychmiastowe.
 
-Rzeczywiste zmiany konfiguracji boot wymagają restartu Raspberry Pi. Zmiany dotyczące wyłącznie wersji/komentarza są porównywane semantycznie i nie generują restartu hosta.
+AI Cooling działa lokalnie i wtórnie wobec klasycznego regulatora. Model rozróżnia buckety `idle`, `low`, `medium` i `high`, kwalifikuje próbki jakościowe oraz może pracować w ograniczonym trybie Assist.
 
-### Interfejs użytkownika
+### CPU, GPU i `config.txt`
 
-Karta Lovelace jest zoptymalizowana pod telefon. Rozbudowane sekcje są domyślnie zwinięte i rozwijane przez kafelki **SBC5 Control Center**, **AI Cooling** i **Zegar CPU**. Sekcja CPU/OC znajduje się pod wykresem temperatury CPU/PWM i nad GPU/V3D/ISP.
+Profile CPU/OC oraz GPU/V3D/ISP mają trwały stan żądany synchronizowany między Ingress, kartą Lovelace, `config.txt` i natywną Konfiguracją Home Assistanta. Rzeczywista zmiana parametrów boot powoduje żądanie pełnego restartu Raspberry Pi. Pliki zarządzane są porównywane semantycznie, więc sama zmiana wersji aplikacji lub komentarza nie powoduje restartu hosta.
+
+### Interfejs Lovelace
+
+Główna karta jest zoptymalizowana pod telefon. Sekcje o dużej liczbie szczegółów są domyślnie zwinięte i rozwijane przez kafelki: **SBC5 Control Center**, **AI Cooling**, **Zegar CPU**, **CPU / Overclocking** i **GPU / V3D / ISP**. Kolejność części wydajnościowych: wykres CPU/PWM → CPU / Overclocking → GPU/V3D/ISP.
+
+### Identyfikacja urządzenia
+
+Rejestr urządzeń Home Assistant otrzymuje model Raspberry Pi, rewizję płyty, wersję sprzętu, numer seryjny, MAC oraz wersję SBC5. Encje diagnostyczne udostępniają również system operacyjny, kernel, architekturę, firmware Raspberry Pi i bootloader EEPROM.
+
+### Aktualizacje i Restart Manager
+
+Lokalne paczki ZIP są sprawdzane przez manifest i SHA-256. Aktualizacja pełna może wymagać restartu Home Assistant, natomiast pełny restart Raspberry Pi jest zgłaszany wyłącznie wtedy, gdy wynikowa konfiguracja boot faktycznie się zmieniła.
+
+### Towarzysząca integracja HACS
+
+Natywne encje Home Assistant są dystrybuowane przez repozytorium:
+
+**[SBC5 Control Center — Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**
+
+Integracja HACS wymaga zainstalowanej i uruchomionej tej aplikacji/runtime.

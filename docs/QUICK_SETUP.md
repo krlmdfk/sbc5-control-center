@@ -1,4 +1,12 @@
+<p align="center">
+  <a href="https://github.com/krlmdfk/sbc5-control-center">
+    <img src="../branding/icon-256.png" alt="SBC5 Control Center" width="112">
+  </a>
+</p>
+
 # SBC5 Control Center — Quick Setup Guide / Szybka konfiguracja
+
+**[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**
 
 ---
 
