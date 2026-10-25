@@ -1,0 +1,14 @@
+{
+  "name": "SBC5 Control Center",
+  "slug": "rpi5_fan_manager",
+  "version": "2.0.1",
+  "release_date": "2026-10-16",
+  "channel": "stable",
+  "restart_required": "home_assistant",
+  "minimum_home_assistant_os": "18.3",
+  "minimum_home_assistant_core": "2026.10.1",
+  "release_url": "https://example.invalid/rpi5-control-center/releases/2.0.1",
+  "download_url": "https://example.invalid/rpi5-control-center/releases/rpi5_control_center_v2.0.1.zip",
+  "changelog_url": "https://example.invalid/rpi5-control-center/CHANGELOG.md",
+  "summary": "Przykład zdalnego manifestu SBC5 Control Center 2.0.1."
+}

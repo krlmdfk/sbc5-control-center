@@ -1,0 +1,370 @@
+configuration:
+  custom_curve_1_name:
+    name: 01 · PROFIL — Nazwa
+    description: Nazwa profilu własnego. Krótka nazwa wystarczy, np. Zbalansowana.
+  custom_target_temp_c:
+    name: 01 · PROFIL — Temperatura docelowa
+    description: 'Temperatura, którą profil ma utrzymywać. Zalecany punkt startowy: 49–50°C.'
+  cooling_control_mode:
+    name: 01 · PROFIL — Tryb sterowania
+    description: 'Automatyczny: aplikacja steruje sama. Hybrydowy: ręczna baza + ograniczona korekta. Ręczny: sztywna krzywa
+      bez Adaptive PWM.'
+  cooling_auto_style:
+    name: 02 · AUTOMATYCZNY — Charakter pracy
+    description: Cichy, Zbalansowany lub Wydajny. Używane tylko w trybie Automatycznym.
+  hybrid_correction_limit_percent:
+    name: 03 · HYBRYDOWY — Zakres korekty ±%
+    description: Jak daleko Adaptive PWM może odejść od ręcznej krzywej. Zalecane ±10%.
+  custom_min_pwm_percent:
+    name: 03/04 · HYBRYDA / RĘCZNY — Minimalne PWM
+    description: Dolna granica ręcznej krzywej. Ustaw tylko dla Hybrydy lub Ręcznego.
+  custom_target_pwm_percent:
+    name: 03/04 · HYBRYDA / RĘCZNY — PWM przy celu
+    description: Bazowe PWM przy temperaturze docelowej w Hybrydzie i trybie Ręcznym.
+  custom_max_pwm_percent:
+    name: 03/04 · HYBRYDA / RĘCZNY — Maksymalne PWM
+    description: Górna granica ręcznej krzywej. 100% zachowuje pełną rezerwę chłodzenia.
+  manual_hysteresis_c:
+    name: 04 · RĘCZNY — Histereza
+    description: Jedna histereza dla trybu Ręcznego. Zalecane 1,0°C.
+  section_ai_cooling_enabled:
+    name: 05 · AI COOLING (PREVIEW) — Włącz sekcję
+    description: Włącza lokalne uczenie Active Coolera. Model działa bez chmury i nigdy nie omija zabezpieczeń Adaptive PWM.
+  ai_cooling_mode:
+    name: 05 · AI COOLING — Tryb
+    description: Learning tylko obserwuje i uczy model. Assist może korygować decyzję Adaptive PWM dopiero po uzyskaniu wymaganej
+      pewności.
+  ai_cooling_assist_limit_percent:
+    name: 05 · AI COOLING — Limit korekty ±%
+    description: 'Maksymalny zakres wpływu AI Assist względem decyzji klasycznego regulatora. Preview: 1–10%, zalecane 5%.'
+  ai_cooling_min_samples:
+    name: 05 · AI COOLING — Minimum próbek
+    description: Liczba próbek danego poziomu obciążenia potrzebna przed dopuszczeniem AI Assist. Zalecane 30.
+  restart_policy:
+    name: 10 · BEZPIECZEŃSTWO — Polityka restartu
+    description: 'Sposób obsługi restartu. `ask` pozwala na restart dopiero po potwierdzeniu; `notify_only` tylko informuje.
+      Domyślnie: ask.'
+  pre_restart_config_check:
+    name: 10 · BEZPIECZEŃSTWO — Sprawdź konfigurację przed restartem
+    description: 'Sprawdza konfigurację Home Assistant przed restartem. Przy błędzie restart zostanie anulowany. Domyślnie:
+      włączone.'
+  restart_notice_on_start:
+    name: 10 · BEZPIECZEŃSTWO — Powiadomienie o restarcie
+    description: 'Tworzy powiadomienie, gdy wymagany jest restart Home Assistant lub całego SBC5. Domyślnie: włączone.'
+  post_update_restart_prompt:
+    name: 10 · BEZPIECZEŃSTWO — Restart po aktualizacji
+    description: 'Po aktualizacji pokazuje właściwy typ wymaganego restartu i — jeśli dostępne — akcję w Companion App. Restart
+      zawsze wymaga potwierdzenia. Domyślnie: włączone.'
+  native_restart_repair:
+    name: 10 · BEZPIECZEŃSTWO — Zgłoszenia Repairs
+    description: 'Publikuje oczekujący restart jako zgłoszenie Home Assistant Repairs. Nie wpływa na sensory ani telemetrię.
+      Domyślnie: włączone.'
+  section_notifications_enabled:
+    name: 11 · POWIADOMIENIA — Włącz sekcję
+    description: Włącza ustawienia powiadomień poniżej. Po wyłączeniu backend je ignoruje.
+  actionable_mobile_notifications:
+    name: 11 · POWIADOMIENIA — Akcje Companion App
+    description: 'Dodaje przyciski akcji do powiadomień Companion App, np. restart HA lub SBC5. Domyślnie: włączone.'
+  mobile_notify_service:
+    name: 11 · POWIADOMIENIA — Usługa notify
+    description: Usługa Companion App używana do powiadomień. `auto` wybiera ją automatycznie, gdy wykryto jedno urządzenie;
+      przy wielu wpisz konkretną usługę.
+  section_updates_enabled:
+    name: 12 · AKTUALIZACJE — Włącz sekcję
+    description: Włącza mechanizmy sprawdzania i lokalnych aktualizacji poniżej.
+  update_check_enabled:
+    name: 12 · AKTUALIZACJE — Automatyczne sprawdzanie
+    description: 'Okresowo sprawdza dostępność nowszej wersji Control Center. Dla instalacji lokalnej priorytet mają paczki
+      ZIP. Domyślnie: włączone.'
+  update_check_interval_hours:
+    name: 12 · AKTUALIZACJE — Interwał sprawdzania
+    description: Częstotliwość sprawdzania aktualizacji. Zakres 1–24 h, domyślnie 6 h.
+  update_notify:
+    name: 12 · AKTUALIZACJE — Powiadamiaj o nowej wersji
+    description: 'Powiadamia o wykryciu nowszej wersji. Aktualizacja nie jest instalowana automatycznie. Domyślnie: włączone.'
+  app_update_manifest_url:
+    name: 12 · AKTUALIZACJE — Zdalny manifest
+    description: Opcjonalny adres HTTP/HTTPS manifestu najnowszej wersji. Pozostaw puste, jeśli nie korzystasz z własnego
+      źródła aktualizacji.
+  local_package_updates_enabled:
+    name: 12 · AKTUALIZACJE — Lokalne paczki ZIP
+    description: 'Skanuje `/config/sbc5_control_center_updates` w poszukiwaniu nowszych paczek ZIP. Instalacja zawsze wymaga
+      potwierdzenia. Domyślnie: włączone.'
+  local_package_scan_interval_minutes:
+    name: 12 · AKTUALIZACJE — Interwał skanowania ZIP
+    description: Interwał skanowania katalogu aktualizacji. Zakres 1–60 min, domyślnie 2 min.
+  local_package_keep_processed:
+    name: 12 · AKTUALIZACJE — Archiwizuj zainstalowane ZIP
+    description: 'Po udanej instalacji przenosi ZIP do `processed/` zamiast go usuwać. Ułatwia audyt i powrót do wcześniejszej
+      paczki. Domyślnie: włączone.'
+  local_package_cleanup_enabled:
+    name: Automatyczne czyszczenie paczek
+    description: Usuwa stare ZIP-y ponad ustawioną retencję z processed/ i failed/. Nie dotyka backupów konfiguracji ani Lovelace.
+  local_package_processed_retention:
+    name: Retencja poprawnych paczek
+    description: Liczba ostatnich poprawnie przetworzonych ZIP-ów do zachowania. Domyślnie 2.
+  local_package_failed_retention:
+    name: Retencja błędnych paczek
+    description: Liczba ostatnich błędnych ZIP-ów do zachowania. Domyślnie 2.
+  section_telemetry_enabled:
+    name: 13 · TELEMETRIA — Włącz sekcję
+    description: Włącza rozszerzoną telemetrię i ustawienia workerów poniżej.
+  multicore_telemetry_enabled:
+    name: 13 · TELEMETRIA — Przetwarzanie wielordzeniowe
+    description: 'Uruchamia niezależne, cięższe etapy diagnostyczne równolegle. Linux rozdziela procesy na dostępne rdzenie
+      SBC5. Domyślnie: włączone.'
+  multicore_workers:
+    name: 13 · TELEMETRIA — Liczba workerów
+    description: '`auto` używa do 4 dostępnych rdzeni. Możesz ograniczyć pulę do 1–4 workerów. Wartość 1 wymusza wykonanie
+      sekwencyjne.'
+  config_txt_manager:
+    name: 20 · CONFIG.TXT — Menedżer i tryb pracy
+    description: Włącza zaawansowane zarządzanie `config.txt`. `auto` oznacza brak ingerencji. Ustawienia są zapisywane do
+      `sbc5cc-managed.txt`. Po awaryjnym przywróceniu ustawień SBC5 synchronizacja pozostaje zablokowana do jawnego ponownego
+      zezwolenia.
+    fields:
+      enabled:
+        name: Włącz konfigurację config.txt z tej zakładki
+        description: 'Włącz, aby ustawienia poniżej zarządzały `sbc5cc-managed.txt`. Domyślnie: wyłączone.'
+      sync_interval_seconds:
+        name: Interwał synchronizacji
+        description: Synchronizacja co 2–60 s; domyślnie 5 s. Zapis nie uruchamia SBC5 automatycznie.
+      advanced_mode:
+        name: Tryb zaawansowany
+        description: Pozwala na parametry spoza katalogu i wybrane wartości poza zakresami ochronnymi. Walidacja składni pozostaje
+          aktywna.
+  section_cpu_enabled:
+    name: 21 · CONFIG.TXT — Włącz CPU / OC
+    description: Aktywuje zarządzanie ustawieniami CPU/OC z grupy znajdującej się bezpośrednio poniżej.
+  config_cpu:
+    name: 21 · CONFIG.TXT — CPU / OC / termika
+    description: Ustawienia CPU, OC i termiki. `auto` = brak wpisu zarządzanego. Zmiany wymagają pełnego restartu SBC5.
+    fields:
+      arm_freq:
+        name: arm_freq [MHz]
+        description: 'Maksymalny zegar CPU. Zakres ochronny: 1500–2800 MHz. Domyślne Pi 5: 2400 MHz.'
+      arm_freq_min:
+        name: arm_freq_min [MHz]
+        description: 'Minimalny zegar CPU. Zakres ochronny: 600–2400 MHz. Domyślne Pi 5: 1500 MHz.'
+      over_voltage:
+        name: over_voltage
+        description: 'Skala napięcia firmware. Zakres ochronny: -16…8. Parametr wysokiego ryzyka.'
+      over_voltage_min:
+        name: over_voltage_min
+        description: Zakres -16…8. Parametr przestarzały na Pi 4/Pi 5 — pozostaw `auto`, jeśli nie jest potrzebny.
+      over_voltage_delta:
+        name: over_voltage_delta [µV]
+        description: 'Offset DVFS w µV. Zakres ochronny Control Center: 0–50000 µV.'
+      force_turbo:
+        name: force_turbo
+        description: '`auto` / `0` / `1`. `1` wymusza tryb turbo zamiast normalnego skalowania. Wysokie ryzyko.'
+      initial_turbo:
+        name: initial_turbo [s]
+        description: Czas turbo po starcie. Zakres 0–60 s; domyślnie 0.
+      temp_limit:
+        name: temp_limit [°C]
+        description: Próg ochrony termicznej. Zakres 0–85°C; domyślnie 85°C.
+  section_gpu_enabled:
+    name: 22 · CONFIG.TXT — Włącz GPU
+    description: Aktywuje zarządzanie ustawieniami GPU/V3D/ISP z grupy poniżej.
+  config_gpu_profile:
+    name: 22 · Profil GPU / V3D / ISP
+    description: 'factory = firmware bez wpisów; eco = 850/850/900; balanced = 950/950/1000; performance = 1000/1000/1100; experimental = 1100/1100/1200; advanced = ustawienia ręczne. Kolejność: core / ISP / V3D MHz.'
+  config_gpu:
+    name: 22 · CONFIG.TXT — GPU / V3D / ISP
+    description: Ustawienia zegarów GPU/V3D/ISP. `auto` = brak wpisu. Zmiany wymagają pełnego restartu SBC5.
+    fields:
+      core_freq:
+        name: core_freq [MHz]
+        description: Maksymalny zegar core. Zakres ochronny 500–1200 MHz; domyślnie ok. 910 MHz.
+      core_freq_min:
+        name: core_freq_min [MHz]
+        description: Minimalny zegar core. Zakres ochronny 200–960 MHz.
+      isp_freq:
+        name: isp_freq [MHz]
+        description: Maksymalny zegar ISP. Zakres ochronny 500–1200 MHz; domyślnie ok. 910 MHz.
+      isp_freq_min:
+        name: isp_freq_min [MHz]
+        description: Minimalny zegar ISP. Zakres ochronny 200–960 MHz.
+      v3d_freq:
+        name: v3d_freq [MHz]
+        description: Maksymalny zegar V3D. Zakres ochronny 500–1200 MHz; domyślnie ok. 960 MHz.
+      v3d_freq_min:
+        name: v3d_freq_min [MHz]
+        description: Minimalny zegar V3D. Zakres ochronny 200–960 MHz.
+      gpu_freq_min:
+        name: gpu_freq_min [MHz]
+        description: Minimalny zegar grupy GPU. Zakres ochronny 200–960 MHz.
+  section_power_usb_enabled:
+    name: 23 · CONFIG.TXT — Włącz Zasilanie / USB
+    description: Aktywuje ustawienia zasilania i USB z grupy poniżej.
+  config_power_usb:
+    name: 23 · CONFIG.TXT — Zasilanie / USB
+    description: Ustawienia zasilania i limitu prądowego USB. `auto` pozostawia decyzję firmware/systemu.
+    fields:
+      usb_max_current_enable:
+        name: usb_max_current_enable
+        description: '`auto` / `0` / `1`. `auto` nie zmienia firmware; `1` włącza wyższy limit USB. Używaj tylko przy odpowiednim
+          zasilaniu.'
+      power_force_3v3_pwm:
+        name: power_force_3v3_pwm
+        description: '`auto` / `0` / `1`. Wymusza PWM dla 3,3 V GPIO/CSI. Parametr wysokiego ryzyka.'
+  section_pcie_rp1_enabled:
+    name: 24 · CONFIG.TXT — Włącz PCIe / RP1
+    description: Aktywuje ustawienia PCIe/RP1 z grupy poniżej.
+  config_pcie_rp1:
+    name: 24 · CONFIG.TXT — PCIe / RP1
+    description: Ustawienia PCIe/RP1 Raspberry Pi 5. Zmiany zaczynają działać po pełnym restarcie.
+    fields:
+      pciex4_reset:
+        name: pciex4_reset
+        description: '`auto` / `0` / `1`. Steruje resetem kontrolera PCIe x4 używanego przez RP1 przed startem.'
+  section_boot_kernel_enabled:
+    name: 25 · CONFIG.TXT — Włącz Boot / Kernel
+    description: Aktywuje ustawienia rozruchu i kernela z grupy poniżej. Używaj świadomie.
+  config_boot_kernel:
+    name: 25 · CONFIG.TXT — Boot / kernel
+    description: Ustawienia boot i kernela. Błędna wartość może uniemożliwić start systemu — zmieniaj tylko świadomie.
+    fields:
+      auto_initramfs:
+        name: auto_initramfs
+        description: '`auto` / `0` / `1`. Automatyczne wykrywanie initramfs; zwykle pozostaw wartość domyślną.'
+      arm_64bit:
+        name: arm_64bit
+        description: '`auto` / `0` / `1`. Wybór 64-bitowego trybu kernela.'
+      boot_ramdisk:
+        name: boot_ramdisk
+        description: '`auto` / `0` / `1`. Opcja specjalistyczna dla secure boot/netboot; wysokie ryzyko.'
+      sha256:
+        name: sha256
+        description: '`auto` / `0` / `1`. Logowanie SHA-256 plików boot; może wydłużyć start.'
+      set_reboot_arg1:
+        name: set_reboot_arg1
+        description: '`auto` albo liczba 0–4294967295.'
+      kernel:
+        name: kernel
+        description: '`auto` albo nazwa pliku kernela. Błędna wartość może uniemożliwić start.'
+      cmdline:
+        name: cmdline
+        description: '`auto` albo nazwa pliku linii poleceń, zwykle `cmdline.txt`.'
+      os_prefix:
+        name: os_prefix
+        description: '`auto` albo względny prefix ścieżki plików boot.'
+  section_hardware_enabled:
+    name: 26 · CONFIG.TXT — Włącz wykrywanie sprzętu
+    description: Aktywuje ustawienia automatycznego wykrywania sprzętu z grupy poniżej.
+  config_hardware:
+    name: 26 · CONFIG.TXT — Wykrywanie sprzętu
+    description: Automatyczne wykrywanie urządzeń CSI/DSI.
+    fields:
+      camera_auto_detect:
+        name: camera_auto_detect
+        description: '`auto` / `0` / `1`. Automatyczne wykrywanie kamer CSI.'
+      display_auto_detect:
+        name: display_auto_detect
+        description: '`auto` / `0` / `1`. Automatyczne wykrywanie ekranów DSI.'
+  section_uart_debug_enabled:
+    name: 27 · CONFIG.TXT — Włącz UART / Debug
+    description: Aktywuje ustawienia UART i debug z grupy poniżej.
+  config_uart_debug:
+    name: 27 · CONFIG.TXT — UART / debug
+    description: UART i diagnostyka wczesnego startu.
+    fields:
+      enable_uart:
+        name: enable_uart
+        description: '`auto` / `0` / `1`. Włącza podstawowy UART.'
+      enable_rp1_uart:
+        name: enable_rp1_uart
+        description: '`auto` / `0` / `1`. Inicjalizuje RP1 UART0 do wczesnego debugowania.'
+      uart_2ndstage:
+        name: uart_2ndstage
+        description: '`auto` / `0` / `1`. Włącza logowanie drugiego etapu boot przez UART.'
+  section_video_enabled:
+    name: 28 · CONFIG.TXT — Włącz Wideo / KMS
+    description: Aktywuje ustawienia wideo/KMS z grupy poniżej.
+  config_video:
+    name: 28 · CONFIG.TXT — Wideo / KMS
+    description: Ustawienia wideo, KMS i framebufferów.
+    fields:
+      enable_tvout:
+        name: enable_tvout
+        description: '`auto` / `0` / `1`. Włączenie wyjścia composite może zmienić dostępność HDMI.'
+      disable_overscan:
+        name: disable_overscan
+        description: '`auto` / `0` / `1`. Steruje kompensacją overscan.'
+      disable_fw_kms_setup:
+        name: disable_fw_kms_setup
+        description: '`auto` / `0` / `1`. Steruje wstępną konfiguracją KMS przez firmware.'
+      max_framebuffers:
+        name: max_framebuffers
+        description: '`auto` albo 0–2. Liczba framebufferów firmware.'
+      hdmi_enable_4kp60:
+        name: hdmi_enable_4kp60
+        description: '`auto` / `0` / `1`. Opcja zgodności głównie dla Pi 4; Pi 5 zwykle jej nie potrzebuje.'
+  section_device_tree_enabled:
+    name: 29 · CONFIG.TXT — Włącz Device Tree
+    description: Aktywuje ustawienia Device Tree z grupy poniżej.
+  config_device_tree:
+    name: 29 · CONFIG.TXT — Device Tree
+    description: Bazowy Device Tree i ścieżka overlayów. `dtoverlay`/`dtparam` dodawaj w sekcji własnych parametrów.
+    fields:
+      device_tree:
+        name: device_tree
+        description: '`auto` albo nazwa pliku `.dtb`. Wysokie ryzyko — błędny plik może uniemożliwić start.'
+      overlay_prefix:
+        name: overlay_prefix
+        description: '`auto` albo względna ścieżka katalogu overlayów; zwykle `overlays/`.'
+  section_compatibility_enabled:
+    name: 30 · CONFIG.TXT — Włącz zgodność / legacy
+    description: Aktywuje opcje zgodności firmware z grupy poniżej.
+  config_compatibility:
+    name: 30 · CONFIG.TXT — Zgodność / legacy
+    description: Opcje zgodności ze starszymi modelami. Na Raspberry Pi 5 zwykle pozostaw `auto`.
+    fields:
+      arm_boost:
+        name: arm_boost
+        description: '`auto` / `0` / `1`. Opcja starszych modeli; na Pi 5 zwykle pozostaw `auto`.'
+      audio_pwm_mode:
+        name: audio_pwm_mode
+        description: '`auto` albo wartość legacy zależna od modelu. Na Pi 5 zwykle pozostaw `auto`.'
+  section_custom_parameters_enabled:
+    name: 31 · CONFIG.TXT — Włącz parametry własne
+    description: Aktywuje dodatkowe wpisy config.txt z grupy poniżej.
+  config_custom_parameters:
+    name: 31 · CONFIG.TXT — Parametry własne
+    description: Dowolne wpisy `config.txt`, w tym `dtoverlay`, `dtparam` i `include`. Parametry spoza katalogu wymagają Trybu
+      zaawansowanego.
+    fields:
+      section:
+        name: Sekcja
+        description: Sekcja bez nawiasów, np. `all`, `pi5`, `tryboot`.
+      key:
+        name: Parametr
+        description: Nazwa parametru, np. `dtoverlay`, `dtparam`, `include`.
+      value:
+        name: Wartość
+        description: Wartość parametru. Poprawny zakres zależy od konkretnego wpisu lub overlaya.
+  custom_hysteresis_dense_c:
+    name: 90 · EKSPERT — Histereza bazowa blisko celu
+    description: Zaawansowana histereza krzywej bazowej. Zwykle nie zmieniaj.
+  custom_hysteresis_outer_c:
+    name: 90 · EKSPERT — Histereza bazowa zewnętrzna
+    description: Zaawansowana histereza zewnętrzna. Zwykle nie zmieniaj.
+  apply_custom_on_start:
+    name: 90 · EKSPERT — Przygotuj profil własny po starcie
+    description: Opcja diagnostyczna/zgodności. W typowej pracy pozostaw wyłączoną.
+  adaptive_pwm_enabled:
+    name: 90 · EKSPERT — Legacy Adaptive PWM
+    description: Pole zgodności. Aktywny tryb sterowania ustawia Adaptive automatycznie.
+  section_adaptive_advanced_enabled:
+    name: 90 · EKSPERT — Włącz strojenie Adaptive PWM
+    description: Aktywuje ręczne strojenie deadbandu, interwału i potwierdzeń Adaptive PWM. Wyłączone = wartości automatyczne.
+  adaptive_pwm_deadband_c:
+    name: 90 · EKSPERT — Martwa strefa Adaptive
+    description: Techniczne pasmo bez korekt wokół celu. Domyślnie 0,75°C.
+  adaptive_pwm_interval_seconds:
+    name: 90 · EKSPERT — Interwał Adaptive
+    description: Odstęp między korektami Adaptive. Domyślnie 10 s.
+  adaptive_pwm_down_confirm_cycles:
+    name: 90 · EKSPERT — Potwierdzenie obniżenia
+    description: Liczba potwierdzeń przed obniżeniem PWM. Domyślnie 2.

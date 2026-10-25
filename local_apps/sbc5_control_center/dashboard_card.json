@@ -1,0 +1,1161 @@
+{
+  "type": "vertical-stack",
+  "cards": [
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "sensor.sbc5_cpu_temperature",
+      "primary": "Raspberry Pi 5",
+      "secondary": "{% set problem = is_state('binary_sensor.sbc5_cooling_problem','on')\n   or is_state('binary_sensor.sbc5_high_temperature','on') %}\n{% if problem %}\n  Wymaga uwagi\n{% else %}\n  System działa prawidłowo\n{% endif %} {% set desired_s = states('sensor.sbc5_requested_fan_profile') %} {% set desired_l = states('sensor.rpi5_requested_fan_profile') %} {% set desired = desired_s if desired_s not in ['unknown','unavailable',''] else desired_l %} {% set runtime_s = states('sensor.sbc5_active_fan_profile') %} {% set runtime_l = states('sensor.rpi5_active_fan_profile') %} {% set runtime = runtime_s if runtime_s not in ['unknown','unavailable',''] else runtime_l %} {% set activation_s = states('sensor.sbc5_fan_profile_activation') %} {% set activation_l = states('sensor.rpi5_fan_profile_activation') %} {% set activation = activation_s if activation_s not in ['unknown','unavailable',''] else activation_l %} · żądany {{ desired if desired not in ['unknown','unavailable',''] else states('input_select.sbc5_fan_profile') }} · runtime {{ runtime }} {% if activation == 'pending_host_reboot' %}· restart hosta wymagany{% endif %} {% set cm = state_attr('sensor.sbc5_active_fan_profile','control_mode_label') | default(state_attr('sensor.rpi5_active_fan_profile','control_mode_label'), true) %} {% if cm %}· {{ cm }}{% endif %} · v{{ state_attr('sensor.sbc5_control_center_update','installed_version')\n      | default(states('sensor.sbc5_package_version'), true) }}\n· Card UI v2.8.25",
+      "icon": "mdi:raspberry-pi",
+      "icon_color": "{% if is_state('binary_sensor.sbc5_cooling_problem','on')\n   or is_state('binary_sensor.sbc5_high_temperature','on') %}\n  red\n{% else %}\n  green\n{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 74px;\n  border-radius: 19px;\n  border: 1px solid rgba(0,188,255,.32);\n  background:\n    radial-gradient(circle at 92% 0%, rgba(0,188,255,.16), transparent 42%),\n    linear-gradient(145deg, rgba(19,34,44,.98), rgba(11,18,24,.98));\n  box-shadow: none;\n  padding: 3px 9px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 46px;\n  --shape-color: rgba(0,188,255,.10) !important;\n}\n.primary {\n  font-size: 16px !important;\n  font-weight: 700 !important;\n}\n.secondary {\n  font-size: 11.5px !important;\n  line-height: 1.18 !important;\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+      }
+    },
+    {
+      "type": "markdown",
+      "content": "## Najważniejsze parametry\n",
+      "card_mod": {
+        "style": "ha-card {\n  background: transparent;\n  box-shadow: none;\n  padding: 4px 6px 0 6px;\n  margin: 0;\n}\nha-markdown { padding: 0 !important; }\nh2 {\n  margin: 0 !important;\n  font-size: 20px !important;\n  line-height: 1.05 !important;\n}\n"
+      }
+    },
+    {
+      "type": "grid",
+      "columns": 2,
+      "square": false,
+      "cards": [
+        {
+          "type": "custom:mushroom-template-card",
+          "multiline_secondary": true,
+          "entity": "sensor.sbc5_cpu_temperature",
+          "primary": "Temperatura CPU",
+          "secondary": "{{ states('sensor.sbc5_cpu_temperature') }} °C · {{ states('sensor.sbc5_cooling_status') }}",
+          "icon": "mdi:thermometer",
+          "icon_color": "{% set t = states('sensor.sbc5_cpu_temperature')|float(0) %} {% if t >= 75 %}red{% elif t >= 60 %}orange{% else %}green{% endif %}",
+          "layout": "horizontal",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "card_mod": {
+            "style": "ha-card {\n  min-height: 68px;\n  height: auto !important;\n  border-radius: 15px;\n  border: 1px solid rgba(125,190,220,.14);\n  background: linear-gradient(145deg, rgba(26,33,40,.96), rgba(16,22,28,.96));\n  box-shadow: none;\n  padding: 4px 6px !important;\n}\nmushroom-shape-icon { --icon-size: 37px; }\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12.5px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10.5px !important;\n  line-height: 1.18 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "multiline_secondary": true,
+          "entity": "sensor.sbc5_fan_percent",
+          "primary": "Wentylator",
+          "secondary": "{{ states('sensor.sbc5_fan_percent') }}% · {{ states('sensor.sbc5_fan_rpm') }} RPM",
+          "icon": "mdi:fan",
+          "icon_color": "cyan",
+          "layout": "horizontal",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "card_mod": {
+            "style": "ha-card {\n  min-height: 68px;\n  height: auto !important;\n  border-radius: 15px;\n  border: 1px solid rgba(125,190,220,.14);\n  background: linear-gradient(145deg, rgba(26,33,40,.96), rgba(16,22,28,.96));\n  box-shadow: none;\n  padding: 4px 6px !important;\n}\nmushroom-shape-icon { --icon-size: 37px; }\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12.5px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10.5px !important;\n  line-height: 1.18 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "multiline_secondary": true,
+          "entity": "sensor.sbc5_cpu_frequency",
+          "primary": "Zegar CPU",
+          "secondary": "{% set f = states('sensor.sbc5_cpu_frequency') %} {{ f }}{% if f not in ['unknown','unavailable','none',''] %} MHz{% endif %}",
+          "icon": "mdi:cpu-64-bit",
+          "icon_color": "blue",
+          "layout": "horizontal",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "card_mod": {
+            "style": "ha-card {\n  min-height: 68px;\n  height: auto !important;\n  border-radius: 15px;\n  border: 1px solid rgba(125,190,220,.14);\n  background: linear-gradient(145deg, rgba(26,33,40,.96), rgba(16,22,28,.96));\n  box-shadow: none;\n  padding: 4px 6px !important;\n}\nmushroom-shape-icon { --icon-size: 37px; }\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12.5px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10.5px !important;\n  line-height: 1.18 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "multiline_secondary": true,
+          "entity": "sensor.sbc5_input_voltage",
+          "primary": "Napięcie wejściowe",
+          "secondary": "{{ states('sensor.sbc5_input_voltage') }} V",
+          "icon": "mdi:lightning-bolt",
+          "icon_color": "amber",
+          "layout": "horizontal",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "card_mod": {
+            "style": "ha-card {\n  min-height: 68px;\n  height: auto !important;\n  border-radius: 15px;\n  border: 1px solid rgba(125,190,220,.14);\n  background: linear-gradient(145deg, rgba(26,33,40,.96), rgba(16,22,28,.96));\n  box-shadow: none;\n  padding: 4px 6px !important;\n}\nmushroom-shape-icon { --icon-size: 37px; }\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12.5px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10.5px !important;\n  line-height: 1.18 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "multiline_secondary": true,
+          "entity": "sensor.sbc5_pmic_power",
+          "primary": "Zasilanie / PMIC",
+          "secondary": "{% set ep = states('sensor.sbc5_pmic_power') %} {% set et = states('sensor.sbc5_pmic_temperature') %} {{ states('sensor.sbc5_power_supply') }} · {{ ep if ep not in ['unknown','unavailable','none',''] else '—' }} W · {{ et if et not in ['unknown','unavailable','none',''] else '—' }} °C",
+          "icon": "mdi:power-plug-battery",
+          "icon_color": "green",
+          "layout": "horizontal",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "card_mod": {
+            "style": "ha-card {\n  min-height: 68px;\n  height: auto !important;\n  border-radius: 15px;\n  border: 1px solid rgba(125,190,220,.14);\n  background: linear-gradient(145deg, rgba(26,33,40,.96), rgba(16,22,28,.96));\n  box-shadow: none;\n  padding: 4px 6px !important;\n}\nmushroom-shape-icon { --icon-size: 37px; }\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12.5px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10.5px !important;\n  line-height: 1.18 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+          }
+        },
+        {
+          "type": "custom:mushroom-template-card",
+          "multiline_secondary": true,
+          "entity": "sensor.sbc5_usb_current_limit",
+          "primary": "Porty USB",
+          "secondary": "limit {{ states('sensor.sbc5_usb_current_limit') }} mA · deklar. {{ states('sensor.sbc5_usb_declared_current') }} mA · {{ states('sensor.sbc5_usb_device_count') }} urz.",
+          "icon": "mdi:usb",
+          "icon_color": "cyan",
+          "layout": "horizontal",
+          "tap_action": {
+            "action": "more-info"
+          },
+          "card_mod": {
+            "style": "ha-card {\n  min-height: 68px;\n  height: auto !important;\n  border-radius: 15px;\n  border: 1px solid rgba(125,190,220,.14);\n  background: linear-gradient(145deg, rgba(26,33,40,.96), rgba(16,22,28,.96));\n  box-shadow: none;\n  padding: 4px 6px !important;\n}\nmushroom-shape-icon { --icon-size: 37px; }\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12.5px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10.5px !important;\n  line-height: 1.18 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+          }
+        }
+      ],
+      "card_mod": {
+        "style": "/* SBC5CC 2.8.25 responsive grid */\n#root {\n  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;\n  gap: clamp(6px, 1.8vw, 10px) !important;\n  align-items: stretch !important;\n}\n#root > * {\n  min-width: 0 !important;\n  height: 100% !important;\n}\n@media (max-width: 339px) {\n  #root { grid-template-columns: 1fr !important; }\n}\n@media (min-width: 720px) {\n  #root { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important; }\n}\n"
+      }
+    },
+    {
+      "type": "custom:apexcharts-card",
+      "graph_span": "1h",
+      "update_interval": "30s",
+      "header": {
+        "show": true,
+        "title": "Temperatura CPU i PWM · ostatnia godzina",
+        "show_states": true,
+        "colorize_states": true
+      },
+      "span": {
+        "end": "minute"
+      },
+      "yaxis": [
+        {
+          "id": "temp",
+          "min": 35,
+          "max": 80,
+          "decimals": 0,
+          "apex_config": {
+            "tickAmount": 5,
+            "title": {
+              "text": "°C"
+            }
+          }
+        },
+        {
+          "id": "pwm",
+          "opposite": true,
+          "min": 0,
+          "max": 100,
+          "decimals": 0,
+          "apex_config": {
+            "tickAmount": 5,
+            "title": {
+              "text": "%"
+            }
+          }
+        }
+      ],
+      "series": [
+        {
+          "entity": "sensor.sbc5_cpu_temperature",
+          "name": "Temperatura",
+          "yaxis_id": "temp",
+          "type": "line",
+          "color": "#ff9800",
+          "stroke_width": 3,
+          "curve": "smooth",
+          "float_precision": 1,
+          "show": {
+            "in_header": "raw"
+          },
+          "group_by": {
+            "func": "avg",
+            "duration": "1min"
+          }
+        },
+        {
+          "entity": "sensor.sbc5_fan_percent",
+          "name": "PWM",
+          "yaxis_id": "pwm",
+          "type": "line",
+          "color": "#03a9f4",
+          "stroke_width": 2,
+          "curve": "smooth",
+          "float_precision": 0,
+          "show": {
+            "in_header": "raw"
+          },
+          "group_by": {
+            "func": "avg",
+            "duration": "1min"
+          }
+        }
+      ],
+      "apex_config": {
+        "chart": {
+          "height": 230,
+          "toolbar": {
+            "show": false
+          },
+          "zoom": {
+            "enabled": false
+          }
+        },
+        "legend": {
+          "show": true,
+          "position": "top",
+          "horizontalAlign": "right",
+          "fontSize": "11px"
+        },
+        "stroke": {
+          "curve": "smooth"
+        },
+        "grid": {
+          "show": true,
+          "borderColor": "rgba(120,150,170,.18)",
+          "strokeDashArray": 3,
+          "padding": {
+            "left": 2,
+            "right": 2,
+            "top": 0,
+            "bottom": 0
+          }
+        },
+        "xaxis": {
+          "type": "datetime",
+          "tickAmount": 4,
+          "labels": {
+            "show": true,
+            "datetimeUTC": false,
+            "format": "HH:mm",
+            "style": {
+              "fontSize": "10px"
+            }
+          },
+          "axisBorder": {
+            "show": false
+          },
+          "axisTicks": {
+            "show": false
+          }
+        },
+        "tooltip": {
+          "enabled": true,
+          "shared": true,
+          "x": {
+            "format": "HH:mm"
+          }
+        }
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 260px;\n  border-radius: 16px;\n  border: 1px solid rgba(0,188,255,.15);\n  background: linear-gradient(145deg, rgba(18,27,34,.98), rgba(10,16,21,.98));\n  box-shadow: none;\n  overflow: hidden;\n}\n/* SBC5CC 2.8.25 chart screen-fit */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n  overflow: hidden !important;\n}\n"
+      }
+    },
+    {
+      "type": "markdown",
+      "content": "## CPU / Overclocking\n",
+      "card_mod": {
+        "style": "ha-card { background: transparent; box-shadow: none; padding: 8px 6px 0 6px; margin: 0; }\nha-markdown { padding: 0 !important; }\nh2 { margin: 0 !important; font-size: 20px !important; line-height: 1.05 !important; }\n"
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "sensor.sbc5_cpu_oc_profile",
+      "primary": "{{ states('sensor.sbc5_cpu_oc_profile') }}",
+      "secondary": "{% set saved = state_attr('sensor.sbc5_overclock_status','saved_arm_freq_mhz') | int(0) %} {% set runtime = state_attr('sensor.sbc5_overclock_status','runtime_max_mhz') | int(0) %} {% set pending = is_state('sensor.sbc5_restart_required','host') or is_state('binary_sensor.sbc5_config_pending_restart','on') %} zapis {{ saved if saved > 0 else 'Auto' }} MHz · runtime max {{ runtime if runtime > 0 else '—' }} MHz {% if pending %} · oczekuje na restart hosta{% elif saved == runtime or (saved == 0 and runtime <= 2400) %} · zweryfikowany{% else %} · sprawdź Boot Verification{% endif %} {% if is_state('input_boolean.sbc5_cpu_profile_controls_visible','on') %} · ustawienia ▲{% else %} · dotknij, aby rozwinąć ▼{% endif %}",
+      "icon": "mdi:speedometer",
+      "icon_color": "{% set saved = state_attr('sensor.sbc5_overclock_status','saved_arm_freq_mhz') | int(0) %} {% set runtime = state_attr('sensor.sbc5_overclock_status','runtime_max_mhz') | int(0) %} {% if is_state('sensor.sbc5_restart_required','host') %}orange {% elif (saved == runtime and saved > 0) or (saved == 0 and runtime <= 2400) %}green {% else %}red{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "perform-action",
+        "perform_action": "input_boolean.toggle",
+        "target": {
+          "entity_id": "input_boolean.sbc5_cpu_profile_controls_visible"
+        }
+      },
+      "hold_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 70px;\n  border-radius: 16px;\n  border: 1px solid rgba(0,188,255,.26);\n  background: linear-gradient(145deg, rgba(17,39,49,.97), rgba(10,25,32,.97));\n  box-shadow: none;\n  padding: 5px 7px !important;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere !important; }\n.primary { font-size: 13px !important; font-weight: 750 !important; }\n.secondary { font-size: 10.5px !important; line-height: 1.2 !important; }\n"
+      }
+    },
+    {
+      "type": "conditional",
+      "conditions": [
+        {
+          "entity": "input_boolean.sbc5_cpu_profile_controls_visible",
+          "state": "on"
+        }
+      ],
+      "card": {
+        "type": "vertical-stack",
+        "cards": [
+          {
+            "type": "custom:mushroom-select-card",
+            "entity": "input_select.sbc5_cpu_oc_profile",
+            "name": "Wybierz profil CPU / OC",
+            "icon": "mdi:chip",
+            "fill_container": true,
+            "secondary_info": "none",
+            "card_mod": {
+              "style": "ha-card {\n  border-radius: 15px;\n  border: 1px solid rgba(125,190,220,.16);\n  background: rgba(15,28,35,.96);\n  box-shadow: none;\n}\n"
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "primary": "Zastosuj wybrany profil CPU / OC",
+            "secondary": "{{ states('input_select.sbc5_cpu_oc_profile') }} · zmiana config.txt może wymagać pełnego restartu Raspberry Pi 5",
+            "icon": "mdi:content-save-cog-outline",
+            "icon_color": "cyan",
+            "layout": "horizontal",
+            "tap_action": {
+              "action": "perform-action",
+              "perform_action": "script.turn_on",
+              "target": {
+                "entity_id": "script.sbc5_cpu_oc_apply_profile"
+              },
+              "confirmation": {
+                "title": "Zastosować profil CPU / OC?",
+                "text": "Wybrany profil zostanie zapisany do config.txt. Jeśli zmieni taktowanie, Restart Manager zażąda pełnego restartu Raspberry Pi 5."
+              }
+            },
+            "card_mod": {
+              "style": "ha-card {\n  min-height: 62px;\n  border-radius: 15px;\n  border: 1px solid rgba(0,220,255,.30);\n  background: linear-gradient(145deg, rgba(13,43,53,.96), rgba(8,26,33,.96));\n  box-shadow: none;\n  padding: 4px 6px !important;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere !important; }\n.primary { font-size: 12.5px !important; font-weight: 700 !important; }\n.secondary { font-size: 10px !important; line-height: 1.2 !important; }\n"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "sensor.sbc5_cpu_core_0_frequency",
+      "primary": "Zegar CPU",
+      "secondary": "{% set f0 = states('sensor.sbc5_cpu_core_0_frequency') %} {% set f1 = states('sensor.sbc5_cpu_core_1_frequency') %} {% set f2 = states('sensor.sbc5_cpu_core_2_frequency') %} {% set f3 = states('sensor.sbc5_cpu_core_3_frequency') %} CPU0 {{ f0 }} · CPU1 {{ f1 }} · CPU2 {{ f2 }} · CPU3 {{ f3 }} MHz {% if is_state('input_boolean.sbc5_cpu_clock_details_visible','on') %}· rdzenie ▲{% else %}· dotknij, aby rozwinąć rdzenie ▼{% endif %}",
+      "icon": "mdi:clock-fast",
+      "icon_color": "cyan",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "perform-action",
+        "perform_action": "input_boolean.toggle",
+        "target": {
+          "entity_id": "input_boolean.sbc5_cpu_clock_details_visible"
+        }
+      },
+      "hold_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 68px;\n  border-radius: 16px;\n  border: 1px solid rgba(0,188,255,.24);\n  background: linear-gradient(145deg, rgba(20,34,42,.98), rgba(11,19,25,.98));\n  box-shadow: none;\n  padding: 5px 7px !important;\n}\nmushroom-shape-icon { --icon-size: 38px; }\nmushroom-state-info { min-width: 0 !important; width: 100% !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary { font-size: 13px !important; font-weight: 750 !important; }\n.secondary { font-size: 10.5px !important; line-height: 1.2 !important; }\n"
+      }
+    },
+    {
+      "type": "conditional",
+      "conditions": [
+        {
+          "entity": "input_boolean.sbc5_cpu_clock_details_visible",
+          "state": "on"
+        }
+      ],
+      "card": {
+        "type": "grid",
+        "columns": 2,
+        "square": false,
+        "cards": [
+          {
+            "type": "custom:mushroom-template-card",
+            "entity": "sensor.sbc5_cpu_core_0_frequency",
+            "primary": "Rdzeń 0",
+            "secondary": "{{ states('sensor.sbc5_cpu_core_0_frequency') }} MHz · obciążenie {{ states('sensor.sbc5_cpu_core_0_usage') }}%",
+            "icon": "mdi:numeric-0-box-multiple-outline",
+            "icon_color": "cyan",
+            "layout": "horizontal",
+            "tap_action": {
+              "action": "more-info"
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "entity": "sensor.sbc5_cpu_core_1_frequency",
+            "primary": "Rdzeń 1",
+            "secondary": "{{ states('sensor.sbc5_cpu_core_1_frequency') }} MHz · obciążenie {{ states('sensor.sbc5_cpu_core_1_usage') }}%",
+            "icon": "mdi:numeric-1-box-multiple-outline",
+            "icon_color": "cyan",
+            "layout": "horizontal",
+            "tap_action": {
+              "action": "more-info"
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "entity": "sensor.sbc5_cpu_core_2_frequency",
+            "primary": "Rdzeń 2",
+            "secondary": "{{ states('sensor.sbc5_cpu_core_2_frequency') }} MHz · obciążenie {{ states('sensor.sbc5_cpu_core_2_usage') }}%",
+            "icon": "mdi:numeric-2-box-multiple-outline",
+            "icon_color": "cyan",
+            "layout": "horizontal",
+            "tap_action": {
+              "action": "more-info"
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "entity": "sensor.sbc5_cpu_core_3_frequency",
+            "primary": "Rdzeń 3",
+            "secondary": "{{ states('sensor.sbc5_cpu_core_3_frequency') }} MHz · obciążenie {{ states('sensor.sbc5_cpu_core_3_usage') }}%",
+            "icon": "mdi:numeric-3-box-multiple-outline",
+            "icon_color": "cyan",
+            "layout": "horizontal",
+            "tap_action": {
+              "action": "more-info"
+            }
+          }
+        ],
+        "card_mod": {
+          "style": "#root {\n  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;\n  gap: 8px !important;\n}\n#root > * { min-width: 0 !important; }\nmushroom-template-card$ ha-card {\n  min-height: 66px;\n  border-radius: 14px;\n  border: 1px solid rgba(125,190,220,.13);\n  background: linear-gradient(145deg, rgba(24,33,40,.96), rgba(14,22,28,.96));\n  box-shadow: none;\n}\n"
+        }
+      }
+    },
+    {
+      "type": "markdown",
+      "content": "## GPU / V3D / ISP\nPresety dla Raspberry Pi 5 · zmiany wymagają pełnego restartu RPi po zapisaniu `config.txt`.\n",
+      "card_mod": {
+        "style": "ha-card { background: transparent; box-shadow: none; padding: 8px 6px 0 6px; margin: 0; }\nha-markdown { padding: 0 !important; }\nh2 { margin: 0 !important; font-size: 20px !important; line-height: 1.05 !important; }\np { margin: 4px 0 0 0 !important; color: var(--secondary-text-color); font-size: 11px; }\n"
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "sensor.sbc5_gpu_profile",
+      "primary": "{{ states('sensor.sbc5_gpu_profile') }}",
+      "secondary": "{% set code = state_attr('sensor.sbc5_gpu_profile','profile_code') | default('factory', true) %} {% if code == 'factory' %}Firmware Auto · ref. core 910 · ISP 910 · V3D 960 MHz {% elif code == 'advanced' %}Wartości ręczne z pozycji 22 · CONFIG.TXT — GPU / V3D / ISP {% else %}Preset SBC5 · napięcie pozostaje pod kontrolą firmware/DVFS{% endif %} {% if is_state('sensor.sbc5_restart_required','host') or is_state('binary_sensor.sbc5_config_pending_restart','on') %} · oczekuje na restart RPi{% endif %} {% if is_state('input_boolean.sbc5_gpu_profile_controls_visible','on') %} · ustawienia ▲{% else %} · dotknij, aby rozwinąć ▼{% endif %}",
+      "icon": "mdi:expansion-card-variant",
+      "icon_color": "{% if is_state('sensor.sbc5_restart_required','host') or is_state('binary_sensor.sbc5_config_pending_restart','on') %}orange {% elif states('sensor.sbc5_gpu_profile').startswith('Eksperymentalny') %}red {% elif states('sensor.sbc5_gpu_profile').startswith('Wydajność') %}orange {% else %}cyan{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "perform-action",
+        "perform_action": "input_boolean.toggle",
+        "target": {
+          "entity_id": "input_boolean.sbc5_gpu_profile_controls_visible"
+        }
+      },
+      "hold_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 70px; border-radius: 16px; border: 1px solid rgba(0,188,255,.26);\n  background: linear-gradient(145deg, rgba(17,39,49,.97), rgba(10,25,32,.97));\n  box-shadow: none; padding: 5px 7px !important;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere !important; }\n.primary { font-size: 13px !important; font-weight: 750 !important; }\n.secondary { font-size: 10.5px !important; line-height: 1.2 !important; }\n"
+      }
+    },
+    {
+      "type": "conditional",
+      "conditions": [
+        {
+          "entity": "input_boolean.sbc5_gpu_profile_controls_visible",
+          "state": "on"
+        }
+      ],
+      "card": {
+        "type": "vertical-stack",
+        "cards": [
+          {
+            "type": "custom:mushroom-select-card",
+            "entity": "input_select.sbc5_gpu_profile",
+            "name": "Wybierz preset GPU / V3D / ISP",
+            "icon": "mdi:tune-variant",
+            "fill_container": true,
+            "secondary_info": "none",
+            "card_mod": {
+              "style": "ha-card { border-radius: 15px; border: 1px solid rgba(125,190,220,.16); background: rgba(15,28,35,.96); box-shadow: none; }\n"
+            }
+          },
+          {
+            "type": "grid",
+            "columns": 2,
+            "square": false,
+            "cards": [
+              {
+                "type": "custom:mushroom-template-card",
+                "primary": "Zastosuj preset",
+                "secondary": "{{ states('input_select.sbc5_gpu_profile') }}",
+                "icon": "mdi:content-save-cog-outline",
+                "icon_color": "cyan",
+                "layout": "horizontal",
+                "tap_action": {
+                  "action": "perform-action",
+                  "perform_action": "script.turn_on",
+                  "target": {
+                    "entity_id": "script.sbc5_gpu_apply_profile"
+                  },
+                  "confirmation": {
+                    "title": "Zastosować profil GPU / V3D / ISP?",
+                    "text": "Profil zostanie zapisany do Config Managera. Jeśli config.txt ulegnie zmianie, wymagany będzie pełny restart Raspberry Pi 5."
+                  }
+                },
+                "card_mod": {
+                  "style": "ha-card { min-height: 68px; border-radius: 15px; border: 1px solid rgba(0,220,255,.30); background: linear-gradient(145deg, rgba(13,43,53,.96), rgba(8,26,33,.96)); box-shadow: none; }\n.primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }\n"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "primary": "Ustawienia zaawansowane",
+                "secondary": "Pozycja 22 · ręczne zegary i Factory restore",
+                "icon": "mdi:cog-transfer-outline",
+                "icon_color": "blue",
+                "layout": "horizontal",
+                "tap_action": {
+                  "action": "navigate",
+                  "navigation_path": "/app/local_sbc5_control_center"
+                },
+                "card_mod": {
+                  "style": "ha-card { min-height: 68px; border-radius: 15px; border: 1px solid rgba(125,190,220,.16); background: rgba(15,28,35,.96); box-shadow: none; }\n.primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }\n"
+                }
+              }
+            ],
+            "card_mod": {
+              "style": "#root { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 8px !important; }\n#root > * { min-width: 0 !important; }\n"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "custom:mushroom-chips-card",
+      "alignment": "justify",
+      "chips": [
+        {
+          "type": "template",
+          "icon": "mdi:cog-outline",
+          "content": "Konfiguracja",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/app/local_sbc5_control_center"
+          },
+          "hold_action": {
+            "action": "none"
+          }
+        },
+        {
+          "type": "template",
+          "icon": "mdi:file-cog-outline",
+          "content": "Config.txt",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/app/local_sbc5_control_center"
+          },
+          "hold_action": {
+            "action": "none"
+          }
+        },
+        {
+          "type": "action",
+          "icon": "mdi:update",
+          "icon_color": "cyan",
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "script.turn_on",
+            "target": {
+              "entity_id": "script.sbc5_fan_check_app_update"
+            }
+          }
+        },
+        {
+          "type": "action",
+          "icon": "mdi:stethoscope",
+          "icon_color": "blue",
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "script.turn_on",
+            "target": {
+              "entity_id": "script.sbc5_fan_diagnose_overlay"
+            }
+          }
+        },
+        {
+          "type": "action",
+          "icon": "mdi:fan",
+          "icon_color": "cyan",
+          "tap_action": {
+            "action": "perform-action",
+            "confirmation": {
+              "text": "Uruchomić kalibrację Active Cooler 1%? Wentylator przejdzie przez szeroki zakres obrotów."
+            },
+            "perform_action": "script.turn_on",
+            "target": {
+              "entity_id": "script.sbc5_fan_calibrate"
+            }
+          },
+          "hold_action": {
+            "action": "none"
+          }
+        },
+        {
+          "type": "action",
+          "icon": "mdi:fan-alert",
+          "icon_color": "orange",
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "script.turn_on",
+            "target": {
+              "entity_id": "script.sbc5_request_restore_active_cooler"
+            }
+          }
+        },
+        {
+          "type": "action",
+          "icon": "mdi:raspberry-pi",
+          "icon_color": "orange",
+          "tap_action": {
+            "action": "perform-action",
+            "perform_action": "script.turn_on",
+            "target": {
+              "entity_id": "script.sbc5_request_restore_system_defaults"
+            }
+          }
+        },
+        {
+          "type": "template",
+          "icon": "mdi:text-box-outline",
+          "content": "Log",
+          "tap_action": {
+            "action": "navigate",
+            "navigation_path": "/config/app/local_sbc5_control_center/logs"
+          },
+          "hold_action": {
+            "action": "none"
+          }
+        }
+      ],
+      "card_mod": {
+        "style": "ha-card {\n  padding: 3px 4px 2px 4px;\n  background: transparent;\n  box-shadow: none;\n}\nmushroom-chip {\n  --chip-height: 34px;\n  --chip-font-size: 10px;\n}\n"
+      }
+    },
+    {
+      "type": "conditional",
+      "conditions": [
+        {
+          "entity": "input_boolean.sbc5_confirm_restore_active_cooler",
+          "state": "on"
+        }
+      ],
+      "card": {
+        "type": "vertical-stack",
+        "cards": [
+          {
+            "type": "markdown",
+            "content": "### Przywrócić fabryczne ustawienia Active Cooler?\n**Czy jesteś pewien?** Zostanie przywrócona fabryczna charakterystyka chłodzenia Raspberry Pi 5. Własna krzywa i kalibracja pozostaną zapisane. Zmiana wymaga pełnego restartu RPi5.\n"
+          },
+          {
+            "type": "custom:mushroom-chips-card",
+            "alignment": "center",
+            "chips": [
+              {
+                "type": "template",
+                "icon": "mdi:check-circle",
+                "icon_color": "green",
+                "content": "Tak — potwierdzam",
+                "tap_action": {
+                  "action": "perform-action",
+                  "perform_action": "script.turn_on",
+                  "target": {
+                    "entity_id": "script.sbc5_fan_restore_factory"
+                  }
+                }
+              },
+              {
+                "type": "template",
+                "icon": "mdi:close-circle",
+                "icon_color": "red",
+                "content": "Nie — anuluj",
+                "tap_action": {
+                  "action": "perform-action",
+                  "perform_action": "script.turn_on",
+                  "target": {
+                    "entity_id": "script.sbc5_cancel_restore_active_cooler"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "conditional",
+      "conditions": [
+        {
+          "entity": "input_boolean.sbc5_confirm_restore_system_defaults",
+          "state": "on"
+        }
+      ],
+      "card": {
+        "type": "vertical-stack",
+        "cards": [
+          {
+            "type": "markdown",
+            "content": "### Cofnąć zmiany RPi5 wprowadzone przez Control Center?\n**Czy potwierdzasz?** Aplikacja usunie wyłącznie własne bloki CPU/OC/USB i Config Manager z `config.txt`. Ręczne wpisy użytkownika poza blokami Control Center pozostaną bez zmian. Przed operacją powstanie backup, a automatyczna synchronizacja `config.txt` zostanie zablokowana do świadomego ponownego włączenia.\n"
+          },
+          {
+            "type": "custom:mushroom-chips-card",
+            "alignment": "center",
+            "chips": [
+              {
+                "type": "template",
+                "icon": "mdi:check-circle",
+                "icon_color": "green",
+                "content": "Tak — potwierdzam",
+                "tap_action": {
+                  "action": "perform-action",
+                  "perform_action": "script.turn_on",
+                  "target": {
+                    "entity_id": "script.sbc5_restore_system_defaults_confirmed"
+                  }
+                }
+              },
+              {
+                "type": "template",
+                "icon": "mdi:close-circle",
+                "icon_color": "red",
+                "content": "Nie — anuluj",
+                "tap_action": {
+                  "action": "perform-action",
+                  "perform_action": "script.turn_on",
+                  "target": {
+                    "entity_id": "script.sbc5_cancel_restore_system_defaults"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "markdown",
+      "content": "## Stan systemu\nNajważniejsze informacje diagnostyczne\n",
+      "card_mod": {
+        "style": "ha-card {\n  background: transparent;\n  box-shadow: none;\n  padding: 5px 6px 2px 6px;\n  margin: 0;\n}\nha-markdown {\n  padding: 0 !important;\n}\nh2 {\n  margin: 0 !important;\n  font-size: 20px !important;\n  line-height: 1.05 !important;\n}\np {\n  margin: 4px 0 0 0 !important;\n  color: var(--secondary-text-color);\n  font-size: 11px;\n}\n"
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "binary_sensor.sbc5_cooling_problem",
+      "primary": "{% if is_state('binary_sensor.sbc5_cooling_problem','on') %}\n  Problem z chłodzeniem\n{% else %}\n  Chłodzenie działa prawidłowo\n{% endif %}",
+      "secondary": "CPU {{ states('sensor.sbc5_cpu_temperature') }} °C · wentylator {{ states('sensor.sbc5_fan_percent') }}% · {{ states('sensor.sbc5_fan_rpm') }} RPM {% set cm = state_attr('sensor.sbc5_active_fan_profile','control_mode_label') | default(state_attr('sensor.rpi5_active_fan_profile','control_mode_label'), true) %} {% if cm %}· {{ cm }}{% endif %}",
+      "icon": "{% if is_state('binary_sensor.sbc5_cooling_problem','on') %}\n  mdi:fan-alert\n{% else %}\n  mdi:check-circle\n{% endif %}",
+      "icon_color": "{% if is_state('binary_sensor.sbc5_cooling_problem','on') %}\n  red\n{% else %}\n  green\n{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "sensor.sbc5_fan_profile_activation",
+      "primary": "{% set reason = state_attr('sensor.sbc5_fan_profile_activation','reason') | default('', true) %} {% if is_state('sensor.sbc5_fan_profile_activation','pending_host_reboot') %}\n  {% if reason == 'overlay_repaired_pending_reboot' %}Profil chłodzenia naprawiony · restart RPi5\n  {% elif reason == 'overlay_not_loaded_after_reboot' %}Overlay chłodzenia nie został załadowany\n  {% elif reason == 'overlay_repair_failed' %}Naprawa profilu chłodzenia wymaga uwagi\n  {% else %}Profil chłodzenia oczekuje na restart hosta{% endif %}\n{% else %}\n  Profil chłodzenia aktywny\n{% endif %}",
+      "secondary": "{% set desired_s = states('sensor.sbc5_requested_fan_profile') %} {% set desired_l = states('sensor.rpi5_requested_fan_profile') %} {% set desired = desired_s if desired_s not in ['unknown','unavailable',''] else desired_l %} {% set runtime_s = states('sensor.sbc5_active_fan_profile') %} {% set runtime_l = states('sensor.rpi5_active_fan_profile') %} {% set runtime = runtime_s if runtime_s not in ['unknown','unavailable',''] else runtime_l %} {% set maxs = state_attr('sensor.sbc5_fan_profile_activation','runtime_max_state') | default(state_attr('sensor.rpi5_fan_profile_activation','runtime_max_state'), true) | default('—', true) %} {% set msg = state_attr('sensor.sbc5_fan_profile_activation','message') | default('', true) %} Żądany: {{ desired }} · runtime: {{ runtime }} · max_state {{ maxs }} {% if msg %} · {{ msg }} {% elif is_state('sensor.sbc5_fan_profile_activation','pending_host_reboot') %} · wykonaj pełny restart RPi5 {% else %} · konfiguracja kernela zgodna z profilem żądanym{% endif %}",
+      "icon": "{% if is_state('sensor.sbc5_fan_profile_activation','pending_host_reboot') %}mdi:restart-alert{% else %}mdi:check-circle-outline{% endif %}",
+      "icon_color": "{% if is_state('sensor.sbc5_fan_profile_activation','pending_host_reboot') %}orange{% else %}green{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "sensor.sbc5_fan_calibration",
+      "primary": "{% set cs = states('sensor.sbc5_fan_calibration') %} {% if cs == 'ready' %}Kalibracja Active Cooler gotowa {% elif cs == 'running' %}Kalibracja Active Cooler trwa {% elif cs == 'restart_required' %}Kalibracja wymaga restartu hosta {% elif cs == 'unsupported' %}Kalibracja niedostępna {% elif cs == 'error' %}Błąd kalibracji Active Cooler {% elif cs in ['unknown', 'unavailable', 'none', ''] %}Oczekiwanie na dane kalibracji Active Cooler {% else %}Active Cooler nie jest jeszcze skalibrowany{% endif %}",
+      "secondary": "{% set cs = states('sensor.sbc5_fan_calibration') %} {% if cs == 'running' %} {{ state_attr('sensor.sbc5_fan_calibration','stage') | default('kalibracja', true) }} · {{ state_attr('sensor.sbc5_fan_calibration','progress_percent') | default(0, true) }}% · PWM {{ state_attr('sensor.sbc5_fan_calibration','current_pwm_percent') | default('—', true) }}% · {{ state_attr('sensor.sbc5_fan_calibration','current_rpm') | default(0, true) }} RPM {% elif cs == 'restart_required' %} {{ state_attr('sensor.sbc5_fan_calibration','message') | default('Siatka 1% nieaktywna · zastosuj custom1 i wykonaj pełny restart hosta', true) }} {% elif cs in ['unknown', 'unavailable', 'none', ''] %} Sensor kalibracji jeszcze niedostępny {% else %} Siatka {{ state_attr('sensor.sbc5_fan_calibration','grid_resolution_percent') | default(1, true) }}% PWM · start {{ state_attr('sensor.sbc5_fan_calibration','detected_start_pwm_percent') | default('—', true) }}% · min safe {{ state_attr('sensor.sbc5_fan_calibration','min_safe_pwm_percent') | default('—', true) }}% · mapa {{ state_attr('sensor.sbc5_fan_calibration','map_points') | default(0, true) }} pkt {% endif %}",
+      "icon": "mdi:fan",
+      "icon_color": "{% set cs = states('sensor.sbc5_fan_calibration') %} {% if cs == 'ready' %}green {% elif cs == 'running' %}cyan {% elif cs == 'error' or cs == 'unsupported' %}red {% else %}orange{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+      }
+    },
+    {
+      "type": "markdown",
+      "content": "## 🧠 AI Adaptive Cooling\nUczenie Active Coolera · Card UI v2.8.25\n",
+      "card_mod": {
+        "style": "ha-card {\n  border-radius: 16px;\n  border: 1px solid rgba(0,188,255,.32);\n  background: linear-gradient(145deg, rgba(18,35,43,.98), rgba(10,20,26,.98));\n  box-shadow: none;\n}\n"
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "primary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% if not ai %}\n  AI Cooling · brak atrybutu ai_cooling\n{% else %}\n  {% set st = ai.state | default('unknown', true) %}\n  {% if st == 'assist' %}AI Cooling · Assist aktywny\n  {% elif st == 'ready' %}AI Cooling · gotowy do Assist\n  {% elif st == 'learning' %}AI Cooling · uczenie jakościowe\n  {% elif st == 'paused' %}AI Cooling · wstrzymane\n  {% elif st == 'disabled' %}AI Cooling · wyłączone\n  {% else %}AI Cooling · {{ st }}{% endif %}\n{% endif %}",
+      "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% if not ai %}\n  Sensor: {{ states('sensor.sbc5_control_center_ai_runtime') }} · atrybut ai_cooling niedostępny\n{% else %}\n  bucket {{ ai.workload_bucket | default('—', true) }} · pewność {{ ai.confidence_percent | default(0, true) }}% · jakościowe {{ ai.bin_qualified_samples | default(0, true) }}/{{ ai.min_samples | default(30, true) }}\n{% endif %}\n{% if is_state('input_boolean.sbc5_ai_controls_visible','on') %}· szczegóły ▲{% else %}· dotknij, aby rozwinąć ▼{% endif %}",
+      "icon": "mdi:brain",
+      "icon_color": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% if not ai %}red{% elif (ai.confidence_percent | default(0, true) | int(0)) >= 70 %}green{% else %}blue{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "perform-action",
+        "perform_action": "input_boolean.toggle",
+        "target": {
+          "entity_id": "input_boolean.sbc5_ai_controls_visible"
+        }
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 72px;\n  height: auto !important;\n  border-radius: 16px;\n  border: 1px solid rgba(0,188,255,.28);\n  background: linear-gradient(145deg, rgba(20,34,42,.98), rgba(11,19,25,.98));\n  box-shadow: none;\n  padding-top: 5px !important;\n  padding-bottom: 5px !important;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.secondary { line-height: 1.2 !important; }\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 80px;\n    padding-top: 8px !important;\n    padding-bottom: 8px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+      },
+      "entity": "sensor.sbc5_ai_confidence",
+      "hold_action": {
+        "action": "more-info"
+      }
+    },
+    {
+      "type": "conditional",
+      "conditions": [
+        {
+          "entity": "input_boolean.sbc5_ai_controls_visible",
+          "state": "on"
+        }
+      ],
+      "card": {
+        "type": "vertical-stack",
+        "cards": [
+          {
+            "type": "grid",
+            "columns": 2,
+            "square": false,
+            "cards": [
+              {
+                "type": "custom:mushroom-template-card",
+                "multiline_secondary": true,
+                "primary": "Dojrzałość bucketu",
+                "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set q = ai.bin_qualified_samples | default(0, true) | int(0) %} {% set req = ai.min_samples | default(30, true) | int(30) %} {% set pct = ([((q * 100 / req) | round(0) | int),100] | min) if req > 0 else 0 %} {{ ai.workload_bucket | default('—', true) }} · {{ pct }}% · {{ q }}/{{ req }} jakościowych",
+                "icon": "mdi:progress-check",
+                "icon_color": "cyan",
+                "layout": "horizontal",
+                "card_mod": {
+                  "style": "ha-card {\n  min-height: 62px;\n  height: auto !important;\n  padding: 4px 6px !important;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary { line-height: 1.15 !important; }\n.secondary { line-height: 1.18 !important; }\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+                },
+                "entity": "sensor.sbc5_ai_bucket_maturity",
+                "tap_action": {
+                  "action": "more-info"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "multiline_secondary": true,
+                "primary": "Pewność AI",
+                "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {{ ai.confidence_percent | default(0, true) }}% · {{ ai.workload_bucket | default('—', true) }} · CPU avg {{ ai.cpu_load_smoothed_percent | default(ai.cpu_load_percent | default(0, true), true) }}%",
+                "icon": "mdi:brain",
+                "icon_color": "blue",
+                "layout": "horizontal",
+                "card_mod": {
+                  "style": "ha-card {\n  min-height: 62px;\n  height: auto !important;\n  padding: 4px 6px !important;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary { line-height: 1.15 !important; }\n.secondary { line-height: 1.18 !important; }\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+                },
+                "entity": "sensor.sbc5_ai_confidence",
+                "tap_action": {
+                  "action": "more-info"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "multiline_secondary": true,
+                "primary": "Dane treningowe",
+                "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} obs. {{ ai.observations_total | default(0, true) }} · jakościowe {{ ai.qualified_samples_total | default(0, true) }}",
+                "icon": "mdi:database-check-outline",
+                "icon_color": "green",
+                "layout": "horizontal",
+                "card_mod": {
+                  "style": "ha-card {\n  min-height: 62px;\n  height: auto !important;\n  padding: 4px 6px !important;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary { line-height: 1.15 !important; }\n.secondary { line-height: 1.18 !important; }\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+                },
+                "entity": "sensor.sbc5_ai_observations",
+                "tap_action": {
+                  "action": "more-info"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "multiline_secondary": true,
+                "entity": "sensor.sbc5_ai_prediction_pwm",
+                "primary": "Predykcja AI",
+                "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% if ai.prediction_available | default(false, true) %}\n  model {{ ai.prediction_pwm_percent | default('—', true) }}% · baza regulatora {{ ai.baseline_pwm_percent | default('—', true) }}%\n{% else %}\n  model — · brak próbek jakościowych · baza regulatora {{ ai.baseline_pwm_percent | default('—', true) }}%\n{% endif %} · AI Δ {{ ai.correction_pwm_percent | default(0, true) }}% · PWM fiz. {{ ai.current_pwm_percent | default('—', true) }}%",
+                "icon": "mdi:chart-bell-curve-cumulative",
+                "icon_color": "{% if is_state('input_boolean.sbc5_ai_prediction_chart_visible','on') %}cyan{% else %}teal{% endif %}",
+                "layout": "horizontal",
+                "tap_action": {
+                  "action": "perform-action",
+                  "perform_action": "input_boolean.toggle",
+                  "target": {
+                    "entity_id": "input_boolean.sbc5_ai_prediction_chart_visible"
+                  }
+                },
+                "hold_action": {
+                  "action": "more-info"
+                },
+                "card_mod": {
+                  "style": "ha-card {\n  min-height: 62px;\n  height: auto !important;\n  padding: 4px 6px !important;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary { line-height: 1.15 !important; }\n.secondary { line-height: 1.18 !important; }\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 72px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+                }
+              }
+            ],
+            "card_mod": {
+              "style": "/* SBC5CC 2.8.25 responsive grid */\n#root {\n  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;\n  gap: clamp(6px, 1.8vw, 10px) !important;\n  align-items: stretch !important;\n}\n#root > * {\n  min-width: 0 !important;\n  height: 100% !important;\n}\n@media (max-width: 339px) {\n  #root { grid-template-columns: 1fr !important; }\n}\n@media (min-width: 720px) {\n  #root { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important; }\n}\n"
+            }
+          },
+          {
+            "type": "conditional",
+            "conditions": [
+              {
+                "entity": "input_boolean.sbc5_ai_prediction_chart_visible",
+                "state": "on"
+              }
+            ],
+            "card": {
+              "type": "history-graph",
+              "title": "Historia predykcji AI · 24 h",
+              "hours_to_show": 24,
+              "entities": [
+                {
+                  "entity": "sensor.sbc5_ai_prediction_pwm",
+                  "name": "Model AI"
+                },
+                {
+                  "entity": "sensor.sbc5_ai_baseline_pwm",
+                  "name": "Regulator"
+                },
+                {
+                  "entity": "sensor.sbc5_ai_correction_pwm",
+                  "name": "AI Delta"
+                },
+                {
+                  "entity": "sensor.sbc5_ai_physical_pwm",
+                  "name": "PWM fizyczny"
+                }
+              ],
+              "card_mod": {
+                "style": "ha-card {\n  min-height: 310px !important;\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n  border-radius: 16px;\n  border: 1px solid rgba(0,188,255,.24);\n  background: linear-gradient(145deg, rgba(18,32,39,.96), rgba(10,19,24,.96));\n  box-shadow: none;\n  overflow: hidden;\n}\n.card-header {\n  font-size: clamp(14px, 3.6vw, 17px) !important;\n  font-weight: 700 !important;\n  padding-bottom: 2px !important;\n}\n"
+              }
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "multiline_secondary": true,
+            "primary": "Postęp według obciążenia",
+            "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set bp = ai.bucket_progress | default({}, true) %} {% set req = ai.min_samples | default(30, true) | int(30) %} obs./kwal. · idle {{ bp.get('idle',{}).get('observations',0) }}/{{ bp.get('idle',{}).get('qualified',0) }} · low {{ bp.get('low',{}).get('observations',0) }}/{{ bp.get('low',{}).get('qualified',0) }} · medium {{ bp.get('medium',{}).get('observations',0) }}/{{ bp.get('medium',{}).get('qualified',0) }} · high {{ bp.get('high',{}).get('observations',0) }}/{{ bp.get('high',{}).get('qualified',0) }} · próg {{ req }} kwal./bucket · globalnie {{ ai.model_coverage_percent | default(0, true) }}% · używany zakres {{ ai.used_model_coverage_percent | default(0, true) }}%",
+            "icon": "mdi:chart-timeline-variant-shimmer",
+            "icon_color": "cyan",
+            "layout": "horizontal",
+            "card_mod": {
+              "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+            },
+            "entity": "sensor.sbc5_ai_model_coverage",
+            "tap_action": {
+              "action": "more-info"
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "multiline_secondary": true,
+            "primary": "Klasyfikacja obciążenia · Workload v2",
+            "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} CPU {{ ai.cpu_load_raw_percent | default(ai.cpu_load_percent | default(0, true), true) }}% · średnia {{ ai.workload_window_seconds | default(30, true) }} s: {{ ai.cpu_load_smoothed_percent | default(ai.cpu_load_percent | default(0, true), true) }}% · bucket {{ ai.workload_bucket | default('—', true) }} · wiek {{ ai.workload_bucket_age_seconds | default(0, true) }} s · progi 10/30/60% · histereza ±{{ ai.workload_hysteresis_percent | default(5, true) }} pp",
+            "icon": "mdi:speedometer-medium",
+            "icon_color": "cyan",
+            "layout": "horizontal",
+            "card_mod": {
+              "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+            },
+            "entity": "sensor.sbc5_ai_workload",
+            "tap_action": {
+              "action": "more-info"
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "multiline_secondary": true,
+            "primary": "Diagnostyka kwalifikacji próbki",
+            "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {{ ai.qualification_state | default('—', true) }} · {{ ai.qualification_reason_label | default(ai.qualification_reason | default('—', true), true) }} · polityka {{ ai.qualification_policy | default('quasi_steady_v3', true) }} · tier {{ ai.qualification_tier | default('—', true) }} · stabilność {{ ai.stable_seconds | default(0, true) }}/{{ ai.stable_seconds_required | default(30, true) }} s · okno T {{ ai.temperature_window_points | default(0, true) }}/{{ ai.qualification_limits.temperature_window_min_points | default(4, true) }} pkt · {{ ai.temperature_window_span_seconds | default(0, true) }} s · PWM 30 s: zakres {{ ai.pwm_range_30s_percent | default('—') }} pp · hold {{ 'tak' if ai.controller_hold | default(false, true) else 'nie (dozwolone)' }} · odrzucenia bucketu: {{ ai.qualification_rejection_summary | default('brak', true) }}",
+            "icon": "mdi:database-search-outline",
+            "icon_color": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set qs = ai.qualification_state | default('', true) %} {% if qs == 'qualified' %}green{% elif qs == 'stabilizing' %}cyan{% else %}blue{% endif %}",
+            "layout": "horizontal",
+            "card_mod": {
+              "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+            },
+            "entity": "sensor.sbc5_ai_stable_seconds",
+            "tap_action": {
+              "action": "more-info"
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "multiline_secondary": true,
+            "primary": "AI · sugestia zagęszczenia siatki",
+            "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set gs_raw = ai.get('grid_suggestion', {}) if ai is mapping else {} %} {% set gs = gs_raw if gs_raw is mapping else {} %} {% if gs.available | default(false, true) %}\n  {{ gs.region_from_c }}–{{ gs.region_to_c }} °C · krok {{ gs.recommended_step_c }} °C\n  · pewność lokalna {{ gs.confidence_percent | default(0, true) }}%\n  · pokrycie modelu {{ gs.model_coverage_percent | default(0, true) }}%\n  · {{ gs.scope_workload | default(ai.workload_bucket | default('—', true), true) }}\n{% elif gs.reason | default('', true) == 'grid_applied' %}\n  Zastosowana siatka AI jest aktywna · szczegóły poniżej\n  · pokrycie modelu {{ gs.model_coverage_percent | default(0, true) }}%\n{% elif gs.reason | default('', true) == 'grid_already_dense' %}\n  Region {{ gs.region_from_c }}–{{ gs.region_to_c }} °C jest już wystarczająco gęsty\n  · obecny max krok {{ gs.current_max_gap_c | default('—', true) }} °C\n  · pokrycie {{ gs.model_coverage_percent | default(0, true) }}%\n{% else %}\n  Nauka regionu pracy: {{ gs.observations | default(0, true) }}/{{ gs.required_observations | default(120, true) }} obserwacji\n  · jakościowe {{ gs.qualified_samples | default(0, true) }}/{{ gs.required_qualified_samples | default(30, true) }}\n  · pokrycie {{ gs.model_coverage_percent | default(0, true) }}%\n{% endif %}",
+            "icon": "mdi:grid-large",
+            "icon_color": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set gs_raw = ai.get('grid_suggestion', {}) if ai is mapping else {} %} {% set gs = gs_raw if gs_raw is mapping else {} %} {% if gs.available | default(false, true) %}cyan {% elif gs.reason | default('', true) == 'grid_already_dense' %}green {% else %}blue{% endif %}",
+            "layout": "horizontal",
+            "tap_action": {
+              "action": "more-info"
+            },
+            "hold_action": {
+              "action": "none"
+            },
+            "double_tap_action": {
+              "action": "none"
+            },
+            "card_mod": {
+              "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+            },
+            "entity": "sensor.sbc5_ai_grid_coverage"
+          },
+          {
+            "type": "grid",
+            "columns": 2,
+            "square": false,
+            "cards": [
+              {
+                "type": "custom:mushroom-template-card",
+                "multiline_secondary": true,
+                "primary": "Zastosuj sugestię",
+                "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set gs_raw = ai.get('grid_suggestion', {}) if ai is mapping else {} %} {% set gs = gs_raw if gs_raw is mapping else {} %} {% if gs.available | default(false, true) %}\n  {{ gs.region_from_c }}–{{ gs.region_to_c }} °C · {{ gs.recommended_step_c }} °C\n{% else %}\n  Brak nowej sugestii do zastosowania\n{% endif %}",
+                "icon": "mdi:grid-plus",
+                "icon_color": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set gs_raw = ai.get('grid_suggestion', {}) if ai is mapping else {} %} {% set gs = gs_raw if gs_raw is mapping else {} %} {% if gs.get('available', false) %}cyan{% else %}grey{% endif %}",
+                "layout": "horizontal",
+                "tap_action": {
+                  "action": "perform-action",
+                  "perform_action": "script.sbc5_ai_grid_apply_suggestion",
+                  "confirmation": {
+                    "text": "Zastosować zagęszczenie punktów zasugerowane przez AI? Zmiana geometrii Device Tree wymaga restartu hosta."
+                  }
+                },
+                "hold_action": {
+                  "action": "none"
+                },
+                "card_mod": {
+                  "style": "ha-card {\n  min-height: 68px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 6px !important;\n}\nmushroom-shape-icon { --icon-size: 36px; }\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 84px;\n    padding-top: 8px !important;\n    padding-bottom: 8px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "multiline_secondary": true,
+                "primary": "Przywróć siatkę Auto",
+                "secondary": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set ap_raw = ai.get('grid_application', {}) if ai is mapping else {} %} {% set ap = ap_raw if ap_raw is mapping else {} %} {% if ap.active | default(false, true) %}\n  AI: {{ ap.region_from_c }}–{{ ap.region_to_c }} °C · krok {{ ap.step_c }} °C\n{% else %}\n  Automatyczna geometria jest aktywna\n{% endif %}",
+                "icon": "mdi:grid-off",
+                "icon_color": "{% set ai_raw = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %} {% set ai = ai_raw if ai_raw is mapping else {} %} {% set ap_raw = ai.get('grid_application', {}) if ai is mapping else {} %} {% set ap = ap_raw if ap_raw is mapping else {} %} {% if ap.get('active', false) %}orange{% else %}green{% endif %}",
+                "layout": "horizontal",
+                "tap_action": {
+                  "action": "perform-action",
+                  "perform_action": "script.sbc5_ai_grid_restore_automatic",
+                  "confirmation": {
+                    "text": "Przywrócić automatyczną geometrię punktów wynikającą z konfiguracji aplikacji?"
+                  }
+                },
+                "hold_action": {
+                  "action": "none"
+                },
+                "card_mod": {
+                  "style": "ha-card {\n  min-height: 68px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 6px !important;\n}\nmushroom-shape-icon { --icon-size: 36px; }\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 84px;\n    padding-top: 8px !important;\n    padding-bottom: 8px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n/* SBC5CC 2.8.25 equal-height responsive tile */\nha-card {\n  height: 100% !important;\n        }\n.primary {\n  font-size: clamp(12px, 3.25vw, 14px) !important;\n  line-height: 1.16 !important;\n}\n.secondary {\n  font-size: clamp(10px, 2.75vw, 12px) !important;\n  line-height: 1.20 !important;\n}\n"
+                }
+              }
+            ],
+            "card_mod": {
+              "style": "/* SBC5CC 2.8.25 responsive grid */\n#root {\n  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;\n  gap: clamp(6px, 1.8vw, 10px) !important;\n  align-items: stretch !important;\n}\n#root > * {\n  min-width: 0 !important;\n  height: 100% !important;\n}\n@media (max-width: 339px) {\n  #root { grid-template-columns: 1fr !important; }\n}\n@media (min-width: 720px) {\n  #root { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important; }\n}\n"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "sensor.sbc5_input_voltage",
+      "primary": "{% set v = states('sensor.sbc5_input_voltage')|float(0) %} {% if v > 0 and v < 4.8 %}\n  Uwaga na zasilanie\n{% else %}\n  Brak przeciążeń zasilania\n{% endif %}",
+      "secondary": "{% set ep = states('sensor.sbc5_pmic_power') %} {{ states('sensor.sbc5_power_supply') }} · wejście {{ states('sensor.sbc5_input_voltage') }} V · PMIC {{ ep if ep not in ['unknown','unavailable','none',''] else '—' }} W",
+      "icon": "{% set v = states('sensor.sbc5_input_voltage')|float(0) %} {% if v > 0 and v < 4.8 %}\n  mdi:alert-circle\n{% else %}\n  mdi:check-circle\n{% endif %}",
+      "icon_color": "{% set v = states('sensor.sbc5_input_voltage')|float(0) %} {% if v > 0 and v < 4.8 %}\n  orange\n{% else %}\n  green\n{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "entity": "binary_sensor.sbc5_local_package_update_available",
+      "primary": "{% if is_state('binary_sensor.sbc5_local_package_update_available','on') %}\n  Dostępna aktualizacja SBC5 Control Center\n{% else %}\n  SBC5 Control Center jest aktualny\n{% endif %}",
+      "secondary": "Zainstalowana wersja: {{ state_attr('sensor.sbc5_control_center_update','installed_version')\n   | default(states('sensor.sbc5_package_version'), true) }}",
+      "icon": "{% if is_state('binary_sensor.sbc5_local_package_update_available','on') %}\n  mdi:update\n{% else %}\n  mdi:check-decagram\n{% endif %}",
+      "icon_color": "{% if is_state('binary_sensor.sbc5_local_package_update_available','on') %}\n  orange\n{% else %}\n  green\n{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "more-info"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+      }
+    },
+    {
+      "type": "custom:mushroom-template-card",
+      "multiline_secondary": true,
+      "primary": "{% set ps = states('sensor.sbc5_platform_compatibility') %} {% if ps == 'compatible' %}\n  Platforma zgodna z wymaganiami SBC5 Control Center\n{% elif ps == 'incompatible' %}\n  Niezgodna wersja Home Assistant\n{% else %}\n  Zgodność platformy — brak pełnych danych\n{% endif %}",
+      "secondary": "Core {{ state_attr('sensor.sbc5_platform_compatibility','installed_core') | default('—', true) }} (min. {{ state_attr('sensor.sbc5_platform_compatibility','minimum_core') | default('2026.10.1', true) }}) · HA OS {{ state_attr('sensor.sbc5_platform_compatibility','installed_haos') | default('—', true) }} (min. {{ state_attr('sensor.sbc5_platform_compatibility','minimum_haos') | default('18.3', true) }})",
+      "icon": "{% set ps = states('sensor.sbc5_platform_compatibility') %} {% if ps == 'compatible' %}mdi:shield-check {% elif ps == 'incompatible' %}mdi:shield-alert {% else %}mdi:shield-search{% endif %}",
+      "icon_color": "{% set ps = states('sensor.sbc5_platform_compatibility') %} {% if ps == 'compatible' %}green {% elif ps == 'incompatible' %}red {% else %}orange{% endif %}",
+      "layout": "horizontal",
+      "tap_action": {
+        "action": "none"
+      },
+      "card_mod": {
+        "style": "ha-card {\n  min-height: 56px;\n  height: auto !important;\n  border-radius: 14px;\n  border: 1px solid rgba(80,180,210,.15);\n  background: rgba(13,25,30,.95);\n  box-shadow: none;\n  padding: 5px 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\nmushroom-state-info { min-width: 0 !important; }\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n  line-height: 1.15 !important;\n}\n.secondary {\n  font-size: 10px !important;\n  line-height: 1.2 !important;\n}\n@media (max-width: 600px) {\n  ha-card {\n    min-height: 68px;\n    padding-top: 7px !important;\n    padding-bottom: 7px !important;\n  }\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+      }
+    },
+    {
+      "type": "conditional",
+      "conditions": [
+        {
+          "entity": "binary_sensor.sbc5_config_pending_restart",
+          "state": "on"
+        }
+      ],
+      "card": {
+        "type": "custom:mushroom-template-card",
+        "multiline_secondary": true,
+        "entity": "binary_sensor.sbc5_config_pending_restart",
+        "primary": "Restart wymagany",
+        "secondary": "Zmiany config.txt oczekują na ponowne uruchomienie Raspberry Pi 5.",
+        "icon": "mdi:restart-alert",
+        "icon_color": "orange",
+        "layout": "horizontal",
+        "tap_action": {
+          "action": "more-info"
+        },
+        "card_mod": {
+          "style": "ha-card {\n  min-height: 54px;\n  border-radius: 14px;\n  border: 1px solid rgba(255,165,0,.28);\n  background: rgba(44,31,14,.92);\n  box-shadow: none;\n  padding: 0 6px !important;\n}\nmushroom-shape-icon {\n  --icon-size: 36px;\n}\n.primary {\n  font-size: 12px !important;\n  font-weight: 700 !important;\n}\n.secondary {\n  font-size: 10px !important;\n}\n/* SBC5CC 2.8.25 screen-fit guard */\nha-card {\n  width: 100% !important;\n  max-width: 100% !important;\n  min-width: 0 !important;\n  box-sizing: border-box !important;\n}\nmushroom-state-info {\n  min-width: 0 !important;\n  width: 100% !important;\n}\n.primary, .secondary {\n  white-space: normal !important;\n  overflow: visible !important;\n  text-overflow: clip !important;\n  max-width: 100% !important;\n  overflow-wrap: anywhere !important;\n  word-break: normal !important;\n}\n"
+        }
+      }
+    }
+  ]
+}

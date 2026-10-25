@@ -1,0 +1,1967 @@
+###############################################################################
+# RASPBERRY PI 5 ACTIVE COOLER
+# SBC5 Control Center Package Version: 2.8.25
+# 2.6.24: APP_VERSION import + package-version sensor + non-destructive namespace recovery.
+# 2.6.23: native integration bootstrap recovery; runtime cooling/AI logic unchanged.
+# 2.6.7: Workload Buckets v2 — 30 s moving average, progi 10/30/60%, histereza ±5 pp i diagnostyka kwalifikacji
+# 2.6.4: Native Mushroom Multiline — multiline_secondary=true eliminuje natywne obcinanie tekstu w aktualnym template-card
+# 2.6.3: Mobile Text Wrap — dynamiczna wysokość kafli, pełne zawijanie treści i wyższe akcje 2-kolumnowe na telefonie
+# 2.6.2: AI Grid Apply — pokrycie modelu, realne zagęszczenie 0,25°C oraz bezpieczne Zastosuj/Cofnij
+# 2.6.1: Mobile UI Stability + AI Grid Density Advisor — bezpieczne karty bez more-info dla telemetryki realtime; pasywna sugestia zagęszczenia siatki
+# 2.5.9: Calibration Card Recovery — uproszczone szablony + pełna weryfikacja integralności Lovelace
+# 2.5.7: Template Hotfix — kompatybilny parser HA dla karty kalibracji Active Cooler
+# 2.5.3: AI Dashboard Integration — główna karta zawiera zweryfikowany panel AI oraz Card UI v2.5.3
+# 2.5.2: AI Adaptive Cooling Preview — Learning + bounded AI Assist; klasyczny Adaptive PWM pozostaje fallbackiem
+# 2.4.2: przełączniki aktywacji sekcji są rozdzielone i umieszczone bezpośrednio przed odpowiadającymi grupami konfiguracji
+# 2.3.0: Active Cooler control modes — Automatic / Hybrid / Manual
+# 2.2.0: single-profile UI + legacy profile cleanup
+# 2.1.8: Adaptive anti-windup + deadband 0,75°C + canonical runtime diagnostics sync
+# 2.1.6: fallback thermal mode=disabled bez governor user_space + automatyczne przywracanie kernela + safety handoff
+# 2.1.3: Adaptive PWM od rzeczywistego cur_state + postęp i weryfikacja kalibracji
+# 2.1.0: siatka PWM 1% + automatyczna kalibracja Active Cooler (AI-ready)
+# 2.0.3: Balanced Adaptive PWM + łagodna charakterystyka powyżej setpointu
+# 2.0.2: Adaptive PWM / Auto-Trim + stabilizacja temperatury zadanej
+# 2.0.0: wymagania platformy + dwie kanoniczne karty + zoptymalizowany runtime
+# 1.9.25: wizualizacja aktywnego punktu pracy i rzeczywistego zagęszczenia krzywej
+# 1.9.23: CPU Usage na Pulpicie + Adaptive Setpoint Density dla 5 własnych krzywych
+# 1.9.22: Restart State Machine — niezawodne zamykanie restartu i czyszczenie Repairs po aktualizacji
+# 1.9.18: factory defaults + per-parameter reset + synchronized profile/curve names + UX optimization
+# 1.9.17: graficzny edytor 5 krzywych (15 punktów) + Complete UX Dashboard
+# 1.9.14: canonical project directories + multicore profiler;
+# 1.9.10: zoptymalizowane Info, Dokumentacja i opisy Konfiguracji; runtime bez zmian
+# 1.9.8: GitHub/HACS-style Info + uporządkowana dokumentacja i walidacja projektu
+# 1.9.7: Info + kompletna dokumentacja krok po kroku
+# 1.9.6: balanced telemetry 5 s + sensory 4 rdzeni (MHz i użycie %) + wykres 5 s/10 s
+# 1.9.4: realtime CPU temperature / RPM / PWM co 1 s przez lekki plik JSON
+# 1.9.3: CPU Spike Fix — optymalizacja pętli i rozłożenie ciężkiej diagnostyki
+# 1.9.1: pełny Config.txt Manager + bloki/opisy/zakresy + katalog parametrów
+# 1.7.10: hotfix host/config.txt + kanoniczne encje + bezpieczny fallback dashboard
+# 1.7.9: bezpieczna konfiguracja CPU/USB + osobny blok config.txt + backup/restore
+# 1.7.8: naprawa Host Access + SYS_PTRACE + Host Probe /mnt/boot
+# 1.7.7: dostęp host PID do /mnt/boot + fallback nsenter + zachowanie 1.7.6
+###############################################################################
+
+input_select:
+  sbc5_fan_profile:
+    name: SBC5 profil chłodzenia
+    icon: mdi:fan-auto
+    options:
+      - Fabryczny
+      - Własna 1 — Zbalansowana · 50°C · 15 pkt
+
+  sbc5_cpu_config_mode:
+    name: SBC5 CPU - tryb konfiguracji
+    icon: mdi:chip
+    options:
+      - Fabryczne
+      - Ręczne
+
+  sbc5_cpu_oc_profile:
+    name: SBC5 CPU / OC - profil
+    icon: mdi:speedometer
+    options:
+      - Fabryczny · 2400 MHz
+      - OC Łagodny · 2500 MHz
+      - OC Zbalansowany · 2600 MHz
+      - OC Wydajność · 2800 MHz
+      - OC 3.0 GHz · 3000 MHz
+      - Zaawansowany · ustawienia ręczne
+
+  sbc5_gpu_profile:
+    name: SBC5 GPU / V3D / ISP - profil
+    icon: mdi:expansion-card-variant
+    options:
+      - Fabryczny · Auto
+      - Eco · 850 / 850 / 900 MHz
+      - Zbalansowany · 950 / 950 / 1000 MHz
+      - Wydajność · 1000 / 1000 / 1100 MHz
+      - Eksperymentalny · 1100 / 1100 / 1200 MHz
+      - Zaawansowany · ustawienia ręczne
+
+  sbc5_usb_current_mode:
+    name: SBC5 USB - limit prądu
+    icon: mdi:usb-port
+    options:
+      - Auto
+      - Wysoki 1600 mA
+      - Niski 600 mA
+
+  sbc5_cc_panel:
+    name: SBC5 Control Center - sekcja
+    icon: mdi:view-dashboard-variant-outline
+    options:
+      - Pulpit
+      - Chłodzenie
+      - Edytor krzywych
+      - CPU / OC
+      - Zasilanie / USB
+      - Config.txt
+      - Diagnostyka
+      - Aktualizacje
+
+  sbc5_curve_editor_curve:
+    name: SBC5 Curve Editor - krzywa
+    icon: mdi:chart-bell-curve-cumulative
+    options:
+      - Własna 1 — Zbalansowana · 50°C
+
+  sbc5_curve_editor_response_mode:
+    name: SBC5 Curve Editor - charakterystyka generatora
+    icon: mdi:tune-variant
+    options:
+      - Łagodna
+      - Zbalansowana
+      - Precyzyjna
+
+  sbc5_curve_editor_point:
+    name: SBC5 Curve Editor - punkt
+    icon: mdi:vector-point
+    options:
+      - Punkt 1
+      - Punkt 2
+      - Punkt 3
+      - Punkt 4
+      - Punkt 5
+      - Punkt 6
+      - Punkt 7
+      - Punkt 8
+      - Punkt 9
+      - Punkt 10
+      - Punkt 11
+      - Punkt 12
+      - Punkt 13
+      - Punkt 14
+      - Punkt 15
+
+input_number:
+  sbc5_curve_editor_target_c:
+    name: SBC5 Curve Editor - temperatura docelowa
+    icon: mdi:thermometer-lines
+    min: 46
+    max: 65
+    step: 0.25
+    initial: 50
+    unit_of_measurement: °C
+    mode: slider
+
+  sbc5_curve_editor_hyst_dense_c:
+    name: SBC5 Curve Editor - histereza gęsta
+    icon: mdi:arrow-expand-vertical
+    min: 0.25
+    max: 3
+    step: 0.25
+    initial: 0.75
+    unit_of_measurement: °C
+    mode: slider
+
+  sbc5_curve_editor_hyst_outer_c:
+    name: SBC5 Curve Editor - histereza zewnętrzna
+    icon: mdi:arrow-expand-vertical
+    min: 0.25
+    max: 5
+    step: 0.25
+    initial: 1
+    unit_of_measurement: °C
+    mode: slider
+
+  sbc5_curve_editor_min_pwm:
+    name: SBC5 Curve Editor - minimalne PWM
+    icon: mdi:fan-speed-1
+    min: 20
+    max: 70
+    step: 1
+    initial: 29
+    unit_of_measurement: "%"
+    mode: slider
+
+  sbc5_curve_editor_target_pwm:
+    name: SBC5 Curve Editor - PWM docelowe
+    icon: mdi:fan-speed-2
+    min: 25
+    max: 90
+    step: 1
+    initial: 55
+    unit_of_measurement: "%"
+    mode: slider
+
+  sbc5_curve_editor_max_pwm:
+    name: SBC5 Curve Editor - maksymalne PWM
+    icon: mdi:fan-speed-3
+    min: 70
+    max: 100
+    step: 1
+    initial: 100
+    unit_of_measurement: "%"
+    mode: slider
+
+  sbc5_curve_editor_point_temp_c:
+    name: SBC5 Curve Editor - temperatura punktu
+    icon: mdi:thermometer
+    min: 35
+    max: 80
+    step: 0.1
+    initial: 44
+    unit_of_measurement: °C
+    mode: box
+
+  sbc5_curve_editor_point_hyst_c:
+    name: SBC5 Curve Editor - histereza punktu
+    icon: mdi:arrow-expand-vertical
+    min: 0.25
+    max: 5
+    step: 0.25
+    initial: 1
+    unit_of_measurement: °C
+    mode: slider
+
+  sbc5_curve_editor_point_pwm:
+    name: SBC5 Curve Editor - PWM punktu
+    icon: mdi:fan
+    min: 0
+    max: 100
+    step: 1
+    initial: 29
+    unit_of_measurement: "%"
+    mode: slider
+
+  sbc5_cpu_target_mhz:
+    name: SBC5 CPU - arm_freq
+    icon: mdi:speedometer
+    min: 2400
+    max: 2800
+    step: 50
+    initial: 2400
+    unit_of_measurement: MHz
+    mode: box
+
+  sbc5_over_voltage_delta_uv:
+    name: SBC5 CPU - over_voltage_delta
+    icon: mdi:flash-triangle-outline
+    min: 0
+    max: 50000
+    step: 5000
+    initial: 0
+    unit_of_measurement: µV
+    mode: box
+
+
+input_text:
+  sbc5_curve_editor_name:
+    name: SBC5 Curve Editor - nazwa krzywej
+    icon: mdi:rename-box-outline
+    initial: Zbalansowana
+    min: 1
+    max: 32
+    mode: text
+
+  sbc5_config_section:
+    name: SBC5 config.txt - sekcja
+    icon: mdi:code-brackets
+    initial: pi5
+    min: 1
+    max: 80
+    mode: text
+
+  sbc5_config_key:
+    name: SBC5 config.txt - parametr
+    icon: mdi:form-textbox
+    min: 1
+    max: 64
+    mode: text
+
+  sbc5_config_value:
+    name: SBC5 config.txt - wartość
+    icon: mdi:form-textbox-password
+    min: 0
+    max: 90
+    mode: text
+
+input_boolean:
+  sbc5_curve_editor_expert_mode:
+    name: SBC5 Curve Editor - edycja pojedynczych punktów
+    icon: mdi:vector-polyline-edit
+    initial: false
+
+  sbc5_config_advanced_mode:
+    name: SBC5 config.txt - tryb zaawansowany
+    icon: mdi:alert-decagram-outline
+    initial: false
+
+  sbc5_confirm_restore_active_cooler:
+    name: SBC5 - potwierdzenie przywrócenia Active Cooler
+    icon: mdi:shield-alert-outline
+    initial: false
+
+  sbc5_confirm_restore_system_defaults:
+    name: SBC5 - potwierdzenie przywrócenia ustawień SBC5
+    icon: mdi:shield-alert-outline
+    initial: false
+
+
+  sbc5_ai_prediction_chart_visible:
+    name: SBC5 AI - historia predykcji widoczna
+    icon: mdi:chart-line
+    initial: false
+
+  sbc5_cpu_profile_controls_visible:
+    name: SBC5 CPU / OC - ustawienia profilu widoczne
+    icon: mdi:chevron-down-box-outline
+    initial: false
+
+  sbc5_gpu_profile_controls_visible:
+    name: SBC5 GPU / V3D / ISP - ustawienia profilu widoczne
+    icon: mdi:chevron-down-box-outline
+    initial: false
+
+  sbc5_update_controls_visible:
+    name: SBC5 aktualizacje - opcje widoczne
+    icon: mdi:chevron-down-box-outline
+    initial: false
+  sbc5_ai_controls_visible:
+    name: SBC5 AI Cooling - szczegóły widoczne
+    icon: mdi:chevron-down-box-outline
+    initial: false
+  sbc5_cpu_clock_details_visible:
+    name: SBC5 Zegar CPU - rdzenie widoczne
+    icon: mdi:chevron-down-box-outline
+    initial: false
+template:
+  - sensor:
+
+      # 2.8.4 — Recorder-friendly AI Prediction History sensors.
+      # These entities intentionally expose numeric states instead of nested attributes,
+      # so Home Assistant Recorder can persist and graph AI behavior across restarts.
+      - name: SBC5 AI Prediction PWM
+        unique_id: sbc5_ai_prediction_pwm
+        icon: mdi:chart-bell-curve-cumulative
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('prediction_available', false) and ai.get('prediction_pwm_percent') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai.get('prediction_pwm_percent', 0) | float(0) | round(1) if ai is mapping else 0 }}
+        attributes:
+          workload_bucket: >-
+            {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+            {{ ai.get('workload_bucket', 'unknown') if ai is mapping else 'unknown' }}
+          ai_state: >-
+            {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+            {{ ai.get('state', 'unknown') if ai is mapping else 'unknown' }}
+
+      - name: SBC5 AI Baseline PWM
+        unique_id: sbc5_ai_baseline_pwm
+        icon: mdi:chart-line
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('baseline_pwm_percent') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai.get('baseline_pwm_percent', 0) | float(0) | round(1) if ai is mapping else 0 }}
+
+      - name: SBC5 AI Correction PWM
+        unique_id: sbc5_ai_correction_pwm
+        icon: mdi:plus-minus-variant
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('correction_pwm_percent') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai.get('correction_pwm_percent', 0) | float(0) | round(1) if ai is mapping else 0 }}
+
+      - name: SBC5 AI Physical PWM
+        unique_id: sbc5_ai_physical_pwm
+        icon: mdi:fan-speed-2
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('current_pwm_percent') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai.get('current_pwm_percent', 0) | float(0) | round(1) if ai is mapping else 0 }}
+
+      - name: SBC5 AI Confidence
+        unique_id: sbc5_ai_confidence
+        icon: mdi:brain
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('confidence_percent') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai.get('confidence_percent', 0) | float(0) | round(1) if ai is mapping else 0 }}
+      - name: SBC5 Package Version
+        unique_id: sbc5_package_version
+        icon: mdi:package-variant-closed-check
+        state: "2.8.25"
+
+      - name: SBC5 CPU OC Profile
+        unique_id: sbc5_cpu_oc_profile
+        icon: mdi:speedometer
+        availability: >-
+          {{ states('input_select.sbc5_cpu_oc_profile') not in ['unknown','unavailable','none','']
+             or states('sensor.sbc5_overclock_status') not in ['unknown','unavailable'] }}
+        state: >-
+          {% set selected = states('input_select.sbc5_cpu_oc_profile') %}
+          {% if selected not in ['unknown','unavailable','none',''] %}
+            {{ selected }}
+          {% else %}
+            {% set saved = state_attr('sensor.sbc5_overclock_status','saved_arm_freq_mhz') | int(0) %}
+            {{ 'OC Łagodny · 2500 MHz' if saved == 2500 else 'OC Zbalansowany · 2600 MHz' if saved == 2600 else 'OC Wydajność · 2800 MHz' if saved == 2800 else 'OC 3.0 GHz · 3000 MHz' if saved == 3000 else 'Fabryczny · 2400 MHz' if saved == 0 else 'Zaawansowany · ustawienia ręczne' }}
+          {% endif %}
+        attributes:
+          profile_code: >-
+            {% set selected = states('input_select.sbc5_cpu_oc_profile') %}
+            {% set codes = {
+              'Fabryczny · 2400 MHz':'factory',
+              'OC Łagodny · 2500 MHz':'mild',
+              'OC Zbalansowany · 2600 MHz':'balanced',
+              'OC Wydajność · 2800 MHz':'performance',
+              'OC 3.0 GHz · 3000 MHz':'experimental',
+              'Zaawansowany · ustawienia ręczne':'advanced'
+            } %}
+            {{ codes.get(selected, 'factory') }}
+          source_of_truth: persistent_profile_state
+          saved_mhz: "{{ state_attr('sensor.sbc5_overclock_status','saved_arm_freq_mhz') | default(0, true) }}"
+          runtime_mhz: "{{ state_attr('sensor.sbc5_overclock_status','runtime_max_mhz') | default(0, true) }}"
+          runtime_matches_requested: >-
+            {% set selected = states('input_select.sbc5_cpu_oc_profile') %}
+            {% set codes = {
+              'Fabryczny · 2400 MHz':'factory',
+              'OC Łagodny · 2500 MHz':'mild',
+              'OC Zbalansowany · 2600 MHz':'balanced',
+              'OC Wydajność · 2800 MHz':'performance',
+              'OC 3.0 GHz · 3000 MHz':'experimental',
+              'Zaawansowany · ustawienia ręczne':'advanced'
+            } %}
+            {% set p = codes.get(selected, 'factory') %}
+            {% set runtime = state_attr('sensor.sbc5_overclock_status','runtime_max_mhz') | int(0) %}
+            {% set expected = {'factory':2400,'mild':2500,'balanced':2600,'performance':2800,'experimental':3000}.get(p) %}
+            {{ expected is none or (p == 'factory' and runtime <= 2400) or runtime == expected }}
+          restart_required: "{{ is_state('sensor.sbc5_restart_required','host') or is_state('binary_sensor.sbc5_config_pending_restart','on') }}"
+
+      - name: SBC5 GPU Profile
+        unique_id: sbc5_gpu_profile
+        icon: mdi:expansion-card-variant
+        availability: >-
+          {{ states('input_select.sbc5_gpu_profile') not in ['unknown','unavailable','none',''] }}
+        state: "{{ states('input_select.sbc5_gpu_profile') }}"
+        attributes:
+          profile_code: >-
+            {% set selected = states('input_select.sbc5_gpu_profile') %}
+            {% set codes = {
+              'Fabryczny · Auto':'factory',
+              'Eco · 850 / 850 / 900 MHz':'eco',
+              'Zbalansowany · 950 / 950 / 1000 MHz':'balanced',
+              'Wydajność · 1000 / 1000 / 1100 MHz':'performance',
+              'Eksperymentalny · 1100 / 1100 / 1200 MHz':'experimental',
+              'Zaawansowany · ustawienia ręczne':'advanced'
+            } %}
+            {{ codes.get(selected, 'factory') }}
+          restart_required: "{{ is_state('sensor.sbc5_restart_required','host') or is_state('binary_sensor.sbc5_config_pending_restart','on') }}"
+          reference_core_mhz: 910
+          reference_isp_mhz: 910
+          reference_v3d_mhz: 960
+
+      - name: SBC5 Control Center UX Status
+        unique_id: sbc5_control_center_ux_status
+        icon: mdi:view-dashboard-edit-outline
+        state: >-
+          {% set required = [
+            'input_select.sbc5_cc_panel',
+            'input_select.sbc5_fan_profile',
+            'input_select.sbc5_cpu_oc_profile',
+            'input_select.sbc5_gpu_profile',
+            'input_select.sbc5_curve_editor_curve',
+            'input_select.sbc5_curve_editor_point',
+            'input_select.sbc5_curve_editor_response_mode',
+            'input_text.sbc5_curve_editor_name',
+            'input_number.sbc5_curve_editor_target_c',
+            'script.sbc5_curve_editor_refresh',
+            'script.sbc5_curve_editor_save_template',
+            'script.sbc5_curve_editor_apply_selected',
+            'sensor.sbc5_cpu_temperature',
+            'sensor.sbc5_cpu_usage',
+            'sensor.sbc5_cpu_oc_profile',
+            'script.sbc5_cpu_oc_apply_profile',
+            'sensor.sbc5_gpu_profile',
+            'script.sbc5_gpu_apply_profile',
+            'sensor.sbc5_fan_percent',
+            'sensor.sbc5_fan_level',
+            'sensor.sbc5_active_fan_profile',
+            'sensor.sbc5_requested_fan_profile',
+            'sensor.sbc5_fan_profile_activation',
+            'sensor.sbc5_ai_confidence',
+            'sensor.sbc5_ai_bucket_maturity',
+            'sensor.sbc5_ai_observations',
+            'sensor.sbc5_ai_model_coverage',
+            'sensor.sbc5_ai_workload',
+            'sensor.sbc5_ai_stable_seconds',
+            'sensor.sbc5_ai_grid_coverage',
+            'sensor.sbc5_package_version'
+          ] %}
+          {% set ns = namespace(missing=[]) %}
+          {% for e in required %}
+            {% if states(e) in ['unknown','unavailable'] %}{% set ns.missing = ns.missing + [e] %}{% endif %}
+          {% endfor %}
+          {% set app = state_attr('sensor.sbc5_control_center_update','installed_version') | default('', true) | string %}
+          {% set package = states('sensor.sbc5_package_version') %}
+          {% if ns.missing | count > 0 %}
+            degraded
+          {% elif app not in ['', 'unknown', 'unavailable', 'None'] and package not in ['', 'unknown', 'unavailable'] and app != package %}
+            restart_required
+          {% elif states('sensor.sbc5_control_center_curve_editor') in ['unknown','unavailable'] or states('sensor.sbc5_curve_editor_runtime') in ['unknown','unavailable'] %}
+            waiting
+          {% else %}
+            ready
+          {% endif %}
+        attributes:
+          app_version: "{{ state_attr('sensor.sbc5_control_center_update','installed_version') | default('—', true) }}"
+          package_version: "{{ states('sensor.sbc5_package_version') }}"
+          curve_editor_state: "{{ states('sensor.sbc5_control_center_curve_editor') }}"
+          panel_helper: "{{ states('input_select.sbc5_cc_panel') }}"
+          note: >-
+            ready = helpery, skrypty i podstawowa telemetria UX są dostępne; restart_required = aplikacja/package mają różne wersje;
+            degraded = brakuje wymaganej encji lub skryptu; waiting = oczekiwanie na publikację danych edytora.
+
+
+      - name: SBC5 Curve Editor Runtime
+        unique_id: sbc5_curve_editor_runtime
+        icon: mdi:target-variant
+        state: >-
+          {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+          {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+          {% set active = state_attr('sensor.sbc5_active_fan_profile','profile_code') | default('', true) %}
+          {% set fan_raw = states('sensor.sbc5_fan_level') %}
+          {% set cpu_raw = states('sensor.sbc5_cpu_temperature') %}
+          {% if curves | count < idx or cpu_raw in ['unknown','unavailable','none','None',''] %}
+            unavailable
+          {% elif active == 'custom' ~ idx and fan_raw not in ['unknown','unavailable','none','None',''] %}
+            active
+          {% else %}
+            predicted
+          {% endif %}
+        attributes:
+          selected_curve_index: >-
+            {{ states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) }}
+          selected_curve_name: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {{ curves[idx-1].get('name','Profil ' ~ idx) if curves | count >= idx else '—' }}
+          active_profile_code: "{{ state_attr('sensor.sbc5_active_fan_profile','profile_code') | default('', true) }}"
+          is_active_curve: >-
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {{ (state_attr('sensor.sbc5_active_fan_profile','profile_code') | default('', true)) == 'custom' ~ idx }}
+          cpu_temperature_c: >-
+            {% set v = states('sensor.sbc5_cpu_temperature') %}
+            {{ v | float | round(2) if v not in ['unknown','unavailable','none','None',''] else none }}
+          actual_pwm_percent: >-
+            {% set v = states('sensor.sbc5_fan_percent') %}
+            {{ v | float | round(1) if v not in ['unknown','unavailable','none','None',''] else none }}
+          actual_fan_level: >-
+            {% set v = states('sensor.sbc5_fan_level') %}
+            {{ v | int if v not in ['unknown','unavailable','none','None',''] else none }}
+          working_source: >-
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set active = state_attr('sensor.sbc5_active_fan_profile','profile_code') | default('', true) %}
+            {% set fan = states('sensor.sbc5_fan_level') %}
+            {{ 'actual_cooling_device' if active == 'custom' ~ idx and fan not in ['unknown','unavailable','none','None',''] else 'temperature_preview' }}
+          working_point_index: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set pts = curves[idx-1].get('points',[]) if curves | count >= idx else [] %}
+            {% set active = state_attr('sensor.sbc5_active_fan_profile','profile_code') | default('', true) %}
+            {% set fan = states('sensor.sbc5_fan_level') %}
+            {% set cpu = states('sensor.sbc5_cpu_temperature') %}
+            {% set ns = namespace(level=0) %}
+            {% if active == 'custom' ~ idx and fan not in ['unknown','unavailable','none','None',''] %}
+              {% set n = fan | int(0) %}
+              {% set ns.level = 0 if n < 0 else (pts | count if n > pts | count else n) %}
+            {% elif cpu not in ['unknown','unavailable','none','None',''] %}
+              {% set t = cpu | float %}
+              {% for p in pts %}{% if t >= p.get('temp_c',999) | float %}{% set ns.level = loop.index %}{% endif %}{% endfor %}
+            {% endif %}
+            {{ ns.level }}
+          working_threshold_temp_c: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set pts = curves[idx-1].get('points',[]) if curves | count >= idx else [] %}
+            {% set active = state_attr('sensor.sbc5_active_fan_profile','profile_code') | default('', true) %}
+            {% set fan = states('sensor.sbc5_fan_level') %}
+            {% set cpu = states('sensor.sbc5_cpu_temperature') %}
+            {% set ns = namespace(level=0) %}
+            {% if active == 'custom' ~ idx and fan not in ['unknown','unavailable','none','None',''] %}
+              {% set n = fan | int(0) %}{% set ns.level = 0 if n < 0 else (pts | count if n > pts | count else n) %}
+            {% elif cpu not in ['unknown','unavailable','none','None',''] %}
+              {% set t = cpu | float %}{% for p in pts %}{% if t >= p.get('temp_c',999) | float %}{% set ns.level = loop.index %}{% endif %}{% endfor %}
+            {% endif %}
+            {{ pts[ns.level-1].get('temp_c') if ns.level > 0 and pts | count >= ns.level else none }}
+          working_curve_pwm_percent: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set pts = curves[idx-1].get('points',[]) if curves | count >= idx else [] %}
+            {% set active = state_attr('sensor.sbc5_active_fan_profile','profile_code') | default('', true) %}
+            {% set fan = states('sensor.sbc5_fan_level') %}
+            {% set cpu = states('sensor.sbc5_cpu_temperature') %}
+            {% set ns = namespace(level=0) %}
+            {% if active == 'custom' ~ idx and fan not in ['unknown','unavailable','none','None',''] %}
+              {% set n = fan | int(0) %}{% set ns.level = 0 if n < 0 else (pts | count if n > pts | count else n) %}
+            {% elif cpu not in ['unknown','unavailable','none','None',''] %}
+              {% set t = cpu | float %}{% for p in pts %}{% if t >= p.get('temp_c',999) | float %}{% set ns.level = loop.index %}{% endif %}{% endfor %}
+            {% endif %}
+            {{ pts[ns.level-1].get('pwm_percent') if ns.level > 0 and pts | count >= ns.level else 0 }}
+          working_display_temp_c: >-
+            {% set v = states('sensor.sbc5_cpu_temperature') %}
+            {{ v | float | round(2) if v not in ['unknown','unavailable','none','None',''] else none }}
+          working_display_pwm_percent: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set pts = curves[idx-1].get('points',[]) if curves | count >= idx else [] %}
+            {% set active = state_attr('sensor.sbc5_active_fan_profile','profile_code') | default('', true) %}
+            {% set fan = states('sensor.sbc5_fan_level') %}
+            {% set pwm = states('sensor.sbc5_fan_percent') %}
+            {% set cpu = states('sensor.sbc5_cpu_temperature') %}
+            {% set ns = namespace(level=0) %}
+            {% if active == 'custom' ~ idx and fan not in ['unknown','unavailable','none','None',''] and pwm not in ['unknown','unavailable','none','None',''] %}
+              {{ pwm | float | round(1) }}
+            {% elif cpu not in ['unknown','unavailable','none','None',''] %}
+              {% set t = cpu | float %}{% for p in pts %}{% if t >= p.get('temp_c',999) | float %}{% set ns.level = loop.index %}{% endif %}{% endfor %}
+              {{ pts[ns.level-1].get('pwm_percent') if ns.level > 0 and pts | count >= ns.level else 0 }}
+            {% else %}
+              {{ none }}
+            {% endif %}
+          setpoint_c: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {{ curves[idx-1].get('target_temp_c') if curves | count >= idx else none }}
+          setpoint_pwm_percent: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set c = curves[idx-1] if curves | count >= idx else dict() %}
+            {% set pts = c.get('points',[]) %}
+            {% set target = c.get('target_temp_c', none) %}
+            {% set ns = namespace(v=none) %}
+            {% if target is not none and pts | count > 0 %}
+              {% set tx = target | float %}
+              {% if tx <= pts[0].get('temp_c',0) | float %}{% set ns.v = pts[0].get('pwm_percent',0) | float %}
+              {% elif tx >= pts[-1].get('temp_c',0) | float %}{% set ns.v = pts[-1].get('pwm_percent',0) | float %}
+              {% else %}
+                {% for p in pts %}
+                  {% if not loop.last %}
+                    {% set q = pts[loop.index] %}
+                    {% set x0 = p.get('temp_c',0) | float %}{% set x1 = q.get('temp_c',0) | float %}
+                    {% if tx >= x0 and tx <= x1 and x1 > x0 %}
+                      {% set y0 = p.get('pwm_percent',0) | float %}{% set y1 = q.get('pwm_percent',0) | float %}
+                      {% set ns.v = y0 + (tx-x0) * (y1-y0) / (x1-x0) %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endif %}
+            {{ ns.v | round(1) if ns.v is not none else none }}
+          dense_from_c: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set pts = curves[idx-1].get('points',[]) if curves | count >= idx else [] %}
+            {{ pts[4].get('temp_c') if pts | count >= 11 else none }}
+          dense_to_c: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set pts = curves[idx-1].get('points',[]) if curves | count >= idx else [] %}
+            {{ pts[10].get('temp_c') if pts | count >= 11 else none }}
+          selected_point_index: >-
+            {{ states('input_select.sbc5_curve_editor_point').split()[-1] | int(1) }}
+          selected_point_temp_c: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set pi = states('input_select.sbc5_curve_editor_point').split()[-1] | int(1) %}
+            {% set pts = curves[idx-1].get('points',[]) if curves | count >= idx else [] %}
+            {{ pts[pi-1].get('temp_c') if pts | count >= pi else none }}
+          selected_point_pwm_percent: >-
+            {% set curves = state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] %}
+            {% set idx = states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) %}
+            {% set pi = states('input_select.sbc5_curve_editor_point').split()[-1] | int(1) %}
+            {% set pts = curves[idx-1].get('points',[]) if curves | count >= idx else [] %}
+            {{ pts[pi-1].get('pwm_percent') if pts | count >= pi else none }}
+          refresh_key: >-
+            {{ states('input_select.sbc5_curve_editor_curve') }}|{{ states('input_select.sbc5_curve_editor_point') }}|{{ states('sensor.sbc5_cpu_temperature') }}|{{ states('sensor.sbc5_fan_level') }}|{{ states('sensor.sbc5_fan_percent') }}|{{ state_attr('sensor.sbc5_control_center_curve_editor','last_update') }}
+
+  # Low-rate Recorder history: these values are diagnostic trends, not control-loop inputs.
+  # Updating them every 30 s keeps More Info/history useful while reducing template renders and DB writes.
+  - triggers:
+      - trigger: time_pattern
+        seconds: "/30"
+    sensor:
+      - name: SBC5 AI Bucket Maturity
+        unique_id: sbc5_ai_bucket_maturity
+        icon: mdi:progress-check
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('qualified_samples_total') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') or {} %}
+          {% set bucket = ai.get('bucket', 'low') %}
+          {% set bp_raw = ai.get('bucket_progress', {}) %}
+          {% set bp = bp_raw if bp_raw is mapping else {} %}
+          {% set b = bp.get(bucket, {}) %}
+          {% set b = b if b is mapping else {} %}
+          {% set q = b.get('qualified', ai.get('qualified_samples_total', 0)) | float(0) %}
+          {% set req = ai.get('min_samples', 30) | float(30) %}
+          {{ ([100, (q / req * 100 if req > 0 else 0)] | min) | round(1) }}
+
+      - name: SBC5 AI Observations
+        unique_id: sbc5_ai_observations
+        icon: mdi:database-eye-outline
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('observations_total') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') or {} %}
+          {{ ai.get('observations_total', 0) | int(0) }}
+
+      - name: SBC5 AI Qualified Samples
+        unique_id: sbc5_ai_qualified_samples
+        icon: mdi:database-check-outline
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('qualified_samples_total') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') or {} %}
+          {{ ai.get('qualified_samples_total', 0) | int(0) }}
+
+      - name: SBC5 AI Model Coverage
+        unique_id: sbc5_ai_model_coverage
+        icon: mdi:chart-donut-variant
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('model_coverage_percent') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') or {} %}
+          {{ ai.get('model_coverage_percent', 0) | float(0) | round(1) }}
+
+      - name: SBC5 AI Workload
+        unique_id: sbc5_ai_workload
+        icon: mdi:cpu-64-bit
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and (ai.get('cpu_load_smoothed_percent') is not none or ai.get('cpu_load_percent') is not none) }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') or {} %}
+          {{ ai.get('cpu_load_smoothed_percent', ai.get('cpu_load_percent', 0)) | float(0) | round(1) }}
+
+      - name: SBC5 AI Stable Seconds
+        unique_id: sbc5_ai_stable_seconds
+        icon: mdi:timer-check-outline
+        unit_of_measurement: "s"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping and ai.get('stable_seconds') is not none }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') or {} %}
+          {{ ai.get('stable_seconds', 0) | float(0) | round(1) }}
+
+      - name: SBC5 AI Grid Coverage
+        unique_id: sbc5_ai_grid_coverage
+        icon: mdi:grid
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') %}
+          {{ ai is mapping }}
+        state: >-
+          {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime', 'ai_cooling') or {} %}
+          {% set gs = ai.get('grid_suggestion', {}) if ai is mapping else {} %}
+          {{ gs.get('model_coverage_percent', ai.get('model_coverage_percent', 0)) | float(0) | round(1) }}
+
+
+
+# 1.7.2 — telemetria sprzętowa pochodzi z uprzywilejowanej aplikacji hostowej.
+# Uprzywilejowana aplikacja odczytuje prawdziwy hostowy sysfs i przekazuje szybkie snapshoty
+# do Home Assistant; sterowanie i telemetria pracują w rozdzielonych cyklach 5/10 s. Dzięki temu RAW PWM
+# 130 pozostaje 130 (≈51%), zamiast błędnego 255/100% z namespace Core.
+
+# Encje sensor/binary_sensor są tworzone przez natywną integrację; aktualizację aplikacji pokazuje Supervisor
+# /config/custom_components/sbc5_control_center.
+
+script:
+  sbc5_single_stable_curve_focus:
+    alias: "SBC5 - przygotuj pojedynczą krzywą stabilną"
+    icon: mdi:target-variant
+    mode: restart
+    sequence:
+      - variables:
+          first_curve_option: >-
+            {% set opts = state_attr('input_select.sbc5_curve_editor_curve','options') or [] %}
+            {{ opts[0] if opts | count > 0 else 'Własna 1 — Zbalansowana · 50°C' }}
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.sbc5_curve_editor_curve
+        data:
+          option: "{{ first_curve_option }}"
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.sbc5_curve_editor_expert_mode
+      - action: script.sbc5_curve_editor_load_curve
+
+  sbc5_single_stable_curve_save:
+    alias: "SBC5 - generuj jedną stabilną charakterystykę"
+    icon: mdi:chart-bell-curve-cumulative
+    mode: restart
+    sequence:
+      - action: script.sbc5_single_stable_curve_focus
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.sbc5_curve_editor_name
+        data:
+          value: "Stabilna"
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.sbc5_curve_editor_response_mode
+        data:
+          option: "Precyzyjna"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_hyst_dense_c
+        data:
+          value: 0.75
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_hyst_outer_c
+        data:
+          value: 1.0
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_min_pwm
+        data:
+          value: 29
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_target_pwm
+        data:
+          value: 55
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_max_pwm
+        data:
+          value: 100
+      - action: script.sbc5_curve_editor_save_template
+
+  sbc5_single_stable_curve_select_profile:
+    alias: "SBC5 - wybierz pojedynczy profil własny"
+    icon: mdi:fan-auto
+    mode: restart
+    sequence:
+      - variables:
+          options: "{{ state_attr('input_select.sbc5_fan_profile','options') or [] }}"
+          own_profile: >-
+            {% set ns = namespace(value='') %}
+            {% for item in options %}
+              {% if ns.value == '' and item.startswith('Własna 1 —') %}
+                {% set ns.value = item %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.value }}
+      - condition: template
+        value_template: "{{ own_profile | length > 0 }}"
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.sbc5_fan_profile
+        data:
+          option: "{{ own_profile }}"
+
+  sbc5_single_stable_curve_apply:
+    alias: "SBC5 - wygeneruj i zastosuj pojedynczą krzywą"
+    icon: mdi:fan-check
+    mode: restart
+    sequence:
+      - action: script.sbc5_single_stable_curve_save
+      - action: script.sbc5_curve_editor_apply_selected
+
+  sbc5_single_stable_curve_apply_and_reboot:
+    alias: "SBC5 - wygeneruj krzywą i uruchom host ponownie"
+    icon: mdi:restart-alert
+    mode: single
+    sequence:
+      - action: script.sbc5_single_stable_curve_save
+      - action: script.sbc5_curve_editor_apply_selected
+      - delay: "00:00:05"
+      - action: hassio.host_reboot
+
+  sbc5_single_stable_curve_reset_50:
+    alias: "SBC5 - przywróć stabilną krzywą 50°C"
+    icon: mdi:restore
+    mode: restart
+    sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_target_c
+        data:
+          value: 50
+      - action: script.sbc5_single_stable_curve_save
+
+  sbc5_curve_editor_refresh:
+    alias: "SBC5 Curve Editor - odśwież dane"
+    icon: mdi:refresh
+    mode: restart
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: curve_editor_refresh
+      - delay: "00:00:01"
+      - action: script.sbc5_curve_editor_load_curve
+
+  sbc5_curve_editor_load_curve:
+    alias: "SBC5 Curve Editor - wczytaj wybraną krzywą"
+    icon: mdi:database-import-outline
+    mode: restart
+    sequence:
+      - variables:
+          curve_idx: >-
+            {{ states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) }}
+          curves: "{{ state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] }}"
+      - condition: template
+        value_template: "{{ curves | count >= curve_idx }}"
+      - variables:
+          c: "{{ curves[curve_idx - 1] }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.sbc5_curve_editor_name
+        data:
+          value: "{{ c.get('name', 'Profil ' ~ curve_idx) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_target_c
+        data:
+          value: "{{ c.get('target_temp_c', 50) | float(50) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_hyst_dense_c
+        data:
+          value: "{{ c.get('hysteresis_dense_c', 0.75) | float(0.75) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_hyst_outer_c
+        data:
+          value: "{{ c.get('hysteresis_outer_c', 1.0) | float(1) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_min_pwm
+        data:
+          value: "{{ c.get('min_pwm_percent', 29) | float(29) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_target_pwm
+        data:
+          value: "{{ c.get('target_pwm_percent', 55) | float(55) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_max_pwm
+        data:
+          value: "{{ c.get('max_pwm_percent', 100) | float(100) }}"
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.sbc5_curve_editor_response_mode
+        data:
+          option: >-
+            {% set m = c.get('response_mode', 'precise') %}
+            {% if m == 'gentle' %}Łagodna{% elif m == 'balanced' %}Zbalansowana{% else %}Precyzyjna{% endif %}
+      - action: script.sbc5_curve_editor_load_point
+
+  sbc5_curve_editor_load_point:
+    alias: "SBC5 Curve Editor - wczytaj wybrany punkt"
+    icon: mdi:vector-point-select
+    mode: restart
+    sequence:
+      - variables:
+          curve_idx: >-
+            {{ states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) }}
+          point_idx: >-
+            {{ states('input_select.sbc5_curve_editor_point').split()[-1] | int(1) }}
+          curves: "{{ state_attr('sensor.sbc5_control_center_curve_editor','curves') or [] }}"
+      - condition: template
+        value_template: >-
+          {{ curves | count >= curve_idx and
+             curves[curve_idx - 1].get('points', []) | count >= point_idx }}
+      - variables:
+          p: "{{ curves[curve_idx - 1].get('points', [])[point_idx - 1] }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_point_temp_c
+        data:
+          value: "{{ p.get('temp_c', 44) | float(44) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_point_hyst_c
+        data:
+          value: "{{ p.get('hysteresis_c', 1) | float(1) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.sbc5_curve_editor_point_pwm
+        data:
+          value: "{{ p.get('pwm_percent', 29) | float(29) | round(0) }}"
+
+  sbc5_curve_editor_save_template:
+    alias: "SBC5 Curve Editor - generuj krzywą z parametrów"
+    icon: mdi:chart-bell-curve
+    mode: single
+    sequence:
+      - variables:
+          curve_idx: >-
+            {{ states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) }}
+      - condition: template
+        value_template: >-
+          {{ states('input_number.sbc5_curve_editor_min_pwm') | float <
+             states('input_number.sbc5_curve_editor_target_pwm') | float <
+             states('input_number.sbc5_curve_editor_max_pwm') | float }}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: set_custom_curve_template
+            curve_index: "{{ curve_idx }}"
+            name: "{{ states('input_text.sbc5_curve_editor_name') | trim }}"
+            target_temp_c: "{{ states('input_number.sbc5_curve_editor_target_c') | float(50) }}"
+            hysteresis_dense_c: "{{ states('input_number.sbc5_curve_editor_hyst_dense_c') | float(0.75) }}"
+            hysteresis_outer_c: "{{ states('input_number.sbc5_curve_editor_hyst_outer_c') | float(1) }}"
+            min_pwm_percent: "{{ states('input_number.sbc5_curve_editor_min_pwm') | int(29) }}"
+            target_pwm_percent: "{{ states('input_number.sbc5_curve_editor_target_pwm') | int(55) }}"
+            max_pwm_percent: "{{ states('input_number.sbc5_curve_editor_max_pwm') | int(100) }}"
+            response_mode: >-
+              {% set m = states('input_select.sbc5_curve_editor_response_mode') %}
+              {% if m == 'Łagodna' %}gentle{% elif m == 'Zbalansowana' %}balanced{% else %}precise{% endif %}
+      - delay: "00:00:01"
+      - action: script.sbc5_curve_editor_refresh
+
+  sbc5_curve_editor_save_point:
+    alias: "SBC5 Curve Editor - zapisz pojedynczy punkt"
+    icon: mdi:content-save-edit-outline
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.sbc5_curve_editor_expert_mode
+        state: "on"
+      - variables:
+          curve_idx: >-
+            {{ states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) }}
+          point_idx: >-
+            {{ states('input_select.sbc5_curve_editor_point').split()[-1] | int(1) }}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: set_custom_curve_point
+            curve_index: "{{ curve_idx }}"
+            point_index: "{{ point_idx }}"
+            temp_c: "{{ states('input_number.sbc5_curve_editor_point_temp_c') | float(44) }}"
+            hysteresis_c: "{{ states('input_number.sbc5_curve_editor_point_hyst_c') | float(1) }}"
+            pwm_percent: "{{ states('input_number.sbc5_curve_editor_point_pwm') | int(29) }}"
+      - delay: "00:00:01"
+      - action: script.sbc5_curve_editor_refresh
+
+  sbc5_curve_editor_reset_parameter:
+    alias: "SBC5 Curve Editor - przywróć domyślny parametr"
+    icon: mdi:restore
+    mode: queued
+    sequence:
+      - variables:
+          curve_idx: >-
+            {{ states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) }}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: reset_custom_curve_parameter
+            curve_index: "{{ curve_idx }}"
+            parameter: "{{ parameter }}"
+      - delay: "00:00:01"
+      - action: script.sbc5_curve_editor_refresh
+
+  sbc5_curve_editor_reset_name:
+    alias: "SBC5 Curve Editor - domyślna nazwa"
+    icon: mdi:rename-box-outline
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_reset_parameter
+        data: {parameter: name}
+
+  sbc5_curve_editor_reset_target_temp:
+    alias: "SBC5 Curve Editor - domyślna temperatura docelowa"
+    icon: mdi:thermometer-lines
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_reset_parameter
+        data: {parameter: target_temp_c}
+
+  sbc5_curve_editor_reset_response_mode:
+    alias: "SBC5 Curve Editor - domyślna charakterystyka"
+    icon: mdi:tune-variant
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_reset_parameter
+        data: {parameter: response_mode}
+
+  sbc5_curve_editor_reset_hyst_dense:
+    alias: "SBC5 Curve Editor - domyślna histereza gęsta"
+    icon: mdi:arrow-expand-vertical
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_reset_parameter
+        data: {parameter: hysteresis_dense_c}
+
+  sbc5_curve_editor_reset_hyst_outer:
+    alias: "SBC5 Curve Editor - domyślna histereza zewnętrzna"
+    icon: mdi:arrow-expand-vertical
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_reset_parameter
+        data: {parameter: hysteresis_outer_c}
+
+  sbc5_curve_editor_reset_pwm_min:
+    alias: "SBC5 Curve Editor - domyślne PWM min"
+    icon: mdi:fan-speed-1
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_reset_parameter
+        data: {parameter: min_pwm_percent}
+
+  sbc5_curve_editor_reset_pwm_target:
+    alias: "SBC5 Curve Editor - domyślne PWM docelowe"
+    icon: mdi:fan-speed-2
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_reset_parameter
+        data: {parameter: target_pwm_percent}
+
+  sbc5_curve_editor_reset_pwm_max:
+    alias: "SBC5 Curve Editor - domyślne PWM max"
+    icon: mdi:fan-speed-3
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_reset_parameter
+        data: {parameter: max_pwm_percent}
+
+  sbc5_ai_grid_apply_suggestion:
+    alias: "SBC5 AI Grid - zastosuj sugestię"
+    icon: mdi:grid-plus
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: apply_ai_grid_suggestion
+            confirm: true
+      - delay: "00:00:02"
+
+  sbc5_ai_grid_restore_automatic:
+    alias: "SBC5 AI Grid - przywróć automatyczną siatkę"
+    icon: mdi:grid-off
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: clear_ai_grid_override
+      - delay: "00:00:02"
+
+  sbc5_ux_self_test:
+    alias: "SBC5 Control Center - test UX/backend"
+    icon: mdi:check-decagram-outline
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: ux_self_test
+
+  sbc5_fan_calibrate:
+    alias: "SBC5 - kalibruj Active Cooler 1%"
+    icon: mdi:fan-cog
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: calibrate_fan
+
+  sbc5_fan_calibration_refresh:
+    alias: "SBC5 - odśwież stan kalibracji wentylatora"
+    icon: mdi:refresh
+    mode: restart
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: fan_calibration_refresh
+
+  sbc5_request_restore_active_cooler:
+    alias: "SBC5 - zapytaj o przywrócenie Active Cooler"
+    icon: mdi:fan-alert
+    mode: restart
+    sequence:
+      - action: input_boolean.turn_on
+        target: {entity_id: input_boolean.sbc5_confirm_restore_active_cooler}
+
+  sbc5_cancel_restore_active_cooler:
+    alias: "SBC5 - anuluj przywrócenie Active Cooler"
+    icon: mdi:close-circle-outline
+    mode: restart
+    sequence:
+      - action: input_boolean.turn_off
+        target: {entity_id: input_boolean.sbc5_confirm_restore_active_cooler}
+
+  sbc5_fan_restore_factory:
+    alias: "SBC5 - POTWIERDŹ fabryczne chłodzenie Active Cooler"
+    icon: mdi:check-circle-outline
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.sbc5_confirm_restore_active_cooler
+        state: "on"
+      - action: input_boolean.turn_off
+        target: {entity_id: input_boolean.sbc5_confirm_restore_active_cooler}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: restore_active_cooler_factory
+            confirm: true
+      - delay: "00:00:02"
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.sbc5_fan_profile
+        data:
+          option: "Fabryczny"
+
+  sbc5_request_restore_system_defaults:
+    alias: "SBC5 - zapytaj o cofnięcie zmian Control Center"
+    icon: mdi:raspberry-pi
+    mode: restart
+    sequence:
+      - action: input_boolean.turn_on
+        target: {entity_id: input_boolean.sbc5_confirm_restore_system_defaults}
+
+  sbc5_cancel_restore_system_defaults:
+    alias: "SBC5 - anuluj cofnięcie zmian Control Center"
+    icon: mdi:close-circle-outline
+    mode: restart
+    sequence:
+      - action: input_boolean.turn_off
+        target: {entity_id: input_boolean.sbc5_confirm_restore_system_defaults}
+
+  sbc5_restore_system_defaults_confirmed:
+    alias: "SBC5 - POTWIERDŹ cofnięcie zmian Control Center"
+    icon: mdi:check-circle-outline
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.sbc5_confirm_restore_system_defaults
+        state: "on"
+      - action: input_boolean.turn_off
+        target: {entity_id: input_boolean.sbc5_confirm_restore_system_defaults}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: restore_rpi5_app_defaults
+            confirm: true
+      - delay: "00:00:02"
+      - action: script.sbc5_system_reset_form_defaults
+
+  sbc5_resume_managed_config:
+    alias: "SBC5 - ponownie zezwól aplikacji na zarządzanie config.txt"
+    icon: mdi:lock-open-variant-outline
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: resume_managed_rpi5_config
+            confirm: true
+
+  sbc5_curve_editor_reset_curve:
+    alias: "SBC5 Curve Editor - przywróć domyślną krzywą"
+    icon: mdi:backup-restore
+    mode: single
+    sequence:
+      - variables:
+          curve_idx: >-
+            {{ states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) }}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: reset_custom_curve_factory
+            curve_index: "{{ curve_idx }}"
+      - delay: "00:00:01"
+      - action: script.sbc5_curve_editor_refresh
+
+  sbc5_curve_editor_reset_all_curves:
+    alias: "SBC5 Curve Editor - przywróć wszystkie domyślne krzywe"
+    icon: mdi:restore-alert
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: reset_all_custom_curves_factory
+      - delay: "00:00:02"
+      - action: script.sbc5_curve_editor_refresh
+
+  sbc5_curve_editor_apply_selected:
+    alias: "SBC5 Curve Editor - zastosuj wybraną krzywą"
+    icon: mdi:fan-check
+    mode: single
+    sequence:
+      - variables:
+          curve_idx: >-
+            {{ states('input_select.sbc5_curve_editor_curve').split('—')[0].split()[-1] | int(1) }}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            profile: "custom{{ curve_idx }}"
+
+  sbc5_curve_editor_apply_and_reboot:
+    alias: "SBC5 Curve Editor - zastosuj i uruchom SBC5 ponownie"
+    icon: mdi:restart-alert
+    mode: single
+    sequence:
+      - action: script.sbc5_curve_editor_apply_selected
+      - delay: "00:00:05"
+      - action: hassio.host_reboot
+
+  sbc5_fan_sync_selected_profile:
+    alias: "SBC5 - odtwórz żądany profil w selektorze"
+    icon: mdi:target
+    mode: restart
+    sequence:
+      - wait_template: >-
+          {% set desired = states('sensor.sbc5_requested_fan_profile') %}
+          {% set options = state_attr('input_select.sbc5_fan_profile','options') or [] %}
+          {{ desired not in ['unknown','unavailable','Niedostępny','Brak danych',''] and desired in options }}
+        timeout: "00:01:30"
+        continue_on_timeout: true
+      - variables:
+          desired_profile: "{{ states('sensor.sbc5_requested_fan_profile') }}"
+      - condition: template
+        value_template: >-
+          {{ desired_profile not in ['unknown','unavailable','Niedostępny','Brak danych','']
+             and desired_profile in (state_attr('input_select.sbc5_fan_profile','options') or []) }}
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.sbc5_fan_profile
+        data:
+          option: "{{ desired_profile }}"
+
+  sbc5_fan_apply_profile:
+    alias: "SBC5 - zastosuj profil chłodzenia"
+    icon: mdi:fan-check
+    mode: single
+    sequence:
+      - variables:
+          profile_code: >-
+            {% if states('input_select.sbc5_fan_profile') == 'Fabryczny' %}factory{% else %}custom1{% endif %}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            profile: "{{ profile_code }}"
+
+  sbc5_fan_apply_and_reboot:
+    alias: "SBC5 - zastosuj profil i uruchom host ponownie"
+    icon: mdi:restart
+    mode: single
+    sequence:
+      - action: script.sbc5_fan_apply_profile
+      - delay: "00:00:05"
+      - action: hassio.host_reboot
+
+  sbc5_control_center_status:
+    alias: "SBC5 - pokaż status menedżera wentylatora"
+    icon: mdi:information-outline
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: status
+
+  sbc5_fan_reload_custom_config:
+    alias: "SBC5 - wczytaj konfigurację custom 15 pkt"
+    icon: mdi:cog-refresh
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: reload_config
+
+  sbc5_fan_restart_manager_status:
+    alias: "SBC5 - sprawdź wymagany restart"
+    icon: mdi:restart-alert
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: restart_status
+
+  sbc5_fan_restart_home_assistant_confirmed:
+    alias: "SBC5 - restart Home Assistant po potwierdzeniu"
+    icon: mdi:home-assistant
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: sensor.sbc5_restart_required
+        state: "home_assistant"
+      - condition: template
+        value_template: >-
+          {{ state_attr('sensor.sbc5_restart_required', 'restart_policy') == 'ask' }}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: restart_ha_confirmed
+
+  sbc5_fan_reboot_host_confirmed:
+    alias: "SBC5 - pełny restart hosta po potwierdzeniu"
+    icon: mdi:restart-alert
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: sensor.sbc5_restart_required
+        state: "host"
+      - action: hassio.host_reboot
+
+  sbc5_fan_check_app_update:
+    alias: "SBC5 - sprawdź aktualizację Control Center"
+    icon: mdi:update
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: check_app_update
+
+  sbc5_fan_install_local_update_confirmed:
+    alias: "SBC5 - zainstaluj lokalną paczkę aktualizacji"
+    icon: mdi:archive-arrow-up
+    mode: single
+    sequence:
+      - condition: template
+        value_template: >-
+          {{ states('sensor.sbc5_control_center_update') == 'available'
+             and state_attr('sensor.sbc5_control_center_update', 'source') == 'local_zip' }}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: install_local_update
+
+
+  sbc5_cpu_oc_apply_profile:
+    alias: "SBC5 - zastosuj wybrany profil CPU / OC"
+    icon: mdi:speedometer
+    mode: single
+    sequence:
+      - variables:
+          profile_code: >-
+            {% set p = states('input_select.sbc5_cpu_oc_profile') %}
+            {% if p.startswith('OC Łagodny') %}mild
+            {% elif p.startswith('OC Zbalansowany') %}balanced
+            {% elif p.startswith('OC Wydajność') %}performance
+            {% elif p.startswith('OC 3.0 GHz') %}experimental
+            {% elif p.startswith('Zaawansowany') %}advanced
+            {% else %}factory{% endif %}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: set_cpu_profile
+            cpu_profile: "{{ profile_code }}"
+
+  sbc5_cpu_oc_sync_selector:
+    alias: "SBC5 - synchronizuj selektor profilu CPU / OC"
+    icon: mdi:sync
+    mode: restart
+    sequence:
+      - variables:
+          option: "{{ states('sensor.sbc5_cpu_oc_profile') }}"
+          options: "{{ state_attr('input_select.sbc5_cpu_oc_profile','options') or [] }}"
+      - condition: template
+        value_template: "{{ option in options }}"
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.sbc5_cpu_oc_profile
+        data:
+          option: "{{ option }}"
+
+  sbc5_gpu_apply_profile:
+    alias: "SBC5 - zastosuj wybrany profil GPU / V3D / ISP"
+    icon: mdi:expansion-card-variant
+    mode: single
+    sequence:
+      - variables:
+          profile_code: >-
+            {% set p = states('input_select.sbc5_gpu_profile') %}
+            {% if p.startswith('Eco') %}eco
+            {% elif p.startswith('Zbalansowany') %}balanced
+            {% elif p.startswith('Wydajność') %}performance
+            {% elif p.startswith('Eksperymentalny') %}experimental
+            {% elif p.startswith('Zaawansowany') %}advanced
+            {% else %}factory{% endif %}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: set_gpu_profile
+            gpu_profile: "{{ profile_code }}"
+
+  sbc5_gpu_sync_selector:
+    alias: "SBC5 - synchronizuj selektor profilu GPU / V3D / ISP"
+    icon: mdi:sync
+    mode: restart
+    sequence:
+      - variables:
+          option: "{{ states('sensor.sbc5_gpu_profile') }}"
+          options: "{{ state_attr('input_select.sbc5_gpu_profile','options') or [] }}"
+      - condition: template
+        value_template: "{{ option in options }}"
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.sbc5_gpu_profile
+        data:
+          option: "{{ option }}"
+
+  sbc5_system_reset_cpu_clock_default:
+    alias: "SBC5 - formularz CPU: arm_freq domyślne"
+    icon: mdi:restore
+    mode: single
+    sequence:
+      - action: input_number.set_value
+        target: {entity_id: input_number.sbc5_cpu_target_mhz}
+        data: {value: 2400}
+
+  sbc5_system_reset_voltage_default:
+    alias: "SBC5 - formularz CPU: napięcie domyślne"
+    icon: mdi:restore
+    mode: single
+    sequence:
+      - action: input_number.set_value
+        target: {entity_id: input_number.sbc5_over_voltage_delta_uv}
+        data: {value: 0}
+
+  sbc5_system_reset_cpu_mode_default:
+    alias: "SBC5 - formularz CPU: tryb fabryczny"
+    icon: mdi:restore
+    mode: single
+    sequence:
+      - action: input_select.select_option
+        target: {entity_id: input_select.sbc5_cpu_config_mode}
+        data: {option: Fabryczne}
+
+  sbc5_system_reset_usb_default:
+    alias: "SBC5 - formularz USB: Auto"
+    icon: mdi:restore
+    mode: single
+    sequence:
+      - action: input_select.select_option
+        target: {entity_id: input_select.sbc5_usb_current_mode}
+        data: {option: Auto}
+
+  sbc5_system_reset_form_defaults:
+    alias: "SBC5 - formularz CPU / USB: wartości domyślne"
+    icon: mdi:restore-alert
+    mode: single
+    sequence:
+      - action: script.sbc5_system_reset_cpu_mode_default
+      - action: script.sbc5_system_reset_cpu_clock_default
+      - action: script.sbc5_system_reset_voltage_default
+      - action: script.sbc5_system_reset_usb_default
+
+  sbc5_system_apply_config:
+    alias: "SBC5 - zapisz konfigurację CPU / USB"
+    icon: mdi:content-save-cog-outline
+    mode: single
+    sequence:
+      - variables:
+          cpu_mode: >-
+            {% if states('input_select.sbc5_cpu_config_mode') == 'Ręczne' %}manual{% else %}factory{% endif %}
+          usb_mode: >-
+            {% set u = states('input_select.sbc5_usb_current_mode') %}
+            {% if u == 'Wysoki 1600 mA' %}high{% elif u == 'Niski 600 mA' %}low{% else %}auto{% endif %}
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: apply_system_config
+            cpu_mode: "{{ cpu_mode }}"
+            arm_freq_mhz: "{{ states('input_number.sbc5_cpu_target_mhz') | int(2400) }}"
+            over_voltage_delta_uv: "{{ states('input_number.sbc5_over_voltage_delta_uv') | int(0) }}"
+            usb_current_mode: "{{ usb_mode }}"
+            confirm: true
+
+  sbc5_system_restore_last_backup:
+    alias: "SBC5 - przywróć ostatnią kopię CPU / USB"
+    icon: mdi:backup-restore
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: restore_system_config_backup
+            confirm: true
+
+
+  sbc5_config_apply_parameter:
+    alias: "SBC5 - zapisz parametr config.txt"
+    icon: mdi:file-cog-outline
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: apply_config_txt_parameter
+            section: "{{ states('input_text.sbc5_config_section') | trim }}"
+            key: "{{ states('input_text.sbc5_config_key') | trim }}"
+            value: "{{ states('input_text.sbc5_config_value') | trim }}"
+            advanced: "{{ is_state('input_boolean.sbc5_config_advanced_mode','on') }}"
+            confirm: true
+
+  sbc5_config_remove_parameter:
+    alias: "SBC5 - usuń parametr config.txt"
+    icon: mdi:file-remove-outline
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: remove_config_txt_parameter
+            section: "{{ states('input_text.sbc5_config_section') | trim }}"
+            key: "{{ states('input_text.sbc5_config_key') | trim }}"
+            value: "{{ states('input_text.sbc5_config_value') | trim }}"
+            confirm: true
+
+  sbc5_config_restore_last_backup:
+    alias: "SBC5 - przywróć poprzedni Config.txt Manager"
+    icon: mdi:backup-restore
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: restore_config_manager_backup
+            confirm: true
+
+
+  sbc5_fan_diagnose_overlay:
+    alias: "SBC5 - diagnostyka overlay 10/15/custom pkt"
+    icon: mdi:stethoscope
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: diagnose
+
+  sbc5_fan_restore_backup:
+    alias: "SBC5 - przywróć kopię config.txt"
+    icon: mdi:backup-restore
+    mode: single
+    sequence:
+      - action: hassio.app_stdin
+        data:
+          app: >-
+            {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
+            {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
+            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
+            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+          input:
+            command: restore_backup
+
+automation:
+  - id: sbc5_single_stable_curve_focus_on_panel
+    alias: "SBC5 - pojedyncza krzywa po otwarciu edytora"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_select.sbc5_cc_panel
+        to: "Edytor krzywych"
+    action:
+      - action: script.sbc5_single_stable_curve_focus
+
+  - id: sbc5_fan_mobile_restart_action
+    alias: "SBC5 - obsługa przycisku restartu z powiadomienia"
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: mobile_app_notification_action
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ trigger.event.data.action in ['RPI5_RESTART_HA', 'RPI5_REBOOT_HOST', 'RPI5_RESTART_LATER', 'RPI5_INSTALL_LOCAL_UPDATE'] }}
+    actions:
+      - choose:
+          - conditions: "{{ trigger.event.data.action == 'RPI5_RESTART_HA' }}"
+            sequence:
+              - action: script.sbc5_fan_restart_home_assistant_confirmed
+          - conditions: "{{ trigger.event.data.action == 'RPI5_REBOOT_HOST' }}"
+            sequence:
+              - action: script.sbc5_fan_reboot_host_confirmed
+          - conditions: "{{ trigger.event.data.action == 'RPI5_RESTART_LATER' }}"
+            sequence:
+              - action: persistent_notification.create
+                data:
+                  notification_id: sbc5_fan_restart_deferred
+                  title: "SBC5 Control Center"
+                  message: >-
+                    Restart został odłożony. Restart Manager nadal będzie wskazywał
+                    wymaganą akcję do czasu jej wykonania.
+          - conditions: "{{ trigger.event.data.action == 'RPI5_INSTALL_LOCAL_UPDATE' }}"
+            sequence:
+              - action: script.sbc5_fan_install_local_update_confirmed
+
+
+  - id: sbc5_fan_profile_selection_sync
+    alias: "SBC5 - utrzymuj selektor na profilu żądanym"
+    mode: restart
+    triggers:
+      - trigger: homeassistant
+        event: start
+        id: ha_start
+      - trigger: state
+        entity_id: sensor.sbc5_requested_fan_profile
+        id: desired_changed
+      - trigger: state
+        entity_id: input_select.sbc5_cc_panel
+        to: "Chłodzenie"
+        id: cooling_opened
+    actions:
+      - if:
+          - condition: trigger
+            id: ha_start
+        then:
+          - delay: "00:00:08"
+      - action: script.sbc5_fan_sync_selected_profile
+
+  - id: sbc5_cpu_oc_profile_selector_sync
+    alias: "SBC5 - synchronizuj kartę z aktywnym profilem CPU / OC"
+    mode: restart
+    triggers:
+      - trigger: homeassistant
+        event: start
+        id: ha_start
+      - trigger: state
+        entity_id: sensor.sbc5_cpu_oc_profile
+        id: profile_changed
+    actions:
+      - if:
+          - condition: trigger
+            id: ha_start
+        then:
+          - delay: "00:00:08"
+      - action: script.sbc5_cpu_oc_sync_selector
+
+  - id: sbc5_gpu_profile_selector_sync
+    alias: "SBC5 - synchronizuj kartę z aktywnym profilem GPU / V3D / ISP"
+    mode: restart
+    triggers:
+      - trigger: homeassistant
+        event: start
+        id: ha_start
+      - trigger: state
+        entity_id: sensor.sbc5_gpu_profile
+        id: profile_changed
+    actions:
+      - if:
+          - condition: trigger
+            id: ha_start
+        then:
+          - delay: "00:00:08"
+      - action: script.sbc5_gpu_sync_selector
+
+  - id: sbc5_curve_editor_selection_sync
+    alias: "SBC5 Curve Editor - synchronizuj wybór"
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: input_select.sbc5_curve_editor_curve
+      - trigger: homeassistant
+        event: start
+    actions:
+      - delay: "00:00:02"
+      - action: script.sbc5_curve_editor_load_curve
+
+  - id: sbc5_curve_editor_point_sync
+    alias: "SBC5 Curve Editor - synchronizuj punkt"
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: input_select.sbc5_curve_editor_point
+    actions:
+      - action: script.sbc5_curve_editor_load_point
+
+
+###############################################################################
+# INTERNAL TRANSPORT SENSORS — nie zapisuj do Recorder
+# Te encje zmieniają się co kilka sekund i służą wyłącznie jako relay backend -> HA.
+###############################################################################
+recorder:
+  exclude:
+    entities:
+      - sensor.sbc5_control_center_host_telemetry
+      - sensor.sbc5_control_center_ai_runtime

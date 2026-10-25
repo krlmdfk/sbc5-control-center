@@ -1,0 +1,14 @@
+SBC5 Control Center
+Copyright 2026 SBC5 Control Center contributors
+
+This product includes software developed for the SBC5 Control Center project.
+The project's original source code is licensed under the Apache License, Version 2.0.
+Third-party software remains under its respective license; see THIRD_PARTY_NOTICES.md.
+
+Raspberry Pi is a trademark of Raspberry Pi Ltd.
+The phrase “for Raspberry Pi 5” is used solely to identify compatibility with genuine Raspberry Pi 5 hardware.
+SBC5 Control Center is an independent project and is not affiliated with, endorsed by, sponsored by, or an official product of Raspberry Pi Ltd.
+
+SBC5 Control Center is not an official Home Assistant or Open Home Foundation component and is not endorsed or sponsored by them. Third-party names and marks remain the property of their respective owners.
+
+Legacy software identifiers containing `rpi5` are retained only for backward compatibility with existing Home Assistant entities, domains, storage paths and automations.

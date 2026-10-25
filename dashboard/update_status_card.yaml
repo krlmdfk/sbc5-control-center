@@ -1,0 +1,685 @@
+# SBC5 Control Center 2.8.25 — Update Status Card
+# Mobile-first card aligned with the main SBC5 Control Center visual language.
+# Requires: Mushroom + card-mod.
+# Paste: Dashboard -> Add card -> Manual.
+
+type: vertical-stack
+cards:
+
+  # ============================================================
+  # HERO — one glance: current / update / attention
+  # ============================================================
+  - type: custom:mushroom-template-card
+    multiline_secondary: true
+    primary: SBC5 Control Center
+    secondary: >-
+      {% set s = states('sensor.sbc5_control_center_update') %} {% set installed = state_attr('sensor.sbc5_control_center_update','installed_version')
+           | default(states('sensor.sbc5_package_version'), true) %}
+      {% set latest = state_attr('sensor.sbc5_control_center_update','latest_version')
+           | default(installed, true) %}
+      {% if s == 'available' %}
+        Aktualizacja buildu · {{ installed }} → {{ latest }}
+      {% elif s == 'current' %}
+        Wersja {{ installed }} jest aktualna
+      {% elif s in ['unknown','unavailable','none',''] %}
+        Status aktualizacji chwilowo niedostępny
+      {% elif s == 'disabled' %}
+        Automatyczne sprawdzanie jest wyłączone
+      {% else %}
+        {{ state_attr('sensor.sbc5_control_center_update','status_message')
+           | default('Sprawdź status aktualizacji', true) }}
+      {% endif %}
+
+      {% if is_state('input_boolean.sbc5_update_controls_visible','on') %}· opcje ▲{% else %}· dotknij, aby rozwinąć ▼{% endif %}
+    icon: >-
+      {% set s = states('sensor.sbc5_control_center_update') %}
+      {% if s == 'available' %}mdi:download-circle
+      {% elif s == 'current' %}mdi:check-decagram
+      {% elif s in ['unknown','unavailable','none',''] %}mdi:cloud-question
+      {% else %}mdi:update{% endif %}
+    icon_color: >-
+      {% set s = states('sensor.sbc5_control_center_update') %}
+      {% if s == 'available' %}cyan
+      {% elif s == 'current' %}green
+      {% elif s in ['unknown','unavailable','none',''] %}orange
+      {% else %}blue{% endif %}
+    layout: horizontal
+    tap_action:
+      action: perform-action
+      perform_action: input_boolean.toggle
+      target:
+        entity_id: input_boolean.sbc5_update_controls_visible
+    card_mod:
+      style: |
+        /* Update Card v2.8.25 */
+        ha-card {
+          min-height: 78px;
+          border-radius: 19px;
+          border: 1px solid rgba(0,188,255,.32);
+          background:
+            radial-gradient(circle at 92% 0%, rgba(0,188,255,.16), transparent 42%),
+            linear-gradient(145deg, rgba(19,34,44,.98), rgba(11,18,24,.98));
+          box-shadow: none;
+          padding: 3px 9px !important;
+        }
+        mushroom-shape-icon {
+          --icon-size: 46px;
+          --shape-color: rgba(0,188,255,.10) !important;
+        }
+        mushroom-state-info { min-width: 0 !important; }
+        .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
+        .primary { font-size: 16px !important; font-weight: 700 !important; }
+        .secondary { font-size: 11.5px !important; line-height: 1.18 !important; }
+        /* SBC5CC 2.8.25 screen-fit guard */
+        ha-card {
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+        }
+        mushroom-state-info {
+          min-width: 0 !important;
+          width: 100% !important;
+        }
+        .primary, .secondary {
+          white-space: normal !important;
+          overflow: visible !important;
+          text-overflow: clip !important;
+          max-width: 100% !important;
+          overflow-wrap: anywhere !important;
+          word-break: normal !important;
+        }
+
+  # ============================================================
+  # STATUS — compact two-column overview
+  # ============================================================
+    entity: sensor.sbc5_control_center_update
+    hold_action:
+      action: more-info
+  - type: conditional
+    conditions:
+      - entity: input_boolean.sbc5_update_controls_visible
+        state: "on"
+    card:
+      type: vertical-stack
+      cards:
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: custom:mushroom-template-card
+              multiline_secondary: true
+              primary: Zainstalowana
+              secondary: >-
+                {% set app = state_attr('sensor.sbc5_control_center_update','installed_version')
+                     | default(states('sensor.sbc5_package_version'), true) %}
+                Build v{{ app }} · App + Card UI zsynchronizowane
+              icon: mdi:package-variant-closed-check
+              icon_color: green
+              layout: horizontal
+              tap_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    min-height: 66px;
+                    height: auto !important;
+                    border-radius: 15px;
+                    border: 1px solid rgba(125,190,220,.14);
+                    background: linear-gradient(145deg, rgba(26,33,40,.96), rgba(16,22,28,.96));
+                    box-shadow: none;
+                    padding: 2px 6px !important;
+                  }
+                  mushroom-shape-icon { --icon-size: 36px; }
+                  mushroom-state-info { min-width: 0 !important; }
+                  .primary, .secondary {
+                    white-space: normal !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    max-width: 100% !important;
+                    overflow-wrap: anywhere !important;
+                  }
+                  .primary { font-size: 12.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
+                  .secondary { font-size: 10.5px !important; line-height: 1.18 !important; }
+                  @media (max-width: 600px) {
+                    ha-card {
+                      min-height: 74px;
+                      padding-top: 7px !important;
+                      padding-bottom: 7px !important;
+                    }
+                  }
+                  /* SBC5CC 2.8.25 screen-fit guard */
+                  ha-card {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: 0 !important;
+                    box-sizing: border-box !important;
+                  }
+                  mushroom-state-info {
+                    min-width: 0 !important;
+                    width: 100% !important;
+                  }
+                  .primary, .secondary {
+                    white-space: normal !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    max-width: 100% !important;
+                    overflow-wrap: anywhere !important;
+                    word-break: normal !important;
+                  }
+                  /* SBC5CC 2.8.25 equal-height responsive tile */
+                  ha-card {
+                    height: 100% !important;
+                          }
+                  .primary {
+                    font-size: clamp(12px, 3.25vw, 14px) !important;
+                    line-height: 1.16 !important;
+                  }
+                  .secondary {
+                    font-size: clamp(10px, 2.75vw, 12px) !important;
+                    line-height: 1.20 !important;
+                  }
+
+            - type: custom:mushroom-template-card
+
+              multiline_secondary: true
+              primary: Paczka lokalna
+              secondary: >-
+                {% set src = state_attr('sensor.sbc5_control_center_update','source') | default('', true) %}
+                {% set f = state_attr('sensor.sbc5_control_center_update','local_package_file') | default('', true) %}
+                {% if src == 'local_zip' and f %}
+                  {{ f }}
+                {% elif src == 'local_zip_scan' %}
+                  Brak nowszej paczki
+                {% else %}
+                  Katalog gotowy do skanowania
+                {% endif %}
+              icon: >-
+                {% if states('sensor.sbc5_control_center_update') == 'available'
+                   and state_attr('sensor.sbc5_control_center_update','source') == 'local_zip' %}
+                  mdi:archive-arrow-up
+                {% else %}
+                  mdi:folder-zip-outline
+                {% endif %}
+              icon_color: >-
+                {% if states('sensor.sbc5_control_center_update') == 'available'
+                   and state_attr('sensor.sbc5_control_center_update','source') == 'local_zip' %}cyan{% else %}blue{% endif %}
+              layout: horizontal
+              tap_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    min-height: 66px;
+                    height: auto !important;
+                    border-radius: 15px;
+                    border: 1px solid rgba(125,190,220,.14);
+                    background: linear-gradient(145deg, rgba(26,33,40,.96), rgba(16,22,28,.96));
+                    box-shadow: none;
+                    padding: 2px 6px !important;
+                  }
+                  mushroom-shape-icon { --icon-size: 36px; }
+                  mushroom-state-info { min-width: 0 !important; }
+                  .primary, .secondary {
+                    white-space: normal !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    max-width: 100% !important;
+                    overflow-wrap: anywhere !important;
+                  }
+                  .primary { font-size: 12.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
+                  .secondary { font-size: 10.5px !important; line-height: 1.18 !important; }
+                  @media (max-width: 600px) {
+                    ha-card {
+                      min-height: 74px;
+                      padding-top: 7px !important;
+                      padding-bottom: 7px !important;
+                    }
+                  }
+                  /* SBC5CC 2.8.25 screen-fit guard */
+                  ha-card {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: 0 !important;
+                    box-sizing: border-box !important;
+                  }
+                  mushroom-state-info {
+                    min-width: 0 !important;
+                    width: 100% !important;
+                  }
+                  .primary, .secondary {
+                    white-space: normal !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    max-width: 100% !important;
+                    overflow-wrap: anywhere !important;
+                    word-break: normal !important;
+                  }
+                  /* SBC5CC 2.8.25 equal-height responsive tile */
+                  ha-card {
+                    height: 100% !important;
+                          }
+                  .primary {
+                    font-size: clamp(12px, 3.25vw, 14px) !important;
+                    line-height: 1.16 !important;
+                  }
+                  .secondary {
+                    font-size: clamp(10px, 2.75vw, 12px) !important;
+                    line-height: 1.20 !important;
+                  }
+
+
+  # ============================================================
+  # ACTIONS — compact and thumb-friendly
+  # ============================================================
+          card_mod:
+            style: |
+              /* SBC5CC 2.8.25 responsive grid */
+              #root {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+                gap: clamp(6px, 1.8vw, 10px) !important;
+                align-items: stretch !important;
+              }
+              #root > * {
+                min-width: 0 !important;
+                height: 100% !important;
+              }
+              @media (max-width: 339px) {
+                #root { grid-template-columns: 1fr !important; }
+              }
+              @media (min-width: 720px) {
+                #root { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important; }
+              }
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: custom:mushroom-template-card
+              multiline_secondary: true
+              primary: Sprawdź teraz
+              secondary: Odśwież status wersji
+              icon: mdi:update
+              icon_color: cyan
+              layout: horizontal
+              tap_action:
+                action: perform-action
+                perform_action: script.turn_on
+                target:
+                  entity_id: script.sbc5_fan_check_app_update
+              card_mod:
+                style: |
+                  ha-card {
+                    min-height: 62px;
+                    height: auto !important;
+                    border-radius: 15px;
+                    border: 1px solid rgba(0,188,255,.24);
+                    background:
+                      radial-gradient(circle at 90% 0%, rgba(0,188,255,.10), transparent 46%),
+                      linear-gradient(145deg, rgba(20,31,39,.98), rgba(12,19,25,.98));
+                    box-shadow: none;
+                    padding: 2px 6px !important;
+                  }
+                  mushroom-shape-icon { --icon-size: 36px; }
+                  mushroom-state-info { min-width: 0 !important; }
+                  .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
+                  .primary { font-size: 12.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
+                  .secondary { font-size: 10px !important; line-height: 1.18 !important; }
+                  @media (max-width: 600px) {
+                    ha-card { min-height: 74px; padding-top: 7px !important; padding-bottom: 7px !important; }
+                  }
+                  /* SBC5CC 2.8.25 screen-fit guard */
+                  ha-card {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: 0 !important;
+                    box-sizing: border-box !important;
+                  }
+                  mushroom-state-info {
+                    min-width: 0 !important;
+                    width: 100% !important;
+                  }
+                  .primary, .secondary {
+                    white-space: normal !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    max-width: 100% !important;
+                    overflow-wrap: anywhere !important;
+                    word-break: normal !important;
+                  }
+                  /* SBC5CC 2.8.25 equal-height responsive tile */
+                  ha-card {
+                    height: 100% !important;
+                          }
+                  .primary {
+                    font-size: clamp(12px, 3.25vw, 14px) !important;
+                    line-height: 1.16 !important;
+                  }
+                  .secondary {
+                    font-size: clamp(10px, 2.75vw, 12px) !important;
+                    line-height: 1.20 !important;
+                  }
+
+            - type: custom:mushroom-template-card
+
+              multiline_secondary: true
+              primary: Szczegóły
+              secondary: Otwórz log SBC5 Control Center
+              icon: mdi:text-box-search-outline
+              icon_color: blue
+              layout: horizontal
+              tap_action:
+                action: navigate
+                navigation_path: /config/app/local_sbc5_control_center/logs
+              hold_action:
+                action: none
+              card_mod:
+                style: |
+                  ha-card {
+                    min-height: 62px;
+                    height: auto !important;
+                    border-radius: 15px;
+                    border: 1px solid rgba(0,188,255,.24);
+                    background:
+                      radial-gradient(circle at 90% 0%, rgba(0,188,255,.10), transparent 46%),
+                      linear-gradient(145deg, rgba(20,31,39,.98), rgba(12,19,25,.98));
+                    box-shadow: none;
+                    padding: 2px 6px !important;
+                  }
+                  mushroom-shape-icon { --icon-size: 36px; }
+                  mushroom-state-info { min-width: 0 !important; }
+                  .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
+                  .primary { font-size: 12.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
+                  .secondary { font-size: 10px !important; line-height: 1.18 !important; }
+                  @media (max-width: 600px) {
+                    ha-card { min-height: 74px; padding-top: 7px !important; padding-bottom: 7px !important; }
+                  }
+                  /* SBC5CC 2.8.25 screen-fit guard */
+                  ha-card {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: 0 !important;
+                    box-sizing: border-box !important;
+                  }
+                  mushroom-state-info {
+                    min-width: 0 !important;
+                    width: 100% !important;
+                  }
+                  .primary, .secondary {
+                    white-space: normal !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
+                    max-width: 100% !important;
+                    overflow-wrap: anywhere !important;
+                    word-break: normal !important;
+                  }
+                  /* SBC5CC 2.8.25 equal-height responsive tile */
+                  ha-card {
+                    height: 100% !important;
+                          }
+                  .primary {
+                    font-size: clamp(12px, 3.25vw, 14px) !important;
+                    line-height: 1.16 !important;
+                  }
+                  .secondary {
+                    font-size: clamp(10px, 2.75vw, 12px) !important;
+                    line-height: 1.20 !important;
+                  }
+
+
+  # ============================================================
+  # INSTALL — visible only when a verified local ZIP is available
+  # ============================================================
+          card_mod:
+            style: |
+              /* SBC5CC 2.8.25 responsive grid */
+              #root {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+                gap: clamp(6px, 1.8vw, 10px) !important;
+                align-items: stretch !important;
+              }
+              #root > * {
+                min-width: 0 !important;
+                height: 100% !important;
+              }
+              @media (max-width: 339px) {
+                #root { grid-template-columns: 1fr !important; }
+              }
+              @media (min-width: 720px) {
+                #root { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important; }
+              }
+        - type: conditional
+          conditions:
+            - entity: sensor.sbc5_control_center_update
+              state: "available"
+            - entity: binary_sensor.sbc5_local_package_update_available
+              state: "on"
+          card:
+            type: custom:mushroom-template-card
+            multiline_secondary: true
+            primary: >-
+              Zainstaluj build {{ state_attr('sensor.sbc5_control_center_update','latest_version') | default('aktualizację', true) }}
+            secondary: >-
+              App + Card UI mają jeden wspólny numer wydania · {{ state_attr('sensor.sbc5_control_center_update','local_package_file') | default('zweryfikowana lokalna paczka ZIP', true) }}
+            icon: mdi:package-down
+            icon_color: cyan
+            layout: horizontal
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.sbc5_fan_install_local_update_confirmed
+              confirmation:
+                title: Aktualizacja SBC5 Control Center
+                text: >-
+                  Paczka zostanie zweryfikowana i zainstalowana zgodnie z zakresem pokazanym na karcie. Jeśli aktualizacja będzie wymagała restartu, Restart Manager wyświetli osobny komunikat. Kontynuować?
+            card_mod:
+              style: |
+                ha-card {
+                  min-height: 68px;
+                  height: auto !important;
+                  border-radius: 16px;
+                  border: 1px solid rgba(0,220,255,.42);
+                  background:
+                    radial-gradient(circle at 92% 0%, rgba(0,220,255,.18), transparent 45%),
+                    linear-gradient(145deg, rgba(14,43,53,.98), rgba(9,24,31,.98));
+                  box-shadow: 0 0 18px rgba(0,188,255,.05);
+                  padding: 3px 7px !important;
+                }
+                mushroom-shape-icon { --icon-size: 40px; }
+                mushroom-state-info { min-width: 0 !important; }
+                .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
+                .primary { font-size: 13.5px !important; font-weight: 750 !important; line-height: 1.15 !important; }
+                .secondary { font-size: 10.5px !important; line-height: 1.18 !important; }
+                /* SBC5CC 2.8.25 screen-fit guard */
+                ha-card {
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  min-width: 0 !important;
+                  box-sizing: border-box !important;
+                }
+                mushroom-state-info {
+                  min-width: 0 !important;
+                  width: 100% !important;
+                }
+                .primary, .secondary {
+                  white-space: normal !important;
+                  overflow: visible !important;
+                  text-overflow: clip !important;
+                  max-width: 100% !important;
+                  overflow-wrap: anywhere !important;
+                  word-break: normal !important;
+                }
+
+  # ============================================================
+  # RESTART MANAGER — shown only when needed
+  # ============================================================
+        - type: conditional
+          conditions:
+            - entity: sensor.sbc5_fan_restart_required
+              state: "home_assistant"
+          card:
+            type: custom:mushroom-template-card
+            multiline_secondary: true
+            primary: Restart Home Assistant wymagany
+            secondary: Dokończ aktualizację po bezpiecznym sprawdzeniu konfiguracji
+            icon: mdi:restart
+            icon_color: orange
+            layout: horizontal
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.sbc5_fan_restart_home_assistant_confirmed
+              confirmation:
+                title: Restart Home Assistant
+                text: Czy potwierdzasz bezpieczny restart Home Assistant?
+            card_mod:
+              style: |
+                ha-card {
+                  min-height: 66px;
+                  height: auto !important;
+                  border-radius: 15px;
+                  border: 1px solid rgba(255,170,0,.30);
+                  background: linear-gradient(145deg, rgba(45,34,18,.96), rgba(25,22,17,.96));
+                  box-shadow: none;
+                  padding: 2px 6px !important;
+                }
+                mushroom-shape-icon { --icon-size: 38px; }
+                mushroom-state-info { min-width: 0 !important; }
+                .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
+                .primary { font-size: 12.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
+                .secondary { font-size: 10px !important; line-height: 1.18 !important; }
+                /* SBC5CC 2.8.25 screen-fit guard */
+                ha-card {
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  min-width: 0 !important;
+                  box-sizing: border-box !important;
+                }
+                mushroom-state-info {
+                  min-width: 0 !important;
+                  width: 100% !important;
+                }
+                .primary, .secondary {
+                  white-space: normal !important;
+                  overflow: visible !important;
+                  text-overflow: clip !important;
+                  max-width: 100% !important;
+                  overflow-wrap: anywhere !important;
+                  word-break: normal !important;
+                }
+
+        - type: conditional
+          conditions:
+            - entity: sensor.sbc5_fan_restart_required
+              state: "host"
+          card:
+            type: custom:mushroom-template-card
+            multiline_secondary: true
+            primary: Restart Raspberry Pi 5 wymagany
+            secondary: Zmiany boot/config.txt zaczną działać po restarcie hosta
+            icon: mdi:restart-alert
+            icon_color: orange
+            layout: horizontal
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.sbc5_fan_reboot_host_confirmed
+              confirmation:
+                title: Restart Raspberry Pi 5
+                text: Czy potwierdzasz pełny restart Raspberry Pi 5?
+            card_mod:
+              style: |
+                ha-card {
+                  min-height: 66px;
+                  height: auto !important;
+                  border-radius: 15px;
+                  border: 1px solid rgba(255,170,0,.30);
+                  background: linear-gradient(145deg, rgba(45,34,18,.96), rgba(25,22,17,.96));
+                  box-shadow: none;
+                  padding: 2px 6px !important;
+                }
+                mushroom-shape-icon { --icon-size: 38px; }
+                mushroom-state-info { min-width: 0 !important; }
+                .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
+                .primary { font-size: 12.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
+                .secondary { font-size: 10px !important; line-height: 1.18 !important; }
+                /* SBC5CC 2.8.25 screen-fit guard */
+                ha-card {
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  min-width: 0 !important;
+                  box-sizing: border-box !important;
+                }
+                mushroom-state-info {
+                  min-width: 0 !important;
+                  width: 100% !important;
+                }
+                .primary, .secondary {
+                  white-space: normal !important;
+                  overflow: visible !important;
+                  text-overflow: clip !important;
+                  max-width: 100% !important;
+                  overflow-wrap: anywhere !important;
+                  word-break: normal !important;
+                }
+
+
+  # ============================================================
+  # CONTEXT — compact, no large empty blocks
+  # ============================================================
+        - type: custom:mushroom-template-card
+          multiline_secondary: true
+          primary: Aktualizacje lokalne
+          secondary: >-
+            /config/sbc5_control_center_updates · HA OS ≥ 18.3 · Core ≥ 2026.10.1
+          icon: mdi:folder-cog-outline
+          icon_color: blue
+          layout: horizontal
+          tap_action:
+            action: none
+          card_mod:
+            style: |
+              ha-card {
+                min-height: 54px;
+                height: auto !important;
+                border-radius: 14px;
+                border: 1px solid rgba(125,190,220,.12);
+                background: rgba(13,25,30,.86);
+                box-shadow: none;
+                padding: 4px 5px !important;
+              }
+              mushroom-shape-icon { --icon-size: 32px; }
+              mushroom-state-info { min-width: 0 !important; }
+              .primary, .secondary {
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                max-width: 100% !important;
+                overflow-wrap: anywhere !important;
+              }
+              .primary { font-size: 11.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
+              .secondary { font-size: 9.5px !important; line-height: 1.2 !important; }
+              @media (max-width: 600px) {
+                ha-card { min-height: 68px; padding-top: 7px !important; padding-bottom: 7px !important; }
+              }
+              /* SBC5CC 2.8.25 screen-fit guard */
+              ha-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+              }
+              mushroom-state-info {
+                min-width: 0 !important;
+                width: 100% !important;
+              }
+              .primary, .secondary {
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                max-width: 100% !important;
+                overflow-wrap: anywhere !important;
+                word-break: normal !important;
+              }

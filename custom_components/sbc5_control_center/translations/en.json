@@ -1,0 +1,28 @@
+{
+  "title": "SBC5 Control Center",
+  "issues": {
+    "restart_required": {
+      "title": "Restart pending — SBC5 Control Center",
+      "short_title": "Restart pending",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "Perform the required restart — SBC5 Control Center",
+            "description": "{reason}\n\nRestart required: **{target}**. The restart will only be performed after confirmation.",
+            "data": {
+              "confirm": "Restart now"
+            }
+          }
+        },
+        "error": {
+          "confirm_required": "Confirm the restart to continue."
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "SBC5 Control Center is already configured."
+    }
+  }
+}

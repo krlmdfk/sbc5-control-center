@@ -1,0 +1,262 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2712";
+
+    fragment@0 {
+        target = <&fan>;
+        __overlay__ {
+            status = "okay";
+            cooling-min-state = <0>;
+            cooling-max-state = <15>;
+
+            /*
+             * State 0 = OFF
+             * 1..15 = 15 stopni chłodzenia
+             *
+             * PWM:
+             *  1:  75  (29%)
+             *  2:  85  (33%)
+             *  3:  95  (37%)
+             *  4: 105  (41%)
+             *  5: 110  (43%)
+             *  6: 115  (45%)
+             *  7: 120  (47%)
+             *  8: 130  (51%)
+             *  9: 140  (55%)
+             * 10: 152  (60%)
+             * 11: 165  (65%)
+             * 12: 185  (73%)
+             * 13: 205  (80%)
+             * 14: 230  (90%)
+             * 15: 255 (100%)
+             */
+            cooling-levels = <
+                0
+                75
+                85
+                95
+                105
+                110
+                115
+                120
+                130
+                140
+                152
+                165
+                185
+                205
+                230
+                255
+            >;
+        };
+    };
+
+    fragment@1 {
+        target = <&rp1_pwm1>;
+        __overlay__ {
+            status = "okay";
+        };
+    };
+
+    /*
+     * Pierwsze cztery istniejące punkty Pi 5 -> stany 1..4.
+     */
+    fragment@2 {
+        target = <&cpu_tepid>;
+        __overlay__ {
+            temperature = <44000>;
+            hysteresis = <1000>;
+            type = "active";
+        };
+    };
+
+    fragment@3 {
+        target = <&cpu_warm>;
+        __overlay__ {
+            temperature = <45000>;
+            hysteresis = <1000>;
+            type = "active";
+        };
+    };
+
+    fragment@4 {
+        target = <&cpu_hot>;
+        __overlay__ {
+            temperature = <46000>;
+            hysteresis = <1000>;
+            type = "active";
+        };
+    };
+
+    fragment@5 {
+        target = <&cpu_vhot>;
+        __overlay__ {
+            temperature = <47000>;
+            hysteresis = <1000>;
+            type = "active";
+        };
+    };
+
+    /*
+     * Dodatkowe punkty 5..15.
+     * W zakresie roboczym 48.5..52.5°C zagęszczenie do 0.5°C.
+     * Histereza 0.75°C w gęstym zakresie, aby ograniczyć oscylacje.
+     */
+    fragment@6 {
+        target = <&thermal_trips>;
+        __overlay__ {
+            stable50_15_t5: stable50-15-t5 {
+                temperature = <48000>;
+                hysteresis = <1000>;
+                type = "active";
+            };
+
+            stable50_15_t6: stable50-15-t6 {
+                temperature = <48500>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t7: stable50-15-t7 {
+                temperature = <49000>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t8: stable50-15-t8 {
+                temperature = <49500>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t9: stable50-15-t9 {
+                temperature = <50000>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t10: stable50-15-t10 {
+                temperature = <50500>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t11: stable50-15-t11 {
+                temperature = <51000>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t12: stable50-15-t12 {
+                temperature = <51500>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t13: stable50-15-t13 {
+                temperature = <52000>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t14: stable50-15-t14 {
+                temperature = <52500>;
+                hysteresis = <750>;
+                type = "active";
+            };
+
+            stable50_15_t15: stable50-15-t15 {
+                temperature = <53000>;
+                hysteresis = <1000>;
+                type = "active";
+            };
+        };
+    };
+
+    fragment@7 {
+        target = <&cooling_maps>;
+        __overlay__ {
+            tepid {
+                trip = <&cpu_tepid>;
+                cooling-device = <&fan 1 1>;
+            };
+
+            warm {
+                trip = <&cpu_warm>;
+                cooling-device = <&fan 2 2>;
+            };
+
+            hot {
+                trip = <&cpu_hot>;
+                cooling-device = <&fan 3 3>;
+            };
+
+            vhot {
+                trip = <&cpu_vhot>;
+                cooling-device = <&fan 4 4>;
+            };
+
+            stable50-15-map5 {
+                trip = <&stable50_15_t5>;
+                cooling-device = <&fan 5 5>;
+            };
+
+            stable50-15-map6 {
+                trip = <&stable50_15_t6>;
+                cooling-device = <&fan 6 6>;
+            };
+
+            stable50-15-map7 {
+                trip = <&stable50_15_t7>;
+                cooling-device = <&fan 7 7>;
+            };
+
+            stable50-15-map8 {
+                trip = <&stable50_15_t8>;
+                cooling-device = <&fan 8 8>;
+            };
+
+            stable50-15-map9 {
+                trip = <&stable50_15_t9>;
+                cooling-device = <&fan 9 9>;
+            };
+
+            stable50-15-map10 {
+                trip = <&stable50_15_t10>;
+                cooling-device = <&fan 10 10>;
+            };
+
+            stable50-15-map11 {
+                trip = <&stable50_15_t11>;
+                cooling-device = <&fan 11 11>;
+            };
+
+            stable50-15-map12 {
+                trip = <&stable50_15_t12>;
+                cooling-device = <&fan 12 12>;
+            };
+
+            stable50-15-map13 {
+                trip = <&stable50_15_t13>;
+                cooling-device = <&fan 13 13>;
+            };
+
+            stable50-15-map14 {
+                trip = <&stable50_15_t14>;
+                cooling-device = <&fan 14 14>;
+            };
+
+            stable50-15-map15 {
+                trip = <&stable50_15_t15>;
+                cooling-device = <&fan 15 15>;
+            };
+
+            melt {
+                trip = <&cpu_crit>;
+                cooling-device = <&fan 15 15>;
+            };
+        };
+    };
+};

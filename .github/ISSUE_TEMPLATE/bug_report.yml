@@ -1,0 +1,30 @@
+name: Bug report
+description: Zgłoś powtarzalny problem w SBC5 Control Center
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Wersja SBC5 Control Center
+      placeholder: 1.9.8
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Wersja Home Assistant
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Kroki odtworzenia
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logi
+      description: Usuń tokeny, hasła i dane poufne.
+      render: shell

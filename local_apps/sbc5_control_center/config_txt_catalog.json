@@ -1,0 +1,507 @@
+{
+  "catalog_version": "1.0",
+  "target": "Raspberry Pi 5 / Home Assistant OS",
+  "source_note": "Zakresy i wartości domyślne oparte na dokumentacji Raspberry Pi; gdy firmware nie publikuje twardego limitu, podano zakres ochronny aplikacji albo typ string.",
+  "fallback": {
+    "type": "string",
+    "range": "0–90 znaków w pojedynczej linii; brak znanego zakresu",
+    "description": "Parametr zaawansowany nieobecny w katalogu. Control Center sprawdza składnię, ale nie zna semantyki ani bezpiecznego zakresu.",
+    "risk": "high",
+    "restart": true
+  },
+  "parameters": {
+    "camera_auto_detect": {
+      "group": "Sprzęt / autodetekcja",
+      "type": "bool",
+      "description": "Automatycznie ładuje overlay dla rozpoznanych kamer CSI.",
+      "restart": true,
+      "risk": "low",
+      "pi5": true,
+      "default": 1,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "display_auto_detect": {
+      "group": "Sprzęt / autodetekcja",
+      "type": "bool",
+      "description": "Automatycznie ładuje overlay dla rozpoznanych wyświetlaczy DSI.",
+      "restart": true,
+      "risk": "low",
+      "pi5": true,
+      "default": 1,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "auto_initramfs": {
+      "group": "Boot / kernel",
+      "type": "bool",
+      "description": "Automatycznie ładuje initramfs, jeśli firmware go znajdzie.",
+      "restart": true,
+      "risk": "low",
+      "pi5": true,
+      "default": 1,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "arm_64bit": {
+      "group": "Boot / kernel",
+      "type": "bool",
+      "description": "Wybiera 64-bitowy tryb kernela, gdy dostępny.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "default": 1,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "enable_uart": {
+      "group": "UART / debug",
+      "type": "bool",
+      "description": "Włącza podstawowy UART; na rodzinie Pi 5 wpływa również na lokalizację konsoli.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "enable_rp1_uart": {
+      "group": "UART / debug",
+      "type": "bool",
+      "description": "Pi 5: inicjalizuje RP1 UART0 115200 bps dla wczesnego debugowania.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "uart_2ndstage": {
+      "group": "UART / debug",
+      "type": "bool",
+      "description": "Włącza logowanie debug bootu do UART w drugim etapie.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "pciex4_reset": {
+      "group": "PCIe / RP1",
+      "type": "bool",
+      "description": "Pi 5: określa, czy kontroler PCIe x4 używany przez RP1 jest resetowany przed startem systemu.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 1,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "power_force_3v3_pwm": {
+      "group": "Zasilanie",
+      "type": "bool",
+      "description": "Pi 5: wymusza PWM na wyjściu 3,3 V GPIO/CSI.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "usb_max_current_enable": {
+      "group": "Zasilanie / USB",
+      "type": "bool",
+      "description": "Wymusza niski lub wysoki sprzętowy limit prądu portów USB-A: 0≈600 mA, 1≈1600 mA.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "allowed": [
+        0,
+        1
+      ],
+      "notes": "Auto = brak wpisu. Wysoki limit tylko przy zasilaniu zdolnym dostarczyć 5 A."
+    },
+    "sha256": {
+      "group": "Boot / debug",
+      "type": "bool",
+      "description": "Włącza logowanie SHA-256 ładowanych plików boot; może wyraźnie wydłużyć start.",
+      "restart": true,
+      "risk": "low",
+      "pi5": true,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "boot_ramdisk": {
+      "group": "Boot / kernel",
+      "type": "bool",
+      "description": "Próbuje uruchomić boot filesystem z boot.img (głównie secure boot / netboot).",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "set_reboot_arg1": {
+      "group": "Boot / kernel",
+      "type": "uint32",
+      "description": "Pi 5: zapisuje 32-bitową wartość przekazywaną przez restart-safe register.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "range": "0–4294967295"
+    },
+    "enable_tvout": {
+      "group": "Wideo / ekran",
+      "type": "bool",
+      "description": "Włącza wyjście composite; na Pi 5 wyłącza HDMI.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "disable_overscan": {
+      "group": "Wideo / ekran",
+      "type": "bool",
+      "description": "Wyłącza kompensację overscan.",
+      "restart": true,
+      "risk": "low",
+      "pi5": true,
+      "default": 1,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "disable_fw_kms_setup": {
+      "group": "Wideo / KMS",
+      "type": "bool",
+      "description": "Nie pozwala firmware tworzyć początkowego ustawienia video= dla KMS.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "default": 1,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "max_framebuffers": {
+      "group": "Wideo / KMS",
+      "type": "int",
+      "description": "Maksymalna liczba firmware framebufferów.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "default": 2,
+      "range": "0–2"
+    },
+    "kernel": {
+      "group": "Boot / kernel",
+      "type": "string",
+      "description": "Alternatywna nazwa pliku kernela. Pi 5 domyślnie preferuje kernel_2712.img.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": "kernel_2712.img",
+      "range": "nazwa pliku, maks. 90 znaków"
+    },
+    "cmdline": {
+      "group": "Boot / kernel",
+      "type": "string",
+      "description": "Alternatywna nazwa pliku z linią poleceń kernela.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": "cmdline.txt",
+      "range": "nazwa pliku, maks. 90 znaków"
+    },
+    "device_tree": {
+      "group": "Device Tree",
+      "type": "string",
+      "description": "Wskazuje alternatywny bazowy plik Device Tree (.dtb).",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "range": "nazwa pliku .dtb, maks. 90 znaków"
+    },
+    "overlay_prefix": {
+      "group": "Device Tree",
+      "type": "string",
+      "description": "Katalog/prefix, z którego firmware ładuje overlaye.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": "overlays/",
+      "range": "ścieżka względna, maks. 90 znaków"
+    },
+    "os_prefix": {
+      "group": "Boot / kernel",
+      "type": "string",
+      "description": "Prefix katalogu systemowego stosowany do plików boot.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "range": "ścieżka względna, maks. 90 znaków"
+    },
+    "arm_freq": {
+      "group": "CPU / overclocking",
+      "type": "int",
+      "description": "Maksymalna częstotliwość CPU ARM. Pi 5 domyślnie 2400 MHz; SBC5 oferuje profile OC do 3000 MHz z zachowaniem DVFS.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 2400,
+      "range": "aplikacja: 600–3000; profile: 2400 / 2500 / 2600 / 2800 / 3000 MHz",
+      "unit": "MHz"
+    },
+    "arm_freq_min": {
+      "group": "CPU / overclocking",
+      "type": "int",
+      "description": "Minimalna częstotliwość CPU używana przez dynamiczne skalowanie. Domyślnie Pi 5: 1500 MHz.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 1500,
+      "range": "600–2400 (obniżanie poniżej domyślnej nie jest zalecane)",
+      "unit": "MHz"
+    },
+    "core_freq": {
+      "group": "GPU / zegary",
+      "type": "int",
+      "description": "Częstotliwość GPU core. Raspberry Pi 5: domyślnie 910 MHz; preset SBC5 maks. 1100 MHz, ręczny limit ochronny 1200 MHz.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 910,
+      "range": "500–1200 (zakres ochronny aplikacji)",
+      "unit": "MHz"
+    },
+    "isp_freq": {
+      "group": "GPU / zegary",
+      "type": "int",
+      "description": "Częstotliwość ISP. Raspberry Pi 5: domyślnie 910 MHz; preset SBC5 maks. 1100 MHz, ręczny limit ochronny 1200 MHz.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 910,
+      "range": "500–1200 (zakres ochronny aplikacji)",
+      "unit": "MHz"
+    },
+    "v3d_freq": {
+      "group": "GPU / zegary",
+      "type": "int",
+      "description": "Częstotliwość V3D. Raspberry Pi 5: domyślnie 960 MHz i niezależnie od core/ISP; preset SBC5 maks. 1200 MHz.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 960,
+      "range": "500–1200 (zakres ochronny aplikacji)",
+      "unit": "MHz"
+    },
+    "core_freq_min": {
+      "group": "GPU / zegary",
+      "type": "int",
+      "description": "Minimalna częstotliwość core. Domyślnie Pi 5: 500 MHz.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 500,
+      "range": "200–910",
+      "unit": "MHz"
+    },
+    "gpu_freq_min": {
+      "group": "GPU / zegary",
+      "type": "int",
+      "description": "Minimalna częstotliwość grupy GPU; na Pi 5 część bloków ma niezależne zegary.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 500,
+      "range": "200–960",
+      "unit": "MHz"
+    },
+    "isp_freq_min": {
+      "group": "GPU / zegary",
+      "type": "int",
+      "description": "Minimalna częstotliwość ISP. Domyślnie Pi 5: 500 MHz.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 500,
+      "range": "200–910",
+      "unit": "MHz"
+    },
+    "v3d_freq_min": {
+      "group": "GPU / zegary",
+      "type": "int",
+      "description": "Minimalna częstotliwość V3D. Domyślnie Pi 5: 500 MHz.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 500,
+      "range": "200–960",
+      "unit": "MHz"
+    },
+    "over_voltage": {
+      "group": "CPU / overclocking",
+      "type": "int",
+      "description": "Górny limit napięcia CPU/GPU core według skali firmware.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 0,
+      "range": "-16–8; krok odpowiada 0,025 V"
+    },
+    "over_voltage_min": {
+      "group": "CPU / overclocking",
+      "type": "int",
+      "description": "Minimalna wartość over_voltage; na Pi 4/Pi 5 parametr jest przestarzały.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 0,
+      "range": "-16–8",
+      "notes": "Deprecated na Raspberry Pi 4 i Raspberry Pi 5."
+    },
+    "over_voltage_delta": {
+      "group": "CPU / overclocking",
+      "type": "int",
+      "description": "Pi 4/Pi 5: dodaje offset do napięcia wyliczonego przez DVFS.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 0,
+      "range": "µV; firmware nie publikuje jednego twardego maksimum; Control Center: 0–50000 w profilu bezpiecznym",
+      "unit": "µV"
+    },
+    "force_turbo": {
+      "group": "CPU / overclocking",
+      "type": "bool",
+      "description": "Wymusza tryb turbo zamiast dynamicznego skalowania.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "initial_turbo": {
+      "group": "CPU / overclocking",
+      "type": "int",
+      "description": "Czas po starcie, przez który firmware utrzymuje turbo.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 0,
+      "range": "0–60",
+      "unit": "s"
+    },
+    "temp_limit": {
+      "group": "CPU / termika",
+      "type": "int",
+      "description": "Próg ochrony termicznej; wartości powyżej 85°C są ograniczane do 85°C.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "default": 85,
+      "range": "0–85",
+      "unit": "°C"
+    },
+    "dtparam": {
+      "group": "Device Tree",
+      "type": "directive",
+      "description": "Parametr bazowego Device Tree lub aktywnego overlaya. Dostępne nazwy i zakresy zależą od zainstalowanego DT/overlaya.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": true,
+      "range": "dynamiczny; overlays/README / dtoverlay -h",
+      "repeatable": true
+    },
+    "dtoverlay": {
+      "group": "Device Tree",
+      "type": "directive",
+      "description": "Ładuje Device Tree overlay. Lista i parametry zależą od obrazów .dtbo zainstalowanych w systemie.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "range": "dynamiczny; nazwa overlaya + opcjonalne parametry",
+      "repeatable": true
+    },
+    "include": {
+      "group": "Zaawansowane",
+      "type": "directive",
+      "description": "Włącza treść dodatkowego pliku config do bieżącej konfiguracji.",
+      "restart": true,
+      "risk": "high",
+      "pi5": true,
+      "range": "ścieżka względna do pliku, maks. 90 znaków",
+      "repeatable": true
+    },
+    "arm_boost": {
+      "group": "CPU / compatibility",
+      "type": "bool",
+      "description": "Podnosi domyślny turbo zegar na wybranych Pi 4/400; nie jest potrzebny do Pi 5.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": false,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "hdmi_enable_4kp60": {
+      "group": "Wideo / compatibility",
+      "type": "bool",
+      "description": "Pi 4/400/CM4: zezwala na 4Kp60. Pi 5 obsługuje dual-4Kp60 bez tego wpisu.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": false,
+      "default": 0,
+      "allowed": [
+        0,
+        1
+      ]
+    },
+    "audio_pwm_mode": {
+      "group": "Audio / legacy",
+      "type": "int",
+      "description": "Tryb firmware PWM dla analogowego audio; nie jest typowym parametrem Pi 5.",
+      "restart": true,
+      "risk": "medium",
+      "pi5": false,
+      "range": "legacy/model-dependent"
+    }
+  }
+}

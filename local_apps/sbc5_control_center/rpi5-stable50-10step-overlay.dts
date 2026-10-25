@@ -1,0 +1,185 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2712";
+
+    fragment@0 {
+        target = <&fan>;
+        __overlay__ {
+            status = "okay";
+            cooling-min-state = <0>;
+            cooling-max-state = <10>;
+            /*
+             * State 0 = OFF
+             * 1..10 = 10 stopni chłodzenia
+             */
+            cooling-levels = <
+                0
+                75
+                85
+                95
+                105
+                110
+                120
+                140
+                165
+                205
+                255
+            >;
+        };
+    };
+
+    fragment@1 {
+        target = <&rp1_pwm1>;
+        __overlay__ {
+            status = "okay";
+        };
+    };
+
+    /*
+     * Cztery istniejące punkty Pi 5 wykorzystujemy jako stany 1..4.
+     */
+    fragment@2 {
+        target = <&cpu_tepid>;
+        __overlay__ {
+            temperature = <44000>;
+            hysteresis = <1000>;
+            type = "active";
+        };
+    };
+
+    fragment@3 {
+        target = <&cpu_warm>;
+        __overlay__ {
+            temperature = <45000>;
+            hysteresis = <1000>;
+            type = "active";
+        };
+    };
+
+    fragment@4 {
+        target = <&cpu_hot>;
+        __overlay__ {
+            temperature = <46000>;
+            hysteresis = <1000>;
+            type = "active";
+        };
+    };
+
+    fragment@5 {
+        target = <&cpu_vhot>;
+        __overlay__ {
+            temperature = <47000>;
+            hysteresis = <1000>;
+            type = "active";
+        };
+    };
+
+    /*
+     * Dodatkowe punkty 5..10.
+     */
+    fragment@6 {
+        target = <&thermal_trips>;
+        __overlay__ {
+            stable50_t5: stable50-t5 {
+                temperature = <48000>;
+                hysteresis = <1000>;
+                type = "active";
+            };
+
+            stable50_t6: stable50-t6 {
+                temperature = <49000>;
+                hysteresis = <1000>;
+                type = "active";
+            };
+
+            stable50_t7: stable50-t7 {
+                temperature = <50000>;
+                hysteresis = <1000>;
+                type = "active";
+            };
+
+            stable50_t8: stable50-t8 {
+                temperature = <51000>;
+                hysteresis = <1000>;
+                type = "active";
+            };
+
+            stable50_t9: stable50-t9 {
+                temperature = <52000>;
+                hysteresis = <1000>;
+                type = "active";
+            };
+
+            stable50_t10: stable50-t10 {
+                temperature = <53000>;
+                hysteresis = <1000>;
+                type = "active";
+            };
+        };
+    };
+
+    /*
+     * Mapowanie temperatur na konkretne stany pwm-fan.
+     */
+    fragment@7 {
+        target = <&cooling_maps>;
+        __overlay__ {
+            tepid {
+                trip = <&cpu_tepid>;
+                cooling-device = <&fan 1 1>;
+            };
+
+            warm {
+                trip = <&cpu_warm>;
+                cooling-device = <&fan 2 2>;
+            };
+
+            hot {
+                trip = <&cpu_hot>;
+                cooling-device = <&fan 3 3>;
+            };
+
+            vhot {
+                trip = <&cpu_vhot>;
+                cooling-device = <&fan 4 4>;
+            };
+
+            stable50-map5 {
+                trip = <&stable50_t5>;
+                cooling-device = <&fan 5 5>;
+            };
+
+            stable50-map6 {
+                trip = <&stable50_t6>;
+                cooling-device = <&fan 6 6>;
+            };
+
+            stable50-map7 {
+                trip = <&stable50_t7>;
+                cooling-device = <&fan 7 7>;
+            };
+
+            stable50-map8 {
+                trip = <&stable50_t8>;
+                cooling-device = <&fan 8 8>;
+            };
+
+            stable50-map9 {
+                trip = <&stable50_t9>;
+                cooling-device = <&fan 9 9>;
+            };
+
+            stable50-map10 {
+                trip = <&stable50_t10>;
+                cooling-device = <&fan 10 10>;
+            };
+
+            melt {
+                trip = <&cpu_crit>;
+                cooling-device = <&fan 10 10>;
+            };
+        };
+    };
+};

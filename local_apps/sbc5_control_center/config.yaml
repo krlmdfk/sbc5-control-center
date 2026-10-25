@@ -1,0 +1,264 @@
+name: SBC5 Control Center
+version: 2.8.25
+slug: sbc5_control_center
+description: SBC5 Control Center 2.8.25 — CPU profile semantic restart guard hotfix with false host-restart cleanup.
+arch:
+- aarch64
+homeassistant: 2026.10.1
+breaking_versions:
+- 2.0.0
+stage: stable
+startup: application
+boot: auto
+init: false
+stdin: true
+full_access: true
+apparmor: false
+host_pid: true
+privileged:
+- SYS_ADMIN
+- SYS_PTRACE
+homeassistant_api: true
+hassio_api: true
+hassio_role: manager
+map:
+- type: homeassistant_config
+  read_only: false
+  path: /homeassistant
+- type: local_apps
+  read_only: false
+  path: /local_apps
+- type: app_config
+  read_only: false
+  path: /config
+options:
+  custom_curve_1_name: Zbalansowana
+  custom_target_temp_c: 50.0
+  cooling_control_mode: automatic
+  cooling_auto_style: balanced
+  hybrid_correction_limit_percent: 10
+  custom_min_pwm_percent: 29
+  custom_target_pwm_percent: 55
+  custom_max_pwm_percent: 100
+  manual_hysteresis_c: 1.0
+  section_ai_cooling_enabled: false
+  ai_cooling_mode: learning
+  ai_cooling_assist_limit_percent: 5
+  ai_cooling_min_samples: 30
+  restart_policy: ask
+  pre_restart_config_check: true
+  restart_notice_on_start: true
+  post_update_restart_prompt: true
+  native_restart_repair: true
+  section_notifications_enabled: true
+  actionable_mobile_notifications: true
+  mobile_notify_service: auto
+  section_updates_enabled: true
+  update_check_enabled: true
+  update_check_interval_hours: 6
+  update_notify: true
+  app_update_manifest_url: ''
+  local_package_updates_enabled: true
+  local_package_scan_interval_minutes: 2
+  local_package_keep_processed: true
+  local_package_cleanup_enabled: true
+  local_package_processed_retention: 2
+  local_package_failed_retention: 2
+  section_telemetry_enabled: true
+  multicore_telemetry_enabled: true
+  multicore_workers: auto
+  config_txt_manager:
+    enabled: false
+    sync_interval_seconds: 5
+    advanced_mode: false
+  section_cpu_enabled: false
+  config_cpu_profile: factory
+  config_cpu:
+    arm_freq: auto
+    arm_freq_min: auto
+    over_voltage: auto
+    over_voltage_min: auto
+    over_voltage_delta: auto
+    force_turbo: auto
+    initial_turbo: auto
+    temp_limit: auto
+  section_gpu_enabled: false
+  config_gpu_profile: factory
+  config_gpu:
+    core_freq: auto
+    core_freq_min: auto
+    isp_freq: auto
+    isp_freq_min: auto
+    v3d_freq: auto
+    v3d_freq_min: auto
+    gpu_freq_min: auto
+  section_power_usb_enabled: false
+  config_power_usb:
+    usb_max_current_enable: auto
+    power_force_3v3_pwm: auto
+  section_pcie_rp1_enabled: false
+  config_pcie_rp1:
+    pciex4_reset: auto
+  section_boot_kernel_enabled: false
+  config_boot_kernel:
+    auto_initramfs: auto
+    arm_64bit: auto
+    boot_ramdisk: auto
+    sha256: auto
+    set_reboot_arg1: auto
+    kernel: auto
+    cmdline: auto
+    os_prefix: auto
+  section_hardware_enabled: false
+  config_hardware:
+    camera_auto_detect: auto
+    display_auto_detect: auto
+  section_uart_debug_enabled: false
+  config_uart_debug:
+    enable_uart: auto
+    enable_rp1_uart: auto
+    uart_2ndstage: auto
+  section_video_enabled: false
+  config_video:
+    enable_tvout: auto
+    disable_overscan: auto
+    disable_fw_kms_setup: auto
+    max_framebuffers: auto
+    hdmi_enable_4kp60: auto
+  section_device_tree_enabled: false
+  config_device_tree:
+    device_tree: auto
+    overlay_prefix: auto
+  section_compatibility_enabled: false
+  config_compatibility:
+    arm_boost: auto
+    audio_pwm_mode: auto
+  section_custom_parameters_enabled: false
+  config_custom_parameters: []
+  custom_hysteresis_dense_c: 0.75
+  custom_hysteresis_outer_c: 1.0
+  apply_custom_on_start: false
+  adaptive_pwm_enabled: true
+  section_adaptive_advanced_enabled: false
+  adaptive_pwm_deadband_c: 0.75
+  adaptive_pwm_interval_seconds: 10
+  adaptive_pwm_down_confirm_cycles: 2
+schema:
+  custom_curve_1_name: str(1,32)
+  custom_target_temp_c: float(46,65)
+  cooling_control_mode: list(automatic|hybrid|manual)
+  cooling_auto_style: list(quiet|balanced|performance)
+  hybrid_correction_limit_percent: int(0,25)
+  custom_min_pwm_percent: int(20,70)
+  custom_target_pwm_percent: int(25,90)
+  custom_max_pwm_percent: int(70,100)
+  manual_hysteresis_c: float(0.25,5.0)
+  section_ai_cooling_enabled: bool
+  ai_cooling_mode: list(learning|assist)
+  ai_cooling_assist_limit_percent: int(1,10)
+  ai_cooling_min_samples: int(10,300)
+  restart_policy: list(ask|notify_only)
+  pre_restart_config_check: bool
+  restart_notice_on_start: bool
+  post_update_restart_prompt: bool
+  native_restart_repair: bool
+  section_notifications_enabled: bool
+  actionable_mobile_notifications: bool
+  mobile_notify_service: str
+  section_updates_enabled: bool
+  update_check_enabled: bool
+  update_check_interval_hours: int(1,24)
+  update_notify: bool
+  app_update_manifest_url: str
+  local_package_updates_enabled: bool
+  local_package_scan_interval_minutes: int(1,60)
+  local_package_keep_processed: bool
+  local_package_cleanup_enabled: bool
+  local_package_processed_retention: int(0,20)
+  local_package_failed_retention: int(0,20)
+  section_telemetry_enabled: bool
+  multicore_telemetry_enabled: bool
+  multicore_workers: list(auto|1|2|3|4)
+  config_txt_manager:
+    enabled: bool
+    sync_interval_seconds: int(2,60)
+    advanced_mode: bool
+  section_cpu_enabled: bool
+  config_cpu_profile: list(factory|mild|balanced|performance|experimental|advanced)
+  config_cpu:
+    arm_freq: str
+    arm_freq_min: str
+    over_voltage: str
+    over_voltage_min: str
+    over_voltage_delta: str
+    force_turbo: list(auto|0|1)
+    initial_turbo: str
+    temp_limit: str
+  section_gpu_enabled: bool
+  config_gpu_profile: list(factory|eco|balanced|performance|experimental|advanced)
+  config_gpu:
+    core_freq: str
+    core_freq_min: str
+    isp_freq: str
+    isp_freq_min: str
+    v3d_freq: str
+    v3d_freq_min: str
+    gpu_freq_min: str
+  section_power_usb_enabled: bool
+  config_power_usb:
+    usb_max_current_enable: list(auto|0|1)
+    power_force_3v3_pwm: list(auto|0|1)
+  section_pcie_rp1_enabled: bool
+  config_pcie_rp1:
+    pciex4_reset: list(auto|0|1)
+  section_boot_kernel_enabled: bool
+  config_boot_kernel:
+    auto_initramfs: list(auto|0|1)
+    arm_64bit: list(auto|0|1)
+    boot_ramdisk: list(auto|0|1)
+    sha256: list(auto|0|1)
+    set_reboot_arg1: str
+    kernel: str
+    cmdline: str
+    os_prefix: str
+  section_hardware_enabled: bool
+  config_hardware:
+    camera_auto_detect: list(auto|0|1)
+    display_auto_detect: list(auto|0|1)
+  section_uart_debug_enabled: bool
+  config_uart_debug:
+    enable_uart: list(auto|0|1)
+    enable_rp1_uart: list(auto|0|1)
+    uart_2ndstage: list(auto|0|1)
+  section_video_enabled: bool
+  config_video:
+    enable_tvout: list(auto|0|1)
+    disable_overscan: list(auto|0|1)
+    disable_fw_kms_setup: list(auto|0|1)
+    max_framebuffers: str
+    hdmi_enable_4kp60: list(auto|0|1)
+  section_device_tree_enabled: bool
+  config_device_tree:
+    device_tree: str
+    overlay_prefix: str
+  section_compatibility_enabled: bool
+  config_compatibility:
+    arm_boost: list(auto|0|1)
+    audio_pwm_mode: str
+  section_custom_parameters_enabled: bool
+  config_custom_parameters:
+  - section: str
+    key: str
+    value: str
+  custom_hysteresis_dense_c: float(0.25,3.0)
+  custom_hysteresis_outer_c: float(0.25,5.0)
+  apply_custom_on_start: bool
+  adaptive_pwm_enabled: bool
+  section_adaptive_advanced_enabled: bool
+  adaptive_pwm_deadband_c: float(0.10,1.50)
+  adaptive_pwm_interval_seconds: int(5,60)
+  adaptive_pwm_down_confirm_cycles: int(1,6)
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:tune-variant
+panel_title: SBC5 Control Center

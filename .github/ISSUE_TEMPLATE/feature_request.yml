@@ -1,0 +1,17 @@
+name: Feature request
+description: Zaproponuj usprawnienie projektu
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Jaki problem ma rozwiązać funkcja?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proponowane rozwiązanie
+    validations:
+      required: true

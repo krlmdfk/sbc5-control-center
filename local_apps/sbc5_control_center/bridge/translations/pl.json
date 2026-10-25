@@ -1,0 +1,28 @@
+{
+  "title": "SBC5 Control Center",
+  "issues": {
+    "restart_required": {
+      "title": "Oczekiwanie na restart — SBC5 Control Center",
+      "short_title": "Oczekiwanie na restart",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "Wykonaj wymagany restart — SBC5 Control Center",
+            "description": "{reason}\n\nWymagane ponowne uruchomienie: **{target}**. Restart zostanie wykonany dopiero po potwierdzeniu.",
+            "data": {
+              "confirm": "Uruchom ponownie teraz"
+            }
+          }
+        },
+        "error": {
+          "confirm_required": "Zaznacz potwierdzenie, aby wykonać restart."
+        }
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "SBC5 Control Center jest już skonfigurowany."
+    }
+  }
+}

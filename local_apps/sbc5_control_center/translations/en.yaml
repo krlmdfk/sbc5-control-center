@@ -1,0 +1,252 @@
+configuration:
+  custom_curve_1_name:
+    name: 01 · PROFILE — Name
+    description: Name of the custom profile, for example Balanced.
+  custom_target_temp_c:
+    name: 01 · PROFILE — Target temperature
+    description: 'Temperature the custom profile should maintain. Recommended starting point: 49–50°C.'
+  cooling_control_mode:
+    name: 01 · PROFILE — Control mode
+    description: 'Automatic: app controls cooling. Hybrid: manual base plus limited correction. Manual: fixed curve without
+      Adaptive PWM.'
+  cooling_auto_style:
+    name: 02 · AUTOMATIC — Character
+    description: Quiet, Balanced or Performance. Used only in Automatic mode.
+  hybrid_correction_limit_percent:
+    name: 03 · HYBRID — Correction range ±%
+    description: Maximum Adaptive PWM correction around the manual curve. Recommended ±10%.
+  custom_min_pwm_percent:
+    name: 03/04 · HYBRID / MANUAL — Minimum PWM
+    description: Lower limit of the manual base curve. Used only by Hybrid or Manual mode.
+  custom_target_pwm_percent:
+    name: 03/04 · HYBRID / MANUAL — PWM at target
+    description: Base PWM at target temperature for Hybrid and Manual mode.
+  custom_max_pwm_percent:
+    name: 03/04 · HYBRID / MANUAL — Maximum PWM
+    description: Upper limit of the manual base curve. 100% preserves full cooling reserve.
+  manual_hysteresis_c:
+    name: 04 · MANUAL — Hysteresis
+    description: Single hysteresis for Manual mode. Recommended 1.0°C.
+  section_ai_cooling_enabled:
+    name: 05 · AI COOLING (PREVIEW) — Enable section
+    description: Enables local Active Cooler learning. The model is offline and never bypasses Adaptive PWM safety.
+  ai_cooling_mode:
+    name: 05 · AI COOLING — Mode
+    description: Learning observes only. Assist may nudge Adaptive PWM after sufficient confidence is reached.
+  ai_cooling_assist_limit_percent:
+    name: 05 · AI COOLING — Assist limit ±%
+    description: Maximum AI Assist influence around the classic controller decision. Preview range 1–10%, recommended 5%.
+  ai_cooling_min_samples:
+    name: 05 · AI COOLING — Minimum samples
+    description: Samples required in a workload bucket before AI Assist may act. Recommended 30.
+  restart_policy:
+    name: 10 · SAFETY — Restart policy
+    description: 'Controls Restart Manager behavior. Allowed values: ask or notify_only. Default: ask. “ask” allows Home Assistant
+      to be restarted from the UI only after explicit user confirmation. “notify_only” reports the required action and blocks
+      restarts initiated by the app. The app never restarts Home Assistant automatically without a user action.'
+  pre_restart_config_check:
+    name: 10 · SAFETY — Check config before restart
+    description: 'When enabled, Control Center performs an additional Supervisor configuration check before handing the restart
+      to the native homeassistant.restart action. Home Assistant also always validates the configuration itself and cancels
+      the restart on validation failure. Default: enabled.'
+  restart_notice_on_start:
+    name: 10 · SAFETY — Restart notification
+    description: 'When enabled, the app creates a persistent Home Assistant notification if a Home Assistant or full host
+      restart is required. The state is always also published in sensor.sbc5_restart_required. Default: enabled.'
+  post_update_restart_prompt:
+    name: 10 · SAFETY — Post-update restart
+    description: 'When enabled, Control Center remembers the app version that was running before an update and checks the
+      new release metadata after the newer version starts. If the release requires a Home Assistant restart or a full SBC5
+      reboot, Restart Manager automatically exposes the required action and sends an actionable notification when Companion
+      App notifications are configured. A restart is performed only after explicit user confirmation. Allowed values: enabled/disabled.
+      Default: enabled.'
+  native_restart_repair:
+    name: 10 · SAFETY — Repairs issue
+    description: 'Controls only the native Home Assistant Repairs “Restart pending” issue. The sbc5_fan_manager_bridge integration,
+      telemetry, safety entities and the native sensors remain active regardless of this option. When enabled, the user can
+      confirm a Home Assistant restart or full SBC5 reboot from the Repair Flow. Default: enabled.'
+  section_notifications_enabled:
+    name: 11 · NOTIFICATIONS — Enable section
+    description: Enables the notification settings shown below.
+  actionable_mobile_notifications:
+    name: 11 · NOTIFICATIONS — Companion actions
+    description: 'When enabled, Control Center sends an additional Home Assistant Companion notification with a “Restart Home
+      Assistant” or “Restart SBC5” action button. Pressing the button is treated as explicit user approval. Internal persistent
+      Home Assistant notifications do not support custom action buttons. Default: enabled.'
+  mobile_notify_service:
+    name: 11 · NOTIFICATIONS — Notify service
+    description: 'The value “auto” automatically selects notify.mobile_app_* when exactly one Companion App device is detected.
+      With multiple devices, enter the service name, for example mobile_app_xiaomi_15_ultra or notify.mobile_app_xiaomi_15_ultra.
+      Default: auto.'
+  section_updates_enabled:
+    name: 12 · UPDATES — Enable section
+    description: Enables update checking and local package settings below.
+  update_check_enabled:
+    name: 12 · UPDATES — Automatic check
+    description: 'When enabled, the app periodically checks whether a newer SBC5 Control Center version is available. Local
+      ZIP packages in /config/sbc5_control_center_updates have priority for local installations. Supervisor Store metadata
+      is read without forcing the expensive /store/reload operation, and a remote manifest can also be used when configured.
+      Default: enabled.'
+  update_check_interval_hours:
+    name: 12 · UPDATES — Check interval
+    description: 'How often SBC5 Control Center checks for a newer app version. Range: 1–24 hours. Default: 6 hours.'
+  update_notify:
+    name: 12 · UPDATES — New-version notification
+    description: 'When enabled, Control Center creates a notification when a newer version of its own app is detected. The
+      notification includes installed/latest versions and, when available, a Companion App action linking to the release page.
+      Updates are never installed automatically. Default: enabled.'
+  app_update_manifest_url:
+    name: 12 · UPDATES — Remote manifest
+    description: Optional HTTP/HTTPS URL to a JSON file describing the latest SBC5 Control Center release. Leave it empty
+      when the app is installed from a Home Assistant repository because Supervisor Store metadata is used natively. For a
+      local installation set this URL so automatic checks can discover new releases. An empty value is allowed.
+  local_package_updates_enabled:
+    name: 12 · UPDATES — Local ZIP packages
+    description: 'When enabled, Control Center automatically scans /config/sbc5_control_center_updates in Home Assistant and
+      detects newer SBC5 Control Center ZIP packages. The package must contain update-manifest.json. Detecting a package never
+      installs it without explicit user confirmation. Default: enabled.'
+  local_package_scan_interval_minutes:
+    name: 12 · UPDATES — ZIP scan interval
+    description: 'How often Control Center scans /config/sbc5_control_center_updates. Range: 1–60 minutes. Default: 2 minutes.
+      A scan can also be started manually with “Check version now”.'
+  local_package_keep_processed:
+    name: 12 · UPDATES — Archive installed ZIPs
+    description: 'When enabled, a successfully installed package is moved to the processed subfolder instead of being deleted.
+      This makes rollback and update auditing easier. Default: enabled.'
+  local_package_cleanup_enabled:
+    name: Automatic package cleanup
+    description: Removes old ZIP packages above retention from processed/ and failed/. Configuration and Lovelace backups are untouched.
+  local_package_processed_retention:
+    name: Processed package retention
+    description: Number of most recent successfully processed ZIPs to keep. Default 2.
+  local_package_failed_retention:
+    name: Failed package retention
+    description: Number of most recent failed ZIPs to keep. Default 2.
+  section_telemetry_enabled:
+    name: 13 · TELEMETRY — Enable section
+    description: Enables extended telemetry settings below.
+  multicore_telemetry_enabled:
+    name: 13 · TELEMETRY — Multicore processing
+    description: 'Runs independent heavier diagnostic collectors in parallel so Linux can schedule them across the available
+      Raspberry Pi 5 CPU cores. Default: enabled.'
+  multicore_workers:
+    name: 13 · TELEMETRY — Worker count
+    description: 'auto uses up to four available CPU cores. Set 1–4 to cap the worker pool; 1 forces sequential collection.
+      Default: auto.'
+  config_txt_manager:
+    name: 20 · CONFIG.TXT — Manager
+    description: Manage Raspberry Pi config.txt settings directly from the app Configuration tab. 'auto' means the parameter
+      is left unmanaged.
+    fields:
+      enabled:
+        name: Enable config.txt management
+        description: Off by default for safe upgrade. Enable to make the options below control sbc5cc-managed.txt.
+      sync_interval_seconds:
+        name: Sync interval
+        description: 2–60 seconds; default 5.
+      advanced_mode:
+        name: Advanced mode
+        description: Allows unknown parameters and bypasses selected protective numeric ranges; syntax checks remain active.
+  section_cpu_enabled:
+    name: 21 · CONFIG.TXT — Enable CPU / OC
+    description: Enables CPU/OC settings in the group directly below.
+  config_cpu:
+    name: 21 · CONFIG.TXT — CPU / OC / thermal
+    description: CPU settings. auto = no managed entry. Full Raspberry Pi reboot required.
+  section_gpu_enabled:
+    name: 22 · CONFIG.TXT — Enable GPU
+    description: Enables GPU/V3D/ISP settings below.
+  config_gpu_profile:
+    name: 22 · GPU / V3D / ISP profile
+    description: 'factory = firmware defaults; eco = 850/850/900; balanced = 950/950/1000; performance = 1000/1000/1100; experimental = 1100/1100/1200; advanced = manual. Order: core / ISP / V3D MHz.'
+  config_gpu:
+    name: 22 · CONFIG.TXT — GPU / V3D / ISP
+    description: GPU clock settings. auto = no managed entry.
+  section_power_usb_enabled:
+    name: 23 · CONFIG.TXT — Enable Power / USB
+    description: Enables power and USB settings below.
+  config_power_usb:
+    name: 23 · CONFIG.TXT — Power / USB
+    description: Power and USB current-limit settings.
+  section_pcie_rp1_enabled:
+    name: 24 · CONFIG.TXT — Enable PCIe / RP1
+    description: Enables PCIe/RP1 settings below.
+  config_pcie_rp1:
+    name: 24 · CONFIG.TXT — PCIe / RP1
+    description: PCIe/RP1 settings for Raspberry Pi 5.
+  section_boot_kernel_enabled:
+    name: 25 · CONFIG.TXT — Enable Boot / Kernel
+    description: Enables boot and kernel settings below. Use with care.
+  config_boot_kernel:
+    name: 25 · CONFIG.TXT — Boot / kernel
+    description: Boot settings; incorrect values may prevent booting.
+  section_hardware_enabled:
+    name: 26 · CONFIG.TXT — Enable hardware detection
+    description: Enables hardware autodetection settings below.
+  config_hardware:
+    name: 26 · CONFIG.TXT — Hardware detection
+    description: CSI/DSI device autodetection.
+  section_uart_debug_enabled:
+    name: 27 · CONFIG.TXT — Enable UART / Debug
+    description: Enables UART/debug settings below.
+  config_uart_debug:
+    name: 27 · CONFIG.TXT — UART / debug
+    description: UART and early boot debug settings.
+  section_video_enabled:
+    name: 28 · CONFIG.TXT — Enable Video / KMS
+    description: Enables video/KMS settings below.
+  config_video:
+    name: 28 · CONFIG.TXT — Video / KMS
+    description: Video and framebuffer settings.
+  section_device_tree_enabled:
+    name: 29 · CONFIG.TXT — Enable Device Tree
+    description: Enables Device Tree settings below.
+  config_device_tree:
+    name: 29 · CONFIG.TXT — Device Tree
+    description: Base DT and overlay path. Use custom parameters for dtoverlay/dtparam.
+  section_compatibility_enabled:
+    name: 30 · CONFIG.TXT — Enable compatibility / legacy
+    description: Enables compatibility settings below.
+  config_compatibility:
+    name: 30 · CONFIG.TXT — Compatibility / legacy
+    description: Compatibility options, usually leave on auto for Pi 5.
+  section_custom_parameters_enabled:
+    name: 31 · CONFIG.TXT — Enable custom parameters
+    description: Enables additional config.txt entries below.
+  config_custom_parameters:
+    name: 31 · CONFIG.TXT — Custom parameters
+    description: Arbitrary config.txt entries. Unknown parameters require Advanced mode.
+    fields:
+      section:
+        name: Section
+        description: For example all or pi5, without brackets.
+      key:
+        name: Parameter
+        description: For example dtoverlay, dtparam or include.
+      value:
+        name: Value
+        description: Parameter value; valid range depends on the parameter/overlay.
+  custom_hysteresis_dense_c:
+    name: 90 · EXPERT — Base hysteresis near target
+    description: Advanced base-curve hysteresis. Usually leave unchanged.
+  custom_hysteresis_outer_c:
+    name: 90 · EXPERT — Outer base hysteresis
+    description: Advanced outer hysteresis. Usually leave unchanged.
+  apply_custom_on_start:
+    name: 90 · EXPERT — Prepare custom profile on startup
+    description: Compatibility/diagnostic option. Normally leave disabled.
+  adaptive_pwm_enabled:
+    name: 90 · EXPERT — Legacy Adaptive PWM
+    description: Compatibility field. The active control mode manages Adaptive automatically.
+  section_adaptive_advanced_enabled:
+    name: 90 · EXPERT — Enable Adaptive PWM tuning
+    description: Enables manual deadband, interval and down-confirm tuning. Disabled = automatic defaults.
+  adaptive_pwm_deadband_c:
+    name: 02 · ADAPTIVE PWM — Deadband
+    description: Technical no-adjustment band around target. Default 0.75°C.
+  adaptive_pwm_interval_seconds:
+    name: 02 · ADAPTIVE PWM — Correction interval
+    description: Adaptive correction interval. Default 10 s.
+  adaptive_pwm_down_confirm_cycles:
+    name: 02 · ADAPTIVE PWM — Downshift confirmation
+    description: Confirmations before lowering PWM. Default 2.

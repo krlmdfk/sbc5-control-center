@@ -1,0 +1,28 @@
+set_restart_required:
+  name: Ustaw wymagany restart
+  description: Tworzy natywne zgłoszenie Repairs informujące o wymaganym restarcie po zmianach SBC5 Control Center.
+  fields:
+    type:
+      required: true
+      example: home_assistant
+      selector:
+        select:
+          options:
+            - home_assistant
+            - host
+    reason:
+      required: false
+      selector:
+        text:
+    from_version:
+      required: false
+      selector:
+        text:
+    to_version:
+      required: false
+      selector:
+        text:
+
+clear_restart_required:
+  name: Wyczyść wymagany restart
+  description: Usuwa natywne zgłoszenie Repairs SBC5 Control Center i znacznik oczekującego restartu.

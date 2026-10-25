@@ -1,0 +1,6 @@
+{
+  "deprecated": true,
+  "since": "2.8.15",
+  "reason": "Unified App + Card UI versioning",
+  "message": "Use a full build with version == package_version == card_ui_version."
+}
