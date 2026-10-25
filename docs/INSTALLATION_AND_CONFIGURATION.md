@@ -1,7 +1,7 @@
 # SBC5 Control Center — Dokumentacja techniczna
 
-**Wersja dokumentacji:** 2.8.25  
-**Card UI:** 2.8.25  
+**Wersja dokumentacji:** 2.8.26  
+**Card UI:** 2.8.26  
 
 **Model obciążenia:** temperatura/RPM/PWM korzystają z lekkiej ścieżki 5 s, Adaptive PWM pracuje co 10 s, pełna telemetria bridge co 15 s, kompaktowy relay AI jest oceniany co 15 s i publikowany po zmianie z 5-minutowym keepalive, ciężki relay hosta co 30 s, a synchronizacja trwałych profili Supervisor co 30 s. Diagnostyczne encje historii AI pozostają próbkowane co 30 s.
 **Platforma:** Raspberry Pi 5 / Home Assistant OS  
@@ -16,7 +16,7 @@ SBC5 Control Center jest lokalną warstwą zarządzania Raspberry Pi 5 pracując
 1. **App runtime** — `/local_apps/sbc5_control_center`, proces `run.sh`, Ingress WWW i dostęp do hosta.
 2. **Bridge `sbc5_control_center`** — sensory, binary sensory, update entity, usługi i Repairs.
 3. **Package** — helpery i skrypty wykorzystywane przez dashboard i część akcji użytkownika.
-4. **Lovelace** — karta diagnostyczna Card UI 2.8.25 i opcjonalna karta aktualizacji.
+4. **Lovelace** — karta diagnostyczna Card UI 2.8.26 i opcjonalna karta aktualizacji.
 5. **Persistent `/data`** — kalibracja, model AI, `cpu_profile_state.json`, backupy i markery restart/update.
 
 ## 3. Start i Health Checks
@@ -108,7 +108,7 @@ Ingress zapewnia konfigurację chłodzenia, AI, telemetrii, CPU/OC, `config.txt`
 CPU UI pokazuje stan `Aktywny`, `Oczekuje na restart` lub `Niespójność`, wraz z `saved` i `runtime max`.
 
 ## 12. Lovelace
-Główna karta Card UI 2.8.25 pokazuje:
+Główna karta Card UI 2.8.26 pokazuje:
 - stan chłodzenia i regulatora,
 - AI Cooling,
 - CPU/OC + wybór bezpiecznego presetu,
@@ -160,8 +160,8 @@ Aplikacja utrzymuje backupy `config.txt`, dashboardów i wybranych stanów migra
 - AI Assist nie zastępuje klasycznych zabezpieczeń.
 
 ## 18. Wersjonowanie dokumentacji
-- **App:** 2.8.25
-- **Card UI:** 2.8.25
+- **App:** 2.8.26
+- **Card UI:** 2.8.26
 - szczegóły zmian: `CHANGELOG.md`
 - szybki start: `QUICK_SETUP.md`
 

@@ -1,5 +1,17 @@
 # Changelog — SBC5 Control Center
 
+## 2.8.26 — 2026-10-25
+
+### English
+
+- Documentation and branding release: complete English/Polish documentation, professional SBC5 branding, clickable App/HACS links and persistent release templates.
+- Restart requirement: `home_assistant`.
+
+### Polski
+
+- Wydanie dokumentacyjne i brandingowe: pełna dokumentacja polska/angielska, profesjonalny branding SBC5, klikalne linki App/HACS oraz trwałe szablony kolejnych wydań.
+- Wymagany restart: `home_assistant`.
+
 Historia zmian projektu. Aktualny stan, instalacja i obsługa są opisane w `INFO.md`, `DOCUMENTATION.md` oraz `docs/QUICK_SETUP.md`. Starsza historia sprzed gałęzi 2.8.x pozostaje w `docs/CHANGELOG_ARCHIVE_PRE_2.8.0.md`.
 
 ## 2.8.25 — CPU Profile Restart Guard Hotfix

@@ -1,6 +1,6 @@
 ###############################################################################
 # RASPBERRY PI 5 ACTIVE COOLER
-# SBC5 Control Center Package Version: 2.8.25
+# SBC5 Control Center Package Version: 2.8.26
 # 2.6.24: APP_VERSION import + package-version sensor + non-destructive namespace recovery.
 # 2.6.23: native integration bootstrap recovery; runtime cooling/AI logic unchanged.
 # 2.6.7: Workload Buckets v2 — 30 s moving average, progi 10/30/60%, histereza ±5 pp i diagnostyka kwalifikacji
@@ -400,7 +400,7 @@ template:
       - name: SBC5 Package Version
         unique_id: sbc5_package_version
         icon: mdi:package-variant-closed-check
-        state: "2.8.25"
+        state: "2.8.26"
 
       - name: SBC5 CPU OC Profile
         unique_id: sbc5_cpu_oc_profile

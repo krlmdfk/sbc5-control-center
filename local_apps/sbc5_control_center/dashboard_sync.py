@@ -23,7 +23,7 @@ def _release_version():
             return version
     except Exception:
         pass
-    return '2.8.25'
+    return '2.8.26'
 
 def _release_card_ui_version():
     try:
