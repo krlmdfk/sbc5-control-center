@@ -1,0 +1,247 @@
+name: Publish SBC5 release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New unified version (X.Y.Z)"
+        required: true
+        type: string
+      release_date:
+        description: "Release date YYYY-MM-DD (blank = today)"
+        required: false
+        type: string
+      restart_required:
+        description: "Restart required by the App update"
+        required: true
+        default: home_assistant
+        type: choice
+        options:
+          - none
+          - home_assistant
+          - host
+      summary_en:
+        description: "Short English release summary"
+        required: true
+        type: string
+      summary_pl:
+        description: "Krótki polski opis wydania"
+        required: true
+        type: string
+      dry_run:
+        description: "Preflight only — build artifacts but do not publish"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  HACS_REPO: krlmdfk/sbc5-control-center-integration
+
+concurrency:
+  group: sbc5-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main project
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Preflight version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          CURRENT_VERSION="$(python -c 'import json; print(json.load(open("local_apps/sbc5_control_center/release.json"))["version"])')"
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> "$GITHUB_ENV"
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Main release $VERSION already exists" >&2
+            exit 1
+          fi
+
+      - name: Prepare unified release
+        env:
+          VERSION: ${{ inputs.version }}
+          RELEASE_DATE: ${{ inputs.release_date }}
+          RESTART_REQUIRED: ${{ inputs.restart_required }}
+          SUMMARY_EN: ${{ inputs.summary_en }}
+          SUMMARY_PL: ${{ inputs.summary_pl }}
+        run: |
+          set -euo pipefail
+          args=(
+            --version "$VERSION"
+            --restart-required "$RESTART_REQUIRED"
+            --summary-en "$SUMMARY_EN"
+            --summary-pl "$SUMMARY_PL"
+          )
+          if [ -n "$RELEASE_DATE" ]; then
+            args+=(--release-date "$RELEASE_DATE")
+          fi
+          python scripts/release_prepare.py "${args[@]}"
+
+      - name: Validate prepared release
+        run: python scripts/validate_release.py
+
+      - name: Build install/update package
+        run: python scripts/build_release_zip.py --out dist
+
+      - name: Upload preflight artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbc5-${{ inputs.version }}-preflight
+          path: |
+            dist/SBC5_Control_Center_v${{ inputs.version }}.zip
+            dist/SBC5_Control_Center_v${{ inputs.version }}.sha256
+            RELEASE_NOTES_${{ inputs.version }}.md
+
+      - name: Stop after dry run
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "Dry run passed. Re-run with dry_run=false to publish."
+
+      - name: Require HACS token for publication
+        if: ${{ !inputs.dry_run }}
+        env:
+          HACS_TOKEN: ${{ secrets.HACS_REPO_TOKEN }}
+        run: |
+          test -n "$HACS_TOKEN" || { echo "Missing repository secret HACS_REPO_TOKEN" >&2; exit 1; }
+
+      - name: Preflight HACS release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.HACS_REPO_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if gh release view "$VERSION" --repo "$HACS_REPO" >/dev/null 2>&1; then
+            echo "HACS release $VERSION already exists" >&2
+            exit 1
+          fi
+
+      - name: Clone and synchronize HACS repository
+        if: ${{ !inputs.dry_run }}
+        env:
+          HACS_TOKEN: ${{ secrets.HACS_REPO_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          SUMMARY_EN: ${{ inputs.summary_en }}
+          SUMMARY_PL: ${{ inputs.summary_pl }}
+        run: |
+          set -euo pipefail
+          git clone "https://x-access-token:${HACS_TOKEN}@github.com/${HACS_REPO}.git" /tmp/sbc5-hacs
+          HACS_CURRENT="$(python -c 'import json; print(json.load(open("/tmp/sbc5-hacs/custom_components/sbc5_control_center/manifest.json"))["version"])')"
+          if [ "$HACS_CURRENT" != "$CURRENT_VERSION" ]; then
+            echo "Version drift before release: main=$CURRENT_VERSION HACS=$HACS_CURRENT" >&2
+            exit 1
+          fi
+          python scripts/sync_hacs_repo.py \
+            --dest /tmp/sbc5-hacs \
+            --version "$VERSION" \
+            --summary-en "$SUMMARY_EN" \
+            --summary-pl "$SUMMARY_PL"
+          cd /tmp/sbc5-hacs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No HACS changes to publish" >&2
+            exit 1
+          fi
+          git commit -m "Release ${VERSION}"
+          git push origin HEAD:main
+          echo "HACS_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Wait for HACS/Hassfest/Syntax validation
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.HACS_REPO_TOKEN }}
+          SHA: ${{ env.HACS_SHA }}
+        run: |
+          set -euo pipefail
+          run_id=""
+          for i in $(seq 1 30); do
+            run_id="$(gh api "repos/${HACS_REPO}/actions/workflows/validate.yml/runs?head_sha=${SHA}&event=push&per_page=5" --jq '.workflow_runs[0].id // empty')"
+            [ -n "$run_id" ] && break
+            sleep 2
+          done
+          [ -n "$run_id" ] || { echo "HACS validation run not found" >&2; exit 1; }
+          echo "Waiting for HACS validation run ${run_id}"
+          for i in $(seq 1 90); do
+            status="$(gh api "repos/${HACS_REPO}/actions/runs/${run_id}" --jq '.status')"
+            conclusion="$(gh api "repos/${HACS_REPO}/actions/runs/${run_id}" --jq '.conclusion // empty')"
+            if [ "$status" = "completed" ]; then
+              [ "$conclusion" = "success" ] || { echo "HACS validation failed: $conclusion" >&2; exit 1; }
+              echo "HACS validation PASS"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for HACS validation" >&2
+          exit 1
+
+      - name: Commit and push main release metadata
+        if: ${{ !inputs.dry_run }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Release ${VERSION}"
+          git push origin HEAD:main
+          echo "MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Publish main GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          gh release create "$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$MAIN_SHA" \
+            --title "SBC5 Control Center ${VERSION}" \
+            --notes-file "RELEASE_NOTES_${VERSION}.md" \
+            --latest \
+            "dist/SBC5_Control_Center_v${VERSION}.zip" \
+            "dist/SBC5_Control_Center_v${VERSION}.sha256"
+
+      - name: Publish HACS integration Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.HACS_REPO_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if gh release view "$VERSION" --repo "$HACS_REPO" >/dev/null 2>&1; then
+            echo "HACS release $VERSION already exists" >&2
+            exit 1
+          fi
+          gh release create "$VERSION" \
+            --repo "$HACS_REPO" \
+            --target "$HACS_SHA" \
+            --title "SBC5 Control Center Integration ${VERSION}" \
+            --notes-file "/tmp/sbc5-hacs/RELEASE_NOTES_${VERSION}.md" \
+            --latest
+
+      - name: Publication summary
+        if: ${{ !inputs.dry_run }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          echo "Published SBC5 Control Center ${VERSION}"
+          echo "Main: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${VERSION}"
+          echo "HACS: https://github.com/${HACS_REPO}/releases/tag/${VERSION}"

@@ -1,0 +1,31 @@
+# SBC5 Control Center — HACS Integration / Integracja HACS
+
+## English
+
+Native Home Assistant companion integration for SBC5 Control Center on Raspberry Pi 5.
+
+**Version:** {{VERSION}}  
+**Home Assistant:** >= {{HA_CORE_MIN}}
+
+**Requirement:** the **SBC5 Control Center App/runtime must already be installed and running**.
+
+Main project / required App: https://github.com/krlmdfk/sbc5-control-center  
+HACS integration repository: https://github.com/krlmdfk/sbc5-control-center-integration
+
+{{SUMMARY_EN}}
+
+---
+
+## Polski
+
+Natywna integracja towarzysząca Home Assistant dla SBC5 Control Center na Raspberry Pi 5.
+
+**Wersja:** {{VERSION}}  
+**Home Assistant:** >= {{HA_CORE_MIN}}
+
+**Wymaganie:** **aplikacja/runtime SBC5 Control Center musi być wcześniej zainstalowana i uruchomiona**.
+
+Główny projekt / wymagana aplikacja: https://github.com/krlmdfk/sbc5-control-center  
+Repozytorium integracji HACS: https://github.com/krlmdfk/sbc5-control-center-integration
+
+{{SUMMARY_PL}}
