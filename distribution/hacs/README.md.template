@@ -1,26 +1,31 @@
-[![Validate](https://github.com/krlmdfk/sbc5-control-center-integration/actions/workflows/validate.yml/badge.svg)](https://github.com/krlmdfk/sbc5-control-center-integration/actions/workflows/validate.yml)
+# SBC5 Control Center — Home Assistant Integration
+
+[![HACS validation](https://github.com/krlmdfk/sbc5-control-center-integration/actions/workflows/validate.yml/badge.svg)](https://github.com/krlmdfk/sbc5-control-center-integration/actions/workflows/validate.yml)
 [![Release](https://img.shields.io/github/v/release/krlmdfk/sbc5-control-center-integration?display_name=tag)](https://github.com/krlmdfk/sbc5-control-center-integration/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-# SBC5 Control Center — Home Assistant Integration
+[![SBC5 Control Center App](https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/branding/icon-256.png)](https://github.com/krlmdfk/sbc5-control-center)
+
+> **App required / Aplikacja wymagana:** this HACS integration is a companion to the **SBC5 Control Center App/runtime**. Click the SBC5 logo above to open the main application repository.
+> **Wymagana aplikacja:** integracja HACS współpracuje z **SBC5 Control Center App/runtime**. Kliknij logo SBC5 powyżej, aby otworzyć główne repozytorium aplikacji.
+
+**[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)** · **[Releases](https://github.com/krlmdfk/sbc5-control-center/releases)** · **[Support / Wsparcie](https://github.com/krlmdfk/sbc5-control-center/issues)**
+
+**Version {{VERSION}} · HACS-ready · Home Assistant ≥ {{HA_CORE_MIN}} · Apache-2.0**
 
 **English** · [Polski](#polski)
 
-> HACS-managed Home Assistant companion integration for SBC5 Control Center on Raspberry Pi 5.
-
-**Version {{VERSION}} · Home Assistant ≥ {{HA_CORE_MIN}} · Apache-2.0**
-
 ## English
 
-### Important requirement
+Native Home Assistant companion integration for **SBC5 Control Center** on Raspberry Pi 5.
 
-This repository contains the **Home Assistant integration only**. It is **not a standalone replacement for the SBC5 Control Center App**.
+### What this repository provides
 
-> **The SBC5 Control Center App/runtime must be installed and running.**
+This repository contains the **Home Assistant integration only**. It exposes SBC5 telemetry and control state natively in Home Assistant, including device information, diagnostics, update state and Restart Manager entities.
 
-Main project and required App: **[krlmdfk/sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)**
+The required Raspberry Pi 5 host services are provided by the **SBC5 Control Center App/runtime** from the main project:
 
-The App provides Raspberry Pi 5 host telemetry and control services. This HACS integration exposes them natively in Home Assistant through entities, device information, diagnostics and update/restart state.
+**[Open SBC5 Control Center App repository →](https://github.com/krlmdfk/sbc5-control-center)**
 
 ### Current release
 
@@ -30,29 +35,65 @@ The App provides Raspberry Pi 5 host telemetry and control services. This HACS i
 
 | Repository | Purpose |
 |---|---|
-| **[sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)** | Main project and required App/runtime. |
+| **[sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)** | Main SBC5 project and required App/runtime. |
 | **[sbc5-control-center-integration](https://github.com/krlmdfk/sbc5-control-center-integration)** | HACS-managed Home Assistant integration. |
 
-### Installation
+### Requirements
 
-1. Install and run the SBC5 Control Center App/runtime from the main project.
-2. In HACS add `https://github.com/krlmdfk/sbc5-control-center-integration` as **Custom repository → Integration**.
-3. Install **SBC5 Control Center**.
-4. Restart Home Assistant when requested.
+- Raspberry Pi 5 with the SBC5 Control Center App/runtime installed and running;
+- Home Assistant Core {{HA_CORE_MIN}} or newer;
+- HACS for HACS-managed installation.
+
+Without the SBC5 Control Center App/runtime, this integration has no SBC5 host telemetry source to read.
+
+### Install with HACS
+
+1. Install and run the **SBC5 Control Center App/runtime** from the [main project](https://github.com/krlmdfk/sbc5-control-center).
+2. Open **HACS**.
+3. Open **⋮ → Custom repositories**.
+4. Add `https://github.com/krlmdfk/sbc5-control-center-integration`.
+5. Select category **Integration**.
+6. Install **SBC5 Control Center**.
+7. Restart Home Assistant when HACS asks for it.
+8. Open **Settings → Devices & services** and add **SBC5 Control Center** if it is not already present.
+
+### HACS ownership protection
+
+The integration contains the `.hacs_managed` marker. SBC5 Control Center detects this marker and leaves `custom_components/sbc5_control_center` under HACS ownership, preventing the App from overwriting or downgrading a HACS-managed copy.
+
+### Validation
+
+Every push and pull request runs:
+
+- HACS repository validation;
+- Home Assistant Hassfest validation;
+- Python compilation and JSON validation.
+
+### Support
+
+Integration/HACS issues: **[sbc5-control-center-integration/issues](https://github.com/krlmdfk/sbc5-control-center-integration/issues)**
+
+App/runtime, cooling, host access, boot configuration and Raspberry Pi diagnostics: **[sbc5-control-center/issues](https://github.com/krlmdfk/sbc5-control-center/issues)**
+
+### License
+
+Apache License 2.0.
+
+SBC5 Control Center is an independent project and is not endorsed by Raspberry Pi Ltd., Home Assistant, or the Open Home Foundation.
 
 ---
 
 ## Polski
 
-### Ważne wymaganie
+Natywna integracja towarzysząca Home Assistant dla **SBC5 Control Center** na Raspberry Pi 5.
 
-To repozytorium zawiera **wyłącznie integrację Home Assistant**. Nie zastępuje samodzielnie aplikacji SBC5 Control Center.
+### Co zawiera to repozytorium
 
-> **Aplikacja/runtime SBC5 Control Center musi być zainstalowana i uruchomiona.**
+Repozytorium zawiera **wyłącznie integrację Home Assistant**. Udostępnia ona natywnie w Home Assistant telemetrię i stan sterowania SBC5, w tym informacje o urządzeniu, diagnostykę, stan aktualizacji oraz encje Restart Managera.
 
-Główny projekt i wymagana aplikacja: **[krlmdfk/sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)**
+Wymagane usługi hosta Raspberry Pi 5 zapewnia **SBC5 Control Center App/runtime** z głównego projektu:
 
-Aplikacja dostarcza telemetrię hosta Raspberry Pi 5 oraz usługi sterujące. Integracja HACS udostępnia je natywnie w Home Assistant jako encje, informacje o urządzeniu, diagnostykę oraz stan aktualizacji/restartu.
+**[Otwórz repozytorium aplikacji SBC5 Control Center →](https://github.com/krlmdfk/sbc5-control-center)**
 
 ### Aktualne wydanie
 
@@ -62,12 +103,48 @@ Aplikacja dostarcza telemetrię hosta Raspberry Pi 5 oraz usługi sterujące. In
 
 | Repozytorium | Przeznaczenie |
 |---|---|
-| **[sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)** | Główny projekt i wymagana aplikacja/runtime. |
+| **[sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)** | Główny projekt SBC5 oraz wymagana aplikacja/runtime. |
 | **[sbc5-control-center-integration](https://github.com/krlmdfk/sbc5-control-center-integration)** | Integracja Home Assistant zarządzana przez HACS. |
 
-### Instalacja
+### Wymagania
 
-1. Zainstaluj i uruchom aplikację/runtime SBC5 Control Center z głównego projektu.
-2. W HACS dodaj `https://github.com/krlmdfk/sbc5-control-center-integration` jako **Niestandardowe repozytorium → Integracja**.
-3. Zainstaluj **SBC5 Control Center**.
-4. Uruchom ponownie Home Assistant, gdy zostaniesz o to poproszony.
+- Raspberry Pi 5 z zainstalowaną i uruchomioną aplikacją/runtime SBC5 Control Center;
+- Home Assistant Core {{HA_CORE_MIN}} lub nowszy;
+- HACS do instalacji zarządzanej przez HACS.
+
+Bez aplikacji/runtime SBC5 Control Center integracja nie ma źródła telemetrii hosta SBC5.
+
+### Instalacja przez HACS
+
+1. Zainstaluj i uruchom **SBC5 Control Center App/runtime** z [głównego projektu](https://github.com/krlmdfk/sbc5-control-center).
+2. Otwórz **HACS**.
+3. Otwórz **⋮ → Niestandardowe repozytoria**.
+4. Dodaj `https://github.com/krlmdfk/sbc5-control-center-integration`.
+5. Wybierz kategorię **Integracja**.
+6. Zainstaluj **SBC5 Control Center**.
+7. Uruchom ponownie Home Assistant, gdy HACS o to poprosi.
+8. Otwórz **Ustawienia → Urządzenia i usługi** i dodaj **SBC5 Control Center**, jeśli integracja nie została jeszcze skonfigurowana.
+
+### Ochrona własności HACS
+
+Integracja zawiera znacznik `.hacs_managed`. SBC5 Control Center wykrywa ten znacznik i pozostawia `custom_components/sbc5_control_center` pod zarządzaniem HACS, dzięki czemu aplikacja nie nadpisuje ani nie obniża wersji kopii zarządzanej przez HACS.
+
+### Walidacja
+
+Każdy push i pull request uruchamia:
+
+- walidację repozytorium HACS;
+- walidację Home Assistant Hassfest;
+- kompilację Pythona i walidację JSON.
+
+### Wsparcie
+
+Problemy integracji/HACS: **[sbc5-control-center-integration/issues](https://github.com/krlmdfk/sbc5-control-center-integration/issues)**
+
+Problemy aplikacji/runtime, chłodzenia, dostępu do hosta, konfiguracji boot oraz diagnostyki Raspberry Pi: **[sbc5-control-center/issues](https://github.com/krlmdfk/sbc5-control-center/issues)**
+
+### Licencja
+
+Apache License 2.0.
+
+SBC5 Control Center jest niezależnym projektem i nie jest oficjalnie wspierany ani zatwierdzony przez Raspberry Pi Ltd., Home Assistant ani Open Home Foundation.
