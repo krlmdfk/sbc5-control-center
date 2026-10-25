@@ -109,6 +109,14 @@ jobs:
             dist/SBC5_Control_Center_v${{ inputs.version }}.sha256
             RELEASE_NOTES_${{ inputs.version }}.md
 
+      - name: Verify HACS repository token
+        env:
+          GH_TOKEN: ${{ secrets.HACS_REPO_TOKEN }}
+        run: |
+          test -n "$GH_TOKEN"
+          gh api repos/krlmdfk/sbc5-control-center-integration --jq '.full_name'
+          echo "HACS repository token: read access OK"
+
       - name: Stop after dry run
         if: ${{ inputs.dry_run }}
         run: |
