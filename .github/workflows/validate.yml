@@ -53,6 +53,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
+          import yaml
 
           expected = '2.8.25'
           manifests = [
