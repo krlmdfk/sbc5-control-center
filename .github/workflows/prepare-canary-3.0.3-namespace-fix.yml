@@ -50,30 +50,6 @@ jobs:
           if old not in s:
               raise SystemExit('namespace_control_allowed block not found')
           s = s.replace(old, new, 1)
-
-          old2 = '''    if ! namespace_control_allowed; then
-              controller_state=-1; base_state=-1; low_count=0; up_count=0; up_hold=0; deadband_count=0
-              adaptive_pwm_write_status standby namespace_migration_standby "$(read_cpu_temp_millideg 2>/dev/null || echo 0)" 0 0 100 false migration "" 0 0 ""
-              sleep 2
-              continue
-            fi
-          '''
-          new2 = '''    if ! namespace_control_allowed; then
-              controller_state=-1; base_state=-1; low_count=0; up_count=0; up_hold=0; deadband_count=0
-              if [ "$last_logged" != "namespace_migration_standby" ]; then
-                local namespace_owner="sbc5"
-                [ -s "$NAMESPACE_CONTROL_FILE" ] && namespace_owner="$(jq -r '.owner // "legacy"' "$NAMESPACE_CONTROL_FILE" 2>/dev/null || echo legacy)"
-                log "Adaptive PWM: standby — namespace migration owner=${namespace_owner}; oczekuję na przejęcie przez kanoniczny runtime SBC5."
-                last_logged="namespace_migration_standby"
-              fi
-              adaptive_pwm_write_status standby namespace_migration_standby "$(read_cpu_temp_millideg 2>/dev/null || echo 0)" 0 0 100 false migration "" 0 0 ""
-              sleep 2
-              continue
-            fi
-          '''
-          if old2 not in s:
-              raise SystemExit('namespace standby block not found')
-          s = s.replace(old2, new2, 1)
           p.write_text(s, encoding='utf-8')
 
           t = Path('scripts/test_runtime_robustness.py')
@@ -81,13 +57,12 @@ jobs:
           marker = 'def main() -> int:'
           if marker not in ts:
               raise SystemExit('runtime test main marker not found')
-          test_fn = '''def test_completed_namespace_is_authoritative() -> None:\n    runtime = (ROOT / "local_apps" / "sbc5_control_center" / "run_legacy.sh").read_text(encoding="utf-8")\n    block = runtime.split("namespace_control_allowed() {", 1)[1].split("}\n", 1)[0]\n    assert 'state.json' in block and 'COMPLETE' in block and 'return 0' in block\n    assert 'namespace migration owner=' in runtime\n\n\n'''
+          test_fn = '''def test_completed_namespace_is_authoritative() -> None:\n    runtime = (ROOT / "local_apps" / "sbc5_control_center" / "run_legacy.sh").read_text(encoding="utf-8")\n    block = runtime.split("namespace_control_allowed() {", 1)[1].split("}\n", 1)[0]\n    assert 'state.json' in block and 'COMPLETE' in block and 'return 0' in block\n\n\n'''
           if 'test_completed_namespace_is_authoritative' not in ts:
               ts = ts.replace(marker, test_fn + marker, 1)
-              call = '    test_completed_namespace_is_authoritative()\n'
               idx = ts.find(marker)
               main_start = ts.find('\n', idx) + 1
-              ts = ts[:main_start] + call + ts[main_start:]
+              ts = ts[:main_start] + '    test_completed_namespace_is_authoritative()\n' + ts[main_start:]
           t.write_text(ts, encoding='utf-8')
       - name: Prepare 3.0.3 release surfaces
         run: >-
@@ -98,9 +73,7 @@ jobs:
           --summary-en "Rust canary runtime fix: completed namespace migration now authoritatively enables canonical Adaptive PWM control."
           --summary-pl "Poprawka runtime Rust canary: zakończona migracja namespace nadrzędnie zezwala kanonicznemu Adaptive PWM na przejęcie sterowania."
           --fixed-en "Treat namespace phase COMPLETE as canonical SBC5 control ownership even if a stale legacy owner marker survives."
-          --fixed-en "Log namespace standby reason instead of silently pausing Adaptive PWM."
           --fixed-pl "Traktuj fazę namespace COMPLETE jako nadrzędne przejęcie sterowania przez kanoniczny SBC5 nawet przy pozostawionym starym markerze legacy."
-          --fixed-pl "Loguj przyczynę oczekiwania namespace zamiast cichego wstrzymania Adaptive PWM."
       - name: Validate
         run: |
           bash -n local_apps/sbc5_control_center/run.sh
