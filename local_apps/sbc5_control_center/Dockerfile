@@ -40,6 +40,14 @@ COPY migration_assets /migration_assets
 COPY namespace_native_guard.sh /namespace_native_guard.sh
 COPY migration_manager.py /migration_manager.py
 
+# The compatibility control plane still contains its own internal version constants.
+# Keep them aligned with the 3.0 package without rewriting the large safety-critical
+# script, so its existing runtime/update logic continues to behave identically.
+RUN sed -i \
+  -e 's/^APP_VERSION="[^"]*"$/APP_VERSION="3.0.0"/' \
+  -e 's/^REQUIRED_PACKAGE_VERSION="[^"]*"$/REQUIRED_PACKAGE_VERSION="3.0.0"/' \
+  /run_legacy.sh
+
 RUN mkdir -p /usr/share/licenses/sbc5-control-center
 COPY LICENSE /usr/share/licenses/sbc5-control-center/LICENSE
 COPY NOTICE /usr/share/licenses/sbc5-control-center/NOTICE
