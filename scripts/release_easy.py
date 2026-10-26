@@ -85,13 +85,37 @@ def ensure_remote_head(repo: Path):
         raise SystemExit(f"{repo}: HEAD is not origin/main; refusing to tag")
 
 
+def tag_target(repo: Path, version: str) -> str | None:
+    proc = subprocess.run(
+        ["git", "rev-parse", "-q", "--verify", f"refs/tags/{version}^{{}}"],
+        cwd=repo, text=True, capture_output=True,
+    )
+    return proc.stdout.strip() if proc.returncode == 0 else None
+
+
 def tag_and_push(repo: Path, version: str, message: str):
-    # Refuse accidental retagging.
-    local_tags = out(["git", "tag", "--list", version], repo)
-    if local_tags:
-        raise SystemExit(f"{repo}: tag {version} already exists locally")
-    run(["git", "tag", "-a", version, "-m", message], repo)
-    run(["git", "push", "origin", version], repo)
+    """Create/push a tag, but safely accept an existing tag at HEAD."""
+    run(["git", "fetch", "origin", "--tags"], repo)
+    head = out(["git", "rev-parse", "HEAD"], repo)
+    existing = tag_target(repo, version)
+    if existing:
+        if existing != head:
+            raise SystemExit(
+                f"{repo}: tag {version} already exists but points to {existing[:12]}, "
+                f"not current HEAD {head[:12]}"
+            )
+        print(f"{repo}: tag {version} already points to current HEAD; keeping it")
+    else:
+        run(["git", "tag", "-a", version, "-m", message], repo)
+
+    remote = subprocess.run(
+        ["git", "ls-remote", "--exit-code", "--tags", "origin", f"refs/tags/{version}"],
+        cwd=repo, text=True, capture_output=True,
+    )
+    if remote.returncode == 0:
+        print(f"{repo}: remote tag {version} already exists; skipping push")
+    else:
+        run(["git", "push", "origin", version], repo)
 
 
 def publish(args) -> int:
@@ -110,8 +134,23 @@ def publish(args) -> int:
     if args.github_release:
         if not shutil.which("gh"):
             raise SystemExit("gh CLI is not installed; tags are pushed, but GitHub Releases were not created")
-        run(["gh", "release", "create", args.version, "--title", f"SBC5 Control Center {args.version}", "--notes-file", f"RELEASE_NOTES_{args.version}.md"], ROOT)
-        run(["gh", "release", "create", args.version, "--title", f"SBC5 Control Center Integration {args.version}", "--notes-file", f"RELEASE_NOTES_{args.version}.md"], hacs)
+        releases = [
+            (ROOT, f"SBC5 Control Center {args.version}"),
+            (hacs, f"SBC5 Control Center Integration {args.version}"),
+        ]
+        for repo, title in releases:
+            exists = subprocess.run(
+                ["gh", "release", "view", args.version],
+                cwd=repo, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            ).returncode == 0
+            if exists:
+                print(f"{repo}: GitHub Release {args.version} already exists; keeping it")
+                continue
+            run([
+                "gh", "release", "create", args.version,
+                "--title", title,
+                "--notes-file", f"RELEASE_NOTES_{args.version}.md",
+            ], repo)
     else:
         print("Tags pushed. Create GitHub Releases from the two RELEASE_NOTES files, or rerun with --github-release when gh is configured.")
     return 0
