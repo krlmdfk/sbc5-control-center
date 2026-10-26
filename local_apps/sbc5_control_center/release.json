@@ -1,13 +1,14 @@
 {
-  "version": "3.0.0",
+  "version": "3.0.1",
   "release_date": "2026-10-26",
-  "restart_required": "home_assistant",
-  "summary": "Rust Core migration: introduces a native Rust runtime for low-overhead host telemetry and runtime health with automatic compatibility fallback. Existing Adaptive PWM safety, AI Cooling learning data, fan calibration, CPU/GPU profiles and persistent /data state are preserved.",
-  "package_version": "3.0.0",
-  "card_ui_version": "3.0.0",
+  "restart_required": "none",
+  "summary": "Rust canary validation build fixing persistence of the complete migrated Supervisor option set across App restarts.",
+  "package_version": "3.0.1",
+  "card_ui_version": "3.0.1",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
-  "versioning_policy": "unified"
+  "versioning_policy": "unified",
+  "summary_pl": "Testowy build Rust canary naprawiający trwałość pełnego zestawu opcji zmigrowanych do Supervisor po restartach aplikacji."
 }

@@ -1,7 +1,7 @@
 name: SBC5 Control Center — Rust Canary
-version: 3.0.0
+version: 3.0.1
 slug: rust_canary_sbc5_control_center
-description: "SBC5 Control Center 3.0.0 Rust Canary — isolated HAOS validation instance for preserved-state migration testing. Manual boot only; keep stopped until the stable source exports a verified handoff."
+description: "SBC5 Control Center 3.0.1 — Rust canary validation build fixing persistence of the complete migrated Supervisor option set across App restarts."
 arch:
 - aarch64
 homeassistant: 2026.10.1

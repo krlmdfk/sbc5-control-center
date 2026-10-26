@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.1 — 2026-10-26
+
+### English
+
+#### Changed
+
+- Rust canary validation build fixing persistence of the complete migrated Supervisor option set across App restarts.
+
+#### Fixed
+
+- Persist the complete imported option tree to the target canary Supervisor store before migration guard finalization.
+- Preserve imported 49°C custom1, AI Assist and other migrated App options across canary container restarts.
+
+#### Security
+
+- Stable 2.8.34 and main are unchanged; this build remains isolated to the manual experimental Rust canary.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Testowy build Rust canary naprawiający trwałość pełnego zestawu opcji zmigrowanych do Supervisor po restartach aplikacji.
+
+#### Naprawiono
+
+- Zapisuj pełne drzewo zaimportowanych opcji do trwałego magazynu Supervisor canary przed finalizacją guardu migracji.
+- Zachowuj po restartach canary zmigrowane ustawienia custom1 49°C, AI Assist oraz pozostałe opcje aplikacji.
+
+#### Bezpieczeństwo
+
+- Stabilna 2.8.34 i main pozostają bez zmian; build jest nadal odizolowany do ręcznej eksperymentalnej Rust canary.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 2.8.32 — 2026-10-26
 
 ### English
