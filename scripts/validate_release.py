@@ -80,7 +80,6 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    # Parse all structured files first.
     for p in ROOT.rglob("*.json"):
         if "__pycache__" not in p.parts:
             load_json(p)
@@ -89,7 +88,6 @@ def main() -> int:
             if "__pycache__" not in p.parts:
                 yaml.safe_load(p.read_text(encoding="utf-8"))
 
-    # Home Assistant Apps repository metadata.
     repo_meta_path = ROOT / "repository.yaml"
     expect(repo_meta_path.is_file(), "repository.yaml missing at repository root")
     repo_meta = yaml.safe_load(repo_meta_path.read_text(encoding="utf-8"))
@@ -102,7 +100,6 @@ def main() -> int:
     expected = str(release["version"])
     expect(bool(re.fullmatch(r"\d+\.\d+\.\d+", expected)), f"Invalid release version: {expected}")
 
-    # Canonical/bridge integration manifests.
     manifests = [
         ROOT / "custom_components" / DOMAIN / "manifest.json",
         APP / "bridge" / "manifest.json",
@@ -116,14 +113,22 @@ def main() -> int:
     legacy = load_json(APP / "legacy_bridge" / "manifest.json")
     expect(str(legacy.get("version")) == expected, f"legacy bridge version={legacy.get('version')!r}, expected={expected}")
 
-    # Migration/Hybrid runtime must be packaged into the App image.
+    # Migration/Hybrid runtime must be packaged into the App image.  The public
+    # entrypoint may delegate to a separate implementation module, but validators
+    # inspect both files so splitting architecture cannot weaken migration guards.
     migration_script = APP / "migration_manager.py"
+    migration_impl = APP / "migration_manager_v2.py"
     expect(migration_script.is_file(), "migration_manager.py missing")
     dockerfile = (APP / "Dockerfile").read_text(encoding="utf-8")
     expect("COPY migration_manager.py /migration_manager.py" in dockerfile, "Dockerfile does not package migration_manager.py")
     expect("/migration_manager.py" in dockerfile and "chmod" in dockerfile, "Dockerfile does not make migration_manager.py executable")
 
     migration_text = migration_script.read_text(encoding="utf-8")
+    if migration_impl.is_file():
+        expect("COPY migration_manager_v2.py /migration_manager_v2.py" in dockerfile, "Dockerfile does not package migration_manager_v2.py")
+        expect("/migration_manager_v2.py" in dockerfile and "chmod" in dockerfile, "Dockerfile does not make migration_manager_v2.py executable")
+        migration_text += "\n" + migration_impl.read_text(encoding="utf-8")
+
     run_text = (APP / "run.sh").read_text(encoding="utf-8")
     expect("store_migration_profile_guard.json" in migration_text, "migration profile guard is missing")
     expect("PROFILE_SYNC_MARKER.unlink()" in migration_text, "migration does not reset stale Supervisor profile marker")
@@ -136,7 +141,6 @@ def main() -> int:
     expect("build_local_update.py" in auto_release, "auto-release does not build verified local-update asset")
     expect("gh release create" in auto_release, "auto-release does not create GitHub releases")
 
-    # App metadata.
     app_cfg = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
     expect(str(app_cfg.get("version")) == expected, f"config.yaml version={app_cfg.get('version')!r}, expected={expected}")
     expect(app_cfg.get("slug") == DOMAIN, f"config.yaml slug={app_cfg.get('slug')!r}")
@@ -155,7 +159,6 @@ def main() -> int:
     channels = um.get("installation_channels", [])
     expect("local" in channels and "home_assistant_apps" in channels, "update-manifest installation_channels incomplete")
 
-    # Canonical integration must remain mirrored by App bridge.
     tree_issues = compare_trees(ROOT / "custom_components" / DOMAIN, APP / "bridge")
     expect(not tree_issues, "Integration/bridge mismatch:\n" + "\n".join(tree_issues))
 

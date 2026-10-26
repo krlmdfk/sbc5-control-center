@@ -42,6 +42,9 @@ jobs:
       - name: Test migration profile guard
         run: python scripts/test_migration_profile_guard.py
 
+      - name: Test canary migration handoff
+        run: python scripts/test_canary_migration.py
+
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
 

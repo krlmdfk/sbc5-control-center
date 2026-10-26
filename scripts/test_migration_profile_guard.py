@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression test for Local -> Store profile finalization guard."""
+"""Regression test for Local/Store durable profile finalization guard."""
 from __future__ import annotations
 
 import hashlib
@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = ROOT / "local_apps" / "sbc5_control_center" / "migration_manager.py"
+MODULE_PATH = ROOT / "local_apps" / "sbc5_control_center" / "migration_manager_v2.py"
 
 
 def digest(path: Path) -> str:
@@ -22,7 +22,7 @@ def write_json(path: Path, obj) -> None:
 
 
 def main() -> int:
-    spec = importlib.util.spec_from_file_location("sbc5_migration_manager_test", MODULE_PATH)
+    spec = importlib.util.spec_from_file_location("sbc5_migration_manager_v2_test", MODULE_PATH)
     assert spec and spec.loader
     mm = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mm)
@@ -43,6 +43,7 @@ def main() -> int:
         mm.MANIFEST = handoff / "manifest.json"
         mm.PAYLOAD = payload
         mm.COMPLETE = handoff / "COMPLETE.json"
+        mm.CANARY_COMPLETE = handoff / "CANARY_COMPLETE.json"
         mm.STATUS = data / "store_migration_status.json"
         mm.IMPORT_MARKER = data / "store_migration_import.json"
         mm.BACKUP_ROOT = data / "migration_backups"
@@ -77,10 +78,13 @@ def main() -> int:
         files = {p.name: digest(p) for p in payload.iterdir() if p.is_file()}
         fp = mm.fingerprint(files)
         manifest = {
-            "schema": 1,
+            "schema": 2,
+            "mode": "replace",
             "source_slug": "local_sbc5_control_center",
+            "source_channel": "local",
             "source_version": "2.8.30",
             "target_slug": "98b55775_sbc5_control_center",
+            "target_version": "2.8.31",
             "created_at": mm.now_iso(),
             "files": files,
             "fingerprint": fp,
@@ -89,7 +93,11 @@ def main() -> int:
         mm.READY.write_text(fp + "\n", encoding="utf-8")
 
         mm.self_slug = lambda: "98b55775_sbc5_control_center"
-        mm.local_source_state = lambda current: ("local_sbc5_control_center", "stopped")
+        mm.channel = lambda _slug: "store"
+        mm.installed_apps = lambda: [
+            {"slug": "local_sbc5_control_center", "state": "stopped", "installed": True, "version": "2.8.30"},
+            {"slug": "98b55775_sbc5_control_center", "state": "started", "installed": True, "version": "2.8.31"},
+        ]
 
         rc = mm.import_handoff("2.8.31")
         assert rc == 0, rc
