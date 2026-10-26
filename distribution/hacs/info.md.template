@@ -22,6 +22,8 @@ Native Home Assistant companion integration for **SBC5 Control Center** on Raspb
 
 The App provides Raspberry Pi 5 host telemetry and control services. This HACS integration exposes device information, telemetry, diagnostics, update state and Restart Manager entities in Home Assistant.
 
+For the **complete SBC5 Lovelace dashboard**, also install through HACS: **Mushroom**, **card-mod**, and **ApexCharts Card**. The native integration itself can operate without these frontend cards.
+
 {{SUMMARY_EN}}
 
 **[Open the required SBC5 Control Center App →](https://github.com/krlmdfk/sbc5-control-center)**
@@ -39,6 +41,8 @@ Natywna integracja towarzysząca Home Assistant dla **SBC5 Control Center** na R
 **Wymaganie:** **aplikacja/runtime SBC5 Control Center musi być wcześniej zainstalowana i uruchomiona**.
 
 Aplikacja dostarcza telemetrię hosta Raspberry Pi 5 oraz usługi sterujące. Integracja HACS udostępnia w Home Assistant informacje o urządzeniu, telemetrię, diagnostykę, stan aktualizacji oraz encje Restart Managera.
+
+Dla **kompletnego dashboardu Lovelace SBC5** zainstaluj również przez HACS: **Mushroom**, **card-mod** i **ApexCharts Card**. Sama natywna integracja może działać bez tych kart frontendowych.
 
 {{SUMMARY_PL}}
 

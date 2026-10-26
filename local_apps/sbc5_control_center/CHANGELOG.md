@@ -14,6 +14,20 @@
 
 Historia zmian projektu. Aktualny stan, instalacja i obsługa są opisane w `INFO.md`, `DOCUMENTATION.md` oraz `docs/QUICK_SETUP.md`. Starsza historia sprzed gałęzi 2.8.x pozostaje w `docs/CHANGELOG_ARCHIVE_PRE_2.8.0.md`.
 
+## 2.8.27 — Dependency Documentation (2026-10-26)
+
+- Uzupełniono stronę HACS/README i `info.md` o jednoznaczną sekcję wymaganych zależności dla kompletnego interfejsu Lovelace: **Mushroom**, **card-mod** i **ApexCharts Card**.
+- Rozdzielono wymagania rdzenia (App/runtime + natywna integracja) od zależności frontendowych dashboardu, aby nie sugerować, że karty są wymagane do samego działania encji integracji.
+- Zaktualizowano kolejność instalacji w README, Dokumentacji i Quick Setup oraz trwałe szablony publikacji HACS.
+- Zmiany są wyłącznie dokumentacyjne/publikacyjne; logika chłodzenia, Adaptive PWM, AI Cooling, profile CPU/GPU, telemetria i konfiguracja boot pozostają bez zmian.
+- Aktualizacja zunifikowanego buildu wymaga restartu Home Assistant. Restart Raspberry Pi nie jest wymagany przez tę zmianę.
+
+## 2.8.26 — Bilingual Documentation & Branding (2026-10-25)
+
+- Uzupełniono dwujęzyczną dokumentację projektu i profesjonalny branding SBC5.
+- Dodano klikalne powiązania między główną aplikacją/runtime a repozytorium integracji HACS oraz trwałe szablony publikacji.
+- Zmiany nie modyfikowały logiki chłodzenia, AI, CPU/GPU ani konfiguracji boot.
+
 ## 2.8.25 — CPU Profile Restart Guard Hotfix
 
 - Naprawiono fałszywe żądanie pełnego restartu Raspberry Pi po aktualizacji przy niezmienionym profilu CPU/OC: `sbc5cc-cpu-profile.txt` nie jest już porównywany bajt-po-bajcie względem komentarza zawierającego wersję aplikacji.

@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 2.8.26
+version: 2.8.27
 slug: sbc5_control_center
-description: "SBC5 Control Center 2.8.26 — Documentation and branding release: complete English/Polish documentation, professional SBC5 branding, clickable App/HACS links and persistent release templates."
+description: "SBC5 Control Center 2.8.27 — Dependency documentation release: clearly documents the required SBC5 App/runtime and the Mushroom, card-mod and ApexCharts Card frontend dependencies for the complete Lovelace dashboard. No cooling, AI, CPU/GPU or boot-configuration logic changes."
 arch:
 - aarch64
 homeassistant: 2026.10.1

@@ -17,3 +17,8 @@ Aplikacja/runtime SBC5 Control Center jest hostową częścią projektu SBC5 dla
 > Integracja HACS jest komponentem towarzyszącym i wymaga zainstalowanej oraz uruchomionej tej aplikacji/runtime.
 
 For full project documentation, use the main repository: **https://github.com/krlmdfk/sbc5-control-center**.
+
+
+## Lovelace / dashboard dependencies
+
+For the complete dashboard install through HACS: **Mushroom**, **card-mod**, and **ApexCharts Card**. / Dla kompletnego dashboardu zainstaluj przez HACS: **Mushroom**, **card-mod** i **ApexCharts Card**.

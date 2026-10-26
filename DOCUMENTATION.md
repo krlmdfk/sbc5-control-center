@@ -18,11 +18,23 @@
 
 ### 1. Requirements
 
+#### Core
+
 - Raspberry Pi 5 / `aarch64`;
 - Home Assistant OS `>= 18.3`;
 - Home Assistant Core `>= 2026.10.1`;
 - SBC5 Control Center App with host access;
-- for the complete Lovelace card: Mushroom, card-mod, and ApexCharts Card.
+- native `sbc5_control_center` integration (HACS-managed installation recommended).
+
+#### Complete Lovelace dashboard
+
+Install through HACS:
+
+- **Mushroom** — SBC5 tiles, selectors and controls;
+- **card-mod** — card styling and dynamic layout;
+- **ApexCharts Card** — CPU temperature/PWM, AI prediction and history charts.
+
+The native SBC5 integration can expose device information, telemetry and control entities without these frontend cards; they are required for the complete dashboard.
 
 ### 2. Architecture
 
@@ -157,11 +169,23 @@ Overclocking, Device Tree settings, USB limits, and boot configuration can affec
 
 ### 1. Wymagania
 
+#### Rdzeń
+
 - Raspberry Pi 5 / `aarch64`;
 - Home Assistant OS `>= 18.3`;
 - Home Assistant Core `>= 2026.10.1`;
 - aplikacja SBC5 Control Center z dostępem do hosta;
-- dla pełnej karty Lovelace: Mushroom, card-mod i ApexCharts Card.
+- natywna integracja `sbc5_control_center` (zalecana instalacja zarządzana przez HACS).
+
+#### Kompletny dashboard Lovelace
+
+Zainstaluj przez HACS:
+
+- **Mushroom** — kafelki, selektory i elementy sterujące SBC5;
+- **card-mod** — stylowanie kart i dynamiczny układ;
+- **ApexCharts Card** — wykresy temperatury CPU/PWM, predykcji AI oraz historii.
+
+Natywna integracja SBC5 może udostępniać informacje o urządzeniu, telemetrię i encje sterujące bez tych kart frontendowych; są one wymagane do kompletnego dashboardu.
 
 ### 2. Architektura
 

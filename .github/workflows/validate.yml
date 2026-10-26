@@ -3,7 +3,6 @@ name: Validate build
 on:
   push:
   pull_request:
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -23,5 +22,73 @@ jobs:
       - name: Install validators
         run: python -m pip install --disable-pip-version-check pyyaml jinja2
 
-      - name: Validate release tree
-        run: python scripts/validate_release.py
+      - name: Validate Bash
+        run: |
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/namespace_native_guard.sh
+
+      - name: Compile Python
+        run: |
+          python -m compileall -q \
+            custom_components/sbc5_control_center \
+            local_apps/sbc5_control_center
+
+      - name: Parse JSON and YAML
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import yaml
+
+          for p in Path('.').rglob('*.json'):
+              json.loads(p.read_text(encoding='utf-8'))
+          for pattern in ('*.yaml', '*.yml'):
+              for p in Path('.').rglob(pattern):
+                  yaml.safe_load(p.read_text(encoding='utf-8'))
+          print('JSON/YAML OK')
+          PY
+
+      - name: Validate Home Assistant manifests
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          expected = '2.8.25'
+          manifests = [
+              Path('custom_components/sbc5_control_center/manifest.json'),
+              Path('local_apps/sbc5_control_center/bridge/manifest.json'),
+          ]
+          for p in manifests:
+              data = json.loads(p.read_text(encoding='utf-8'))
+              assert data['domain'] == 'sbc5_control_center', (p, data['domain'])
+              assert data['version'] == expected, (p, data['version'])
+              assert data.get('config_flow') is True, p
+          app = yaml.safe_load(Path('local_apps/sbc5_control_center/config.yaml').read_text(encoding='utf-8'))
+          assert str(app['version']) == expected, app['version']
+          assert app['slug'] == 'sbc5_control_center', app['slug']
+          print('Manifest/config version sync OK')
+          PY
+
+      - name: Validate update manifest hashes
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          root = Path('.')
+          manifest_path = root / 'update-manifest.json'
+          data = json.loads(manifest_path.read_text(encoding='utf-8'))
+          bad = []
+          for rel, expected in data['files'].items():
+              p = root / rel
+              if not p.is_file():
+                  bad.append(f'missing: {rel}')
+                  continue
+              actual = hashlib.sha256(p.read_bytes()).hexdigest()
+              if actual != expected:
+                  bad.append(f'hash mismatch: {rel}')
+          if bad:
+              raise SystemExit('\n'.join(bad))
+          print(f"update-manifest: {len(data['files'])}/{len(data['files'])} SHA-256 OK")
+          PY

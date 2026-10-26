@@ -1,4 +1,4 @@
-# SBC5 Control Center 2.8.26 — Update Status Card
+# SBC5 Control Center 2.8.27 — Update Status Card
 # Mobile-first card aligned with the main SBC5 Control Center visual language.
 # Requires: Mushroom + card-mod.
 # Paste: Dashboard -> Add card -> Manual.
@@ -51,7 +51,7 @@ cards:
         entity_id: input_boolean.sbc5_update_controls_visible
     card_mod:
       style: |
-        /* Update Card v2.8.26 */
+        /* Update Card v2.8.27 */
         ha-card {
           min-height: 78px;
           border-radius: 19px;
@@ -70,7 +70,7 @@ cards:
         .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
         .primary { font-size: 16px !important; font-weight: 700 !important; }
         .secondary { font-size: 11.5px !important; line-height: 1.18 !important; }
-        /* SBC5CC 2.8.26 screen-fit guard */
+        /* SBC5CC 2.8.27 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -148,7 +148,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 2.8.26 screen-fit guard */
+                  /* SBC5CC 2.8.27 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -167,7 +167,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 2.8.26 equal-height responsive tile */
+                  /* SBC5CC 2.8.27 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -236,7 +236,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 2.8.26 screen-fit guard */
+                  /* SBC5CC 2.8.27 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -255,7 +255,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 2.8.26 equal-height responsive tile */
+                  /* SBC5CC 2.8.27 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -274,7 +274,7 @@ cards:
   # ============================================================
           card_mod:
             style: |
-              /* SBC5CC 2.8.26 responsive grid */
+              /* SBC5CC 2.8.27 responsive grid */
               #root {
                 grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
                 gap: clamp(6px, 1.8vw, 10px) !important;
@@ -327,7 +327,7 @@ cards:
                   @media (max-width: 600px) {
                     ha-card { min-height: 74px; padding-top: 7px !important; padding-bottom: 7px !important; }
                   }
-                  /* SBC5CC 2.8.26 screen-fit guard */
+                  /* SBC5CC 2.8.27 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -346,7 +346,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 2.8.26 equal-height responsive tile */
+                  /* SBC5CC 2.8.27 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -393,7 +393,7 @@ cards:
                   @media (max-width: 600px) {
                     ha-card { min-height: 74px; padding-top: 7px !important; padding-bottom: 7px !important; }
                   }
-                  /* SBC5CC 2.8.26 screen-fit guard */
+                  /* SBC5CC 2.8.27 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -412,7 +412,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 2.8.26 equal-height responsive tile */
+                  /* SBC5CC 2.8.27 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -431,7 +431,7 @@ cards:
   # ============================================================
           card_mod:
             style: |
-              /* SBC5CC 2.8.26 responsive grid */
+              /* SBC5CC 2.8.27 responsive grid */
               #root {
                 grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
                 gap: clamp(6px, 1.8vw, 10px) !important;
@@ -490,7 +490,7 @@ cards:
                 .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
                 .primary { font-size: 13.5px !important; font-weight: 750 !important; line-height: 1.15 !important; }
                 .secondary { font-size: 10.5px !important; line-height: 1.18 !important; }
-                /* SBC5CC 2.8.26 screen-fit guard */
+                /* SBC5CC 2.8.27 screen-fit guard */
                 ha-card {
                   width: 100% !important;
                   max-width: 100% !important;
@@ -549,7 +549,7 @@ cards:
                 .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
                 .primary { font-size: 12.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
                 .secondary { font-size: 10px !important; line-height: 1.18 !important; }
-                /* SBC5CC 2.8.26 screen-fit guard */
+                /* SBC5CC 2.8.27 screen-fit guard */
                 ha-card {
                   width: 100% !important;
                   max-width: 100% !important;
@@ -605,7 +605,7 @@ cards:
                 .primary, .secondary { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: 100% !important; overflow-wrap: anywhere !important; }
                 .primary { font-size: 12.5px !important; font-weight: 700 !important; line-height: 1.15 !important; }
                 .secondary { font-size: 10px !important; line-height: 1.18 !important; }
-                /* SBC5CC 2.8.26 screen-fit guard */
+                /* SBC5CC 2.8.27 screen-fit guard */
                 ha-card {
                   width: 100% !important;
                   max-width: 100% !important;
@@ -664,7 +664,7 @@ cards:
               @media (max-width: 600px) {
                 ha-card { min-height: 68px; padding-top: 7px !important; padding-bottom: 7px !important; }
               }
-              /* SBC5CC 2.8.26 screen-fit guard */
+              /* SBC5CC 2.8.27 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;

@@ -14,6 +14,7 @@ This integration **requires the SBC5 Control Center App/runtime to be installed 
 
 - Home Assistant >= {{HA_CORE_MIN}}
 - HACS-managed integration
+- Complete Lovelace dashboard: Mushroom + card-mod + ApexCharts Card
 - Restart Home Assistant after installation/update when requested
 - A Raspberry Pi host restart is not required by the integration update itself
 
@@ -31,5 +32,6 @@ Integracja **wymaga zainstalowanej i uruchomionej aplikacji/runtime SBC5 Control
 
 - Home Assistant >= {{HA_CORE_MIN}}
 - Integracja zarządzana przez HACS
+- Kompletny dashboard Lovelace: Mushroom + card-mod + ApexCharts Card
 - Po instalacji/aktualizacji uruchom ponownie Home Assistant, gdy zostaniesz o to poproszony
 - Sama aktualizacja integracji nie wymaga restartu hosta Raspberry Pi

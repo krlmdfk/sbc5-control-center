@@ -17,7 +17,11 @@
 - Raspberry Pi 5 / `aarch64`;
 - Home Assistant OS `>= 18.3`;
 - Home Assistant Core `>= 2026.10.1`;
-- Mushroom, card-mod, and ApexCharts Card for the complete Lovelace card.
+- SBC5 Control Center App/runtime;
+- native SBC5 Control Center integration;
+- for the complete Lovelace dashboard: **Mushroom**, **card-mod**, and **ApexCharts Card** installed through HACS.
+
+> Mushroom/card-mod/ApexCharts are frontend dependencies of the complete dashboard, not dependencies of the native integration core.
 
 ### 2. First start
 
@@ -36,7 +40,8 @@
 
 ### 4. Lovelace card
 
-Add `dashboard/sbc5_control_center_diagnostics_card.yaml`. The optional update card is available at `dashboard/update_status_card.yaml`.
+1. In HACS install **Mushroom**, **card-mod**, and **ApexCharts Card**.
+2. Add `dashboard/sbc5_control_center_diagnostics_card.yaml`. The optional update card is available at `dashboard/update_status_card.yaml`.
 
 The **SBC5 Control Center**, **AI Cooling**, and **CPU Clock** sections are collapsed by default. Tap a tile to expand details; tap it again to collapse them.
 
@@ -89,7 +94,11 @@ Full documentation: `DOCUMENTATION.md`.
 - Raspberry Pi 5 / `aarch64`;
 - Home Assistant OS `>= 18.3`;
 - Home Assistant Core `>= 2026.10.1`;
-- Mushroom, card-mod i ApexCharts Card dla pełnej karty Lovelace.
+- aplikacja/runtime SBC5 Control Center;
+- natywna integracja SBC5 Control Center;
+- dla kompletnego dashboardu Lovelace: **Mushroom**, **card-mod** i **ApexCharts Card** zainstalowane przez HACS.
+
+> Mushroom/card-mod/ApexCharts są zależnościami frontendowymi kompletnego dashboardu, a nie zależnościami rdzenia natywnej integracji.
 
 ### 2. Pierwszy start
 
@@ -108,7 +117,8 @@ Full documentation: `DOCUMENTATION.md`.
 
 ### 4. Karta Lovelace
 
-Dodaj `dashboard/sbc5_control_center_diagnostics_card.yaml`. Opcjonalną kartę aktualizacji znajdziesz w `dashboard/update_status_card.yaml`.
+1. W HACS zainstaluj **Mushroom**, **card-mod** i **ApexCharts Card**.
+2. Dodaj `dashboard/sbc5_control_center_diagnostics_card.yaml`. Opcjonalną kartę aktualizacji znajdziesz w `dashboard/update_status_card.yaml`.
 
 Sekcje **SBC5 Control Center**, **AI Cooling** i **Zegar CPU** są domyślnie zwinięte. Dotknięcie kafelka rozwija szczegóły, ponowne dotknięcie je chowa.
 

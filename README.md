@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <strong>Stable · v2.8.26 · Card UI 2.8.26 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
+  <strong>Stable · v2.8.27 · Card UI 2.8.27 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
 </p>
 
 <p align="center">
@@ -83,14 +83,23 @@ Home Assistant OS
 └── Lovelace cards
 ```
 
+### Lovelace dependencies
+
+The native SBC5 integration works independently of third-party frontend cards. For the **complete SBC5 Control Center dashboard**, install through HACS:
+
+- **Mushroom** — tiles, selectors and controls;
+- **card-mod** — styling and dynamic layout;
+- **ApexCharts Card** — temperature, PWM, AI prediction and history charts.
+
 ### Quick start
 
 1. Install and start the SBC5 Control Center App/runtime.
 2. Verify `Platform Guard` and `Host Access`.
 3. Calibrate the Active Cooler before aggressively reducing minimum PWM.
-4. Add or synchronize the main Lovelace card.
-5. Change CPU/GPU profiles gradually and restart the Raspberry Pi host only when Restart Manager reports a real boot-configuration change.
-6. Install the companion **[HACS integration](https://github.com/krlmdfk/sbc5-control-center-integration)** if you want native Home Assistant entities and device diagnostics.
+4. Install **Mushroom**, **card-mod**, and **ApexCharts Card** in HACS for the complete Lovelace dashboard.
+5. Add or synchronize the main Lovelace card.
+6. Change CPU/GPU profiles gradually and restart the Raspberry Pi host only when Restart Manager reports a real boot-configuration change.
+7. Install the companion **[HACS integration](https://github.com/krlmdfk/sbc5-control-center-integration)** if you want native Home Assistant entities and device diagnostics.
 
 Full guide: [`docs/QUICK_SETUP.md`](docs/QUICK_SETUP.md).
 
@@ -161,14 +170,23 @@ Home Assistant OS
 └── karty Lovelace
 ```
 
+### Zależności Lovelace
+
+Natywna integracja SBC5 działa niezależnie od zewnętrznych kart frontendowych. Do działania **kompletnego dashboardu SBC5 Control Center** zainstaluj przez HACS:
+
+- **Mushroom** — kafelki, selektory i elementy sterujące;
+- **card-mod** — stylowanie i dynamiczny układ;
+- **ApexCharts Card** — wykresy temperatury, PWM, predykcji AI i historii.
+
 ### Szybki start
 
 1. Zainstaluj i uruchom SBC5 Control Center App/runtime.
 2. Sprawdź `Platform Guard` i `Host Access`.
 3. Uruchom kalibrację Active Coolera przed agresywnym obniżaniem minimalnego PWM.
-4. Dodaj lub zsynchronizuj główną kartę Lovelace.
-5. Zmieniaj profile CPU/GPU etapami i restartuj host Raspberry Pi tylko wtedy, gdy Restart Manager zgłosi rzeczywistą zmianę konfiguracji boot.
-6. Zainstaluj towarzyszącą **[integrację HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**, jeśli chcesz natywne encje i diagnostykę urządzenia w Home Assistant.
+4. Zainstaluj w HACS **Mushroom**, **card-mod** i **ApexCharts Card** dla kompletnego dashboardu Lovelace.
+5. Dodaj lub zsynchronizuj główną kartę Lovelace.
+6. Zmieniaj profile CPU/GPU etapami i restartuj host Raspberry Pi tylko wtedy, gdy Restart Manager zgłosi rzeczywistą zmianę konfiguracji boot.
+7. Zainstaluj towarzyszącą **[integrację HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**, jeśli chcesz natywne encje i diagnostykę urządzenia w Home Assistant.
 
 Pełna instrukcja: [`docs/QUICK_SETUP.md`](docs/QUICK_SETUP.md).
 

@@ -8,8 +8,8 @@
 
 | Parameter / Parametr | Value / Wartość |
 |---|---|
-| App version / Wersja aplikacji | **2.8.26** |
-| Card UI | **2.8.26** |
+| App version / Wersja aplikacji | **2.8.27** |
+| Card UI | **2.8.27** |
 | Status / Stan | **stable** |
 | Architecture / Architektura | `aarch64` |
 | Home Assistant OS | `>= 18.3` |
@@ -50,6 +50,8 @@ AI Cooling runs locally and is secondary to the classical controller. The model 
 CPU/OC and GPU/V3D/ISP profiles maintain persistent desired state synchronized between Ingress, Lovelace, `config.txt` and native Home Assistant configuration. A real boot-parameter change requests a full Raspberry Pi restart. Managed files are compared semantically, so changing only an App version/comment must not trigger a host restart.
 
 ### Lovelace interface
+
+The complete Lovelace interface requires **Mushroom**, **card-mod**, and **ApexCharts Card** installed through HACS. The native SBC5 integration can expose its entities without these frontend cards.
 
 The main card is mobile-first. Dense sections are collapsed by default and expanded from tiles: **SBC5 Control Center**, **AI Cooling**, **CPU Clock**, **CPU / Overclocking**, and **GPU / V3D / ISP**. Performance order is CPU/PWM chart → CPU / Overclocking → GPU/V3D/ISP.
 
@@ -101,6 +103,8 @@ AI Cooling działa lokalnie i wtórnie wobec klasycznego regulatora. Model rozr�
 Profile CPU/OC oraz GPU/V3D/ISP mają trwały stan żądany synchronizowany między Ingress, kartą Lovelace, `config.txt` i natywną Konfiguracją Home Assistanta. Rzeczywista zmiana parametrów boot powoduje żądanie pełnego restartu Raspberry Pi. Pliki zarządzane są porównywane semantycznie, więc sama zmiana wersji aplikacji lub komentarza nie powoduje restartu hosta.
 
 ### Interfejs Lovelace
+
+Kompletny interfejs Lovelace wymaga zainstalowania przez HACS **Mushroom**, **card-mod** i **ApexCharts Card**. Natywna integracja SBC5 może udostępniać swoje encje bez tych kart frontendowych.
 
 Główna karta jest zoptymalizowana pod telefon. Sekcje o dużej liczbie szczegółów są domyślnie zwinięte i rozwijane przez kafelki: **SBC5 Control Center**, **AI Cooling**, **Zegar CPU**, **CPU / Overclocking** i **GPU / V3D / ISP**. Kolejność części wydajnościowych: wykres CPU/PWM → CPU / Overclocking → GPU/V3D/ISP.
 

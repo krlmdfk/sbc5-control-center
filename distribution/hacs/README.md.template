@@ -43,22 +43,35 @@ The required Raspberry Pi 5 host services are provided by the **SBC5 Control Cen
 
 ### Requirements
 
-- Raspberry Pi 5 with the SBC5 Control Center App/runtime installed and running;
-- Home Assistant Core {{HA_CORE_MIN}} or newer;
+#### Core requirements
+
+- Raspberry Pi 5 with the **SBC5 Control Center App/runtime** installed and running;
+- Home Assistant Core 2026.10.1 or newer;
 - HACS for HACS-managed installation.
 
 Without the SBC5 Control Center App/runtime, this integration has no SBC5 host telemetry source to read.
+
+#### Lovelace / dashboard dependencies
+
+For the **complete SBC5 Control Center Lovelace dashboard**, install these frontend components through HACS:
+
+- **Mushroom** — required by SBC5 tiles, selectors and controls;
+- **card-mod** — required by SBC5 styling and dynamic card layout;
+- **ApexCharts Card** — required by CPU temperature/PWM, AI prediction and history charts.
+
+> The native SBC5 integration can expose device information, telemetry and control entities without these frontend cards. The three components above are required for the complete SBC5 Lovelace interface.
 
 ### Install with HACS
 
 1. Install and run the **SBC5 Control Center App/runtime** from the [main project](https://github.com/krlmdfk/sbc5-control-center).
 2. Open **HACS**.
-3. Open **⋮ → Custom repositories**.
-4. Add `https://github.com/krlmdfk/sbc5-control-center-integration`.
-5. Select category **Integration**.
-6. Install **SBC5 Control Center**.
-7. Restart Home Assistant when HACS asks for it.
-8. Open **Settings → Devices & services** and add **SBC5 Control Center** if it is not already present.
+3. For the complete SBC5 dashboard, install **Mushroom**, **card-mod**, and **ApexCharts Card** in HACS.
+4. Open **⋮ → Custom repositories**.
+5. Add `https://github.com/krlmdfk/sbc5-control-center-integration`.
+6. Select category **Integration**.
+7. Install **SBC5 Control Center**.
+8. Restart Home Assistant when HACS asks for it.
+9. Open **Settings → Devices & services** and add **SBC5 Control Center** if it is not already present.
 
 ### HACS ownership protection
 
@@ -104,22 +117,35 @@ Wymagane usługi hosta Raspberry Pi 5 zapewnia **SBC5 Control Center App/runtime
 
 ### Wymagania
 
-- Raspberry Pi 5 z zainstalowaną i uruchomioną aplikacją/runtime SBC5 Control Center;
-- Home Assistant Core {{HA_CORE_MIN}} lub nowszy;
+#### Wymagania podstawowe
+
+- Raspberry Pi 5 z zainstalowaną i uruchomioną **aplikacją/runtime SBC5 Control Center**;
+- Home Assistant Core 2026.10.1 lub nowszy;
 - HACS do instalacji zarządzanej przez HACS.
 
 Bez aplikacji/runtime SBC5 Control Center integracja nie ma źródła telemetrii hosta SBC5.
+
+#### Zależności Lovelace / dashboardu
+
+Do poprawnego działania **kompletnego dashboardu Lovelace SBC5 Control Center** zainstaluj przez HACS:
+
+- **Mushroom** — wymagany przez kafelki, selektory i elementy sterujące SBC5;
+- **card-mod** — wymagany do stylowania i dynamicznego układu kart SBC5;
+- **ApexCharts Card** — wymagany przez wykresy temperatury CPU/PWM, predykcji AI oraz historii.
+
+> Natywna integracja SBC5 może udostępniać informacje o urządzeniu, telemetrię i encje sterujące bez tych kart frontendowych. Powyższe trzy komponenty są wymagane do działania kompletnego interfejsu Lovelace SBC5.
 
 ### Instalacja przez HACS
 
 1. Zainstaluj i uruchom **SBC5 Control Center App/runtime** z [głównego projektu](https://github.com/krlmdfk/sbc5-control-center).
 2. Otwórz **HACS**.
-3. Otwórz **⋮ → Niestandardowe repozytoria**.
-4. Dodaj `https://github.com/krlmdfk/sbc5-control-center-integration`.
-5. Wybierz kategorię **Integracja**.
-6. Zainstaluj **SBC5 Control Center**.
-7. Uruchom ponownie Home Assistant, gdy HACS o to poprosi.
-8. Otwórz **Ustawienia → Urządzenia i usługi** i dodaj **SBC5 Control Center**, jeśli integracja nie została jeszcze skonfigurowana.
+3. Dla kompletnego dashboardu SBC5 zainstaluj w HACS **Mushroom**, **card-mod** i **ApexCharts Card**.
+4. Otwórz **⋮ → Niestandardowe repozytoria**.
+5. Dodaj `https://github.com/krlmdfk/sbc5-control-center-integration`.
+6. Wybierz kategorię **Integracja**.
+7. Zainstaluj **SBC5 Control Center**.
+8. Uruchom ponownie Home Assistant, gdy HACS o to poprosi.
+9. Otwórz **Ustawienia → Urządzenia i usługi** i dodaj **SBC5 Control Center**, jeśli integracja nie została jeszcze skonfigurowana.
 
 ### Ochrona własności HACS
 
