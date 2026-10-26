@@ -1,7 +1,7 @@
 #!/bin/bash
 set -u
 
-# v2.8.33 Runtime Robustness: some HAOS/App container starts may expose no /tmp.
+# v2.8.34 Runtime Robustness: some HAOS/App container starts may expose no /tmp.
 # SBC5 has historically used /tmp for short-lived lock/cache/TSV files, so create it
 # deterministically before any runtime path is evaluated.
 if [ ! -d /tmp ]; then
@@ -10,8 +10,8 @@ fi
 chmod 1777 /tmp 2>/dev/null || true
 export TMPDIR="${TMPDIR:-/tmp}"
 
-APP_VERSION="2.8.33"
-REQUIRED_PACKAGE_VERSION="2.8.33"
+APP_VERSION="2.8.34"
+REQUIRED_PACKAGE_VERSION="2.8.34"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -9082,7 +9082,7 @@ migration_handoff_startup() {
   done
 }
 
-# v2.8.33: local -> Store migration is completed before profile bootstrap/load_options,
+# v2.8.34: local -> Store migration is completed before profile bootstrap/load_options,
 # so imported AI/calibration/profile state becomes the source of truth from the first
 # controller cycle. The store identity waits until the local source is stopped.
 migration_handoff_startup
