@@ -1,165 +1,198 @@
-# SBC5 Control Center — Home Assistant Integration
+<p align="center">
+  <a href="https://github.com/krlmdfk/sbc5-control-center">
+    <img src="https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/branding/logo-512.png" alt="SBC5 Control Center" width="180">
+  </a>
+</p>
 
-[![HACS validation](https://github.com/krlmdfk/sbc5-control-center-integration/actions/workflows/validate.yml/badge.svg)](https://github.com/krlmdfk/sbc5-control-center-integration/actions/workflows/validate.yml)
-[![Release](https://img.shields.io/github/v/release/krlmdfk/sbc5-control-center-integration?display_name=tag)](https://github.com/krlmdfk/sbc5-control-center-integration/releases)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+<h1 align="center">SBC5 Control Center — Home Assistant Integration</h1>
 
-[![SBC5 Control Center App](https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/branding/icon-256.png)](https://github.com/krlmdfk/sbc5-control-center)
+<p align="center">
+  Native HACS integration for Raspberry Pi 5 telemetry, diagnostics and SBC5 control state in Home Assistant.<br>
+  Natywna integracja HACS dla telemetrii Raspberry Pi 5, diagnostyki i stanu sterowania SBC5 w Home Assistant.
+</p>
 
-> **App required / Aplikacja wymagana**
+<p align="center">
+  <a href="https://github.com/krlmdfk/sbc5-control-center-integration/actions/workflows/validate.yml"><img src="https://github.com/krlmdfk/sbc5-control-center-integration/actions/workflows/validate.yml/badge.svg" alt="Validate"></a>
+  <a href="https://github.com/krlmdfk/sbc5-control-center-integration/releases"><img src="https://img.shields.io/github/v/release/krlmdfk/sbc5-control-center-integration?display_name=tag" alt="Release"></a>
+  <img src="https://img.shields.io/badge/HACS-Custom%20Integration-41BDF5" alt="HACS">
+  <img src="https://img.shields.io/badge/Home%20Assistant-%3E%3D%20{{HA_CORE_MIN}}-18BCF2" alt="Home Assistant">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/krlmdfk/sbc5-control-center"><strong>Main App</strong></a> ·
+  <a href="https://krlmdfk.github.io/sbc5-control-center/"><strong>Documentation</strong></a> ·
+  <a href="https://github.com/krlmdfk/sbc5-control-center-integration/releases"><strong>Releases</strong></a> ·
+  <a href="https://github.com/krlmdfk/sbc5-control-center-integration/issues"><strong>Issues</strong></a>
+</p>
+
+> [!IMPORTANT]
+> **SBC5 Control Center App/runtime is required.** This repository contains the Home Assistant integration only. The App/runtime provides the Raspberry Pi 5 host telemetry and control services used by this integration.
 >
-> This HACS integration is a companion to the **SBC5 Control Center App/runtime**. Click the SBC5 logo above to open the required main application repository.
->
-> Integracja HACS współpracuje z **SBC5 Control Center App/runtime**. Kliknij logo SBC5 powyżej, aby otworzyć wymagane główne repozytorium aplikacji.
-
-**[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)** · **[App Releases](https://github.com/krlmdfk/sbc5-control-center/releases)** · **[Integration Releases](https://github.com/krlmdfk/sbc5-control-center-integration/releases)**
+> **Wymagana jest aplikacja/runtime SBC5 Control Center.** To repozytorium zawiera wyłącznie integrację Home Assistant. Aplikacja/runtime dostarcza telemetrię hosta Raspberry Pi 5 i usługi sterujące wykorzystywane przez integrację.
 
 **Version {{VERSION}} · HACS-ready · Home Assistant ≥ {{HA_CORE_MIN}} · Apache-2.0**
 
 **English** · [Polski](#polski)
 
+---
+
 ## English
 
-Native Home Assistant companion integration for **SBC5 Control Center** on Raspberry Pi 5.
+### Overview
 
-### What this repository provides
+SBC5 Control Center Integration exposes SBC5 data and control state as native Home Assistant entities and device diagnostics. It is the HACS-managed companion to the main SBC5 Control Center App/runtime.
 
-This repository contains the **Home Assistant integration only**. It exposes SBC5 telemetry and control state natively in Home Assistant, including device information, diagnostics, update state and Restart Manager entities.
+### What you get
 
-The required Raspberry Pi 5 host services are provided by the **SBC5 Control Center App/runtime** from the main project:
-
-**[Open SBC5 Control Center App repository →](https://github.com/krlmdfk/sbc5-control-center)**
+| Area | Integration capability |
+|---|---|
+| **Device** | Native Home Assistant device entry and diagnostic metadata |
+| **Telemetry** | Raspberry Pi 5 CPU, temperature, fan/PWM and system state exposed to Home Assistant |
+| **Cooling state** | SBC5 cooling, controller and AI Cooling status |
+| **Profiles** | CPU/GPU profile state and related diagnostics |
+| **Updates** | App/integration update visibility and version state |
+| **Restart Manager** | Native entities for restart requirements and state |
+| **Diagnostics** | Troubleshooting data without replacing the App/runtime diagnostics layer |
 
 ### Current release
 
 {{SUMMARY_EN}}
 
-### Repository relationship
+### Architecture
 
-| Repository | Purpose |
-|---|---|
-| **[sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)** | Main SBC5 project and required App/runtime. |
-| **[sbc5-control-center-integration](https://github.com/krlmdfk/sbc5-control-center-integration)** | HACS-managed Home Assistant integration. |
+```text
+Raspberry Pi 5 + Home Assistant OS
+│
+├── SBC5 Control Center App/runtime
+│   ├── host access
+│   ├── cooling / AI / profile logic
+│   └── Raspberry Pi telemetry
+│
+└── SBC5 Control Center Integration (this repository)
+    ├── Home Assistant device
+    ├── sensors / binary sensors
+    ├── diagnostics / repairs
+    └── update & restart entities
+```
 
 ### Requirements
 
-#### Core requirements
-
-- Raspberry Pi 5 with the **SBC5 Control Center App/runtime** installed and running;
-- Home Assistant Core 2026.10.1 or newer;
+- Raspberry Pi 5;
+- running **SBC5 Control Center App/runtime** from the main repository;
+- Home Assistant Core **{{HA_CORE_MIN}} or newer**;
 - HACS for HACS-managed installation.
-
-Without the SBC5 Control Center App/runtime, this integration has no SBC5 host telemetry source to read.
-
-#### Lovelace / dashboard dependencies
-
-For the **complete SBC5 Control Center Lovelace dashboard**, install these frontend components through HACS:
-
-- **Mushroom** — required by SBC5 tiles, selectors and controls;
-- **card-mod** — required by SBC5 styling and dynamic card layout;
-- **ApexCharts Card** — required by CPU temperature/PWM, AI prediction and history charts.
-
-> The native SBC5 integration can expose device information, telemetry and control entities without these frontend cards. The three components above are required for the complete SBC5 Lovelace interface.
 
 ### Install with HACS
 
-1. Install and run the **SBC5 Control Center App/runtime** from the [main project](https://github.com/krlmdfk/sbc5-control-center).
-2. Open **HACS**.
-3. For the complete SBC5 dashboard, install **Mushroom**, **card-mod**, and **ApexCharts Card** in HACS.
-4. Open **⋮ → Custom repositories**.
-5. Add `https://github.com/krlmdfk/sbc5-control-center-integration`.
-6. Select category **Integration**.
-7. Install **SBC5 Control Center**.
-8. Restart Home Assistant when HACS asks for it.
-9. Open **Settings → Devices & services** and add **SBC5 Control Center** if it is not already present.
+1. Install and start the **SBC5 Control Center App/runtime** from the main repository.
+2. Open **HACS → Integrations**.
+3. Open **⋮ → Custom repositories**.
+4. Add `https://github.com/krlmdfk/sbc5-control-center-integration` as category **Integration**.
+5. Install **SBC5 Control Center**.
+6. Restart Home Assistant when requested.
+7. Open **Settings → Devices & services** and add **SBC5 Control Center** if it is not already configured.
+
+### Optional dashboard components
+
+The native integration works without third-party frontend cards. For the complete SBC5 Lovelace dashboard, install through HACS:
+
+- **Mushroom**
+- **card-mod**
+- **ApexCharts Card**
 
 ### HACS ownership protection
 
-The integration contains the `.hacs_managed` marker. SBC5 Control Center detects this marker and leaves `custom_components/sbc5_control_center` under HACS ownership, preventing the App from overwriting or downgrading a HACS-managed copy.
+The integration contains the `.hacs_managed` marker. The main App detects this marker and does not overwrite or downgrade the HACS-managed copy.
 
 ### Validation
 
-Every push and pull request runs HACS repository validation, Home Assistant Hassfest validation, Python compilation and JSON validation.
+Every push and pull request should pass repository validation, Home Assistant Hassfest checks, Python compilation and JSON validation before publication.
 
 ### Support
 
-- Integration/HACS issues: **[integration issue tracker](https://github.com/krlmdfk/sbc5-control-center-integration/issues)**
-- App/runtime, cooling, host access, boot configuration and Raspberry Pi diagnostics: **[main project issue tracker](https://github.com/krlmdfk/sbc5-control-center/issues)**
-
-### License
-
-Apache License 2.0. SBC5 Control Center is an independent project and is not endorsed by Raspberry Pi Ltd., Home Assistant, or the Open Home Foundation.
+- Integration/HACS issues: [integration issue tracker](https://github.com/krlmdfk/sbc5-control-center-integration/issues)
+- Runtime, cooling, host access, boot configuration or Raspberry Pi diagnostics: [main project issue tracker](https://github.com/krlmdfk/sbc5-control-center/issues)
 
 ---
 
 ## Polski
 
-Natywna integracja towarzysząca Home Assistant dla **SBC5 Control Center** na Raspberry Pi 5.
+### Przegląd
 
-### Co zawiera to repozytorium
+SBC5 Control Center Integration udostępnia dane i stan sterowania SBC5 jako natywne encje Home Assistant oraz diagnostykę urządzenia. Jest to zarządzana przez HACS integracja towarzysząca głównej aplikacji/runtime SBC5 Control Center.
 
-Repozytorium zawiera **wyłącznie integrację Home Assistant**. Udostępnia ona natywnie w Home Assistant telemetrię i stan sterowania SBC5, w tym informacje o urządzeniu, diagnostykę, stan aktualizacji oraz encje Restart Managera.
+### Co otrzymujesz
 
-Wymagane usługi hosta Raspberry Pi 5 zapewnia **SBC5 Control Center App/runtime** z głównego projektu:
-
-**[Otwórz repozytorium aplikacji SBC5 Control Center →](https://github.com/krlmdfk/sbc5-control-center)**
+| Obszar | Możliwości integracji |
+|---|---|
+| **Urządzenie** | Natywny wpis urządzenia Home Assistant i metadane diagnostyczne |
+| **Telemetria** | CPU Raspberry Pi 5, temperatura, wentylator/PWM i stan systemu w Home Assistant |
+| **Stan chłodzenia** | Stan SBC5 Cooling, regulatora i AI Cooling |
+| **Profile** | Stan profili CPU/GPU i powiązana diagnostyka |
+| **Aktualizacje** | Widoczność wersji oraz stanu aktualizacji aplikacji/integracji |
+| **Restart Manager** | Natywne encje wymaganego restartu i jego stanu |
+| **Diagnostyka** | Dane troubleshooting bez zastępowania warstwy diagnostycznej App/runtime |
 
 ### Aktualne wydanie
 
 {{SUMMARY_PL}}
 
-### Relacja repozytoriów
+### Architektura
 
-| Repozytorium | Przeznaczenie |
-|---|---|
-| **[sbc5-control-center](https://github.com/krlmdfk/sbc5-control-center)** | Główny projekt SBC5 oraz wymagana aplikacja/runtime. |
-| **[sbc5-control-center-integration](https://github.com/krlmdfk/sbc5-control-center-integration)** | Integracja Home Assistant zarządzana przez HACS. |
+```text
+Raspberry Pi 5 + Home Assistant OS
+│
+├── SBC5 Control Center App/runtime
+│   ├── dostęp do hosta
+│   ├── chłodzenie / AI / profile
+│   └── telemetria Raspberry Pi
+│
+└── SBC5 Control Center Integration (to repozytorium)
+    ├── urządzenie Home Assistant
+    ├── sensory / binary sensors
+    ├── diagnostyka / repairs
+    └── encje aktualizacji i restartu
+```
 
 ### Wymagania
 
-#### Wymagania podstawowe
-
-- Raspberry Pi 5 z zainstalowaną i uruchomioną **aplikacją/runtime SBC5 Control Center**;
-- Home Assistant Core 2026.10.1 lub nowszy;
+- Raspberry Pi 5;
+- uruchomiona **aplikacja/runtime SBC5 Control Center** z głównego repozytorium;
+- Home Assistant Core **{{HA_CORE_MIN}} lub nowszy**;
 - HACS do instalacji zarządzanej przez HACS.
-
-Bez aplikacji/runtime SBC5 Control Center integracja nie ma źródła telemetrii hosta SBC5.
-
-#### Zależności Lovelace / dashboardu
-
-Do poprawnego działania **kompletnego dashboardu Lovelace SBC5 Control Center** zainstaluj przez HACS:
-
-- **Mushroom** — wymagany przez kafelki, selektory i elementy sterujące SBC5;
-- **card-mod** — wymagany do stylowania i dynamicznego układu kart SBC5;
-- **ApexCharts Card** — wymagany przez wykresy temperatury CPU/PWM, predykcji AI oraz historii.
-
-> Natywna integracja SBC5 może udostępniać informacje o urządzeniu, telemetrię i encje sterujące bez tych kart frontendowych. Powyższe trzy komponenty są wymagane do działania kompletnego interfejsu Lovelace SBC5.
 
 ### Instalacja przez HACS
 
-1. Zainstaluj i uruchom **SBC5 Control Center App/runtime** z [głównego projektu](https://github.com/krlmdfk/sbc5-control-center).
-2. Otwórz **HACS**.
-3. Dla kompletnego dashboardu SBC5 zainstaluj w HACS **Mushroom**, **card-mod** i **ApexCharts Card**.
-4. Otwórz **⋮ → Niestandardowe repozytoria**.
-5. Dodaj `https://github.com/krlmdfk/sbc5-control-center-integration`.
-6. Wybierz kategorię **Integracja**.
-7. Zainstaluj **SBC5 Control Center**.
-8. Uruchom ponownie Home Assistant, gdy HACS o to poprosi.
-9. Otwórz **Ustawienia → Urządzenia i usługi** i dodaj **SBC5 Control Center**, jeśli integracja nie została jeszcze skonfigurowana.
+1. Zainstaluj i uruchom **SBC5 Control Center App/runtime** z głównego repozytorium.
+2. Otwórz **HACS → Integrations**.
+3. Otwórz **⋮ → Niestandardowe repozytoria**.
+4. Dodaj `https://github.com/krlmdfk/sbc5-control-center-integration` jako kategorię **Integration**.
+5. Zainstaluj **SBC5 Control Center**.
+6. Uruchom ponownie Home Assistant, gdy zostaniesz o to poproszony.
+7. Otwórz **Ustawienia → Urządzenia i usługi** i dodaj **SBC5 Control Center**, jeśli nie jest jeszcze skonfigurowany.
+
+### Opcjonalne komponenty dashboardu
+
+Natywna integracja działa bez zewnętrznych kart frontendowych. Dla kompletnego dashboardu Lovelace SBC5 zainstaluj przez HACS:
+
+- **Mushroom**
+- **card-mod**
+- **ApexCharts Card**
 
 ### Ochrona własności HACS
 
-Integracja zawiera znacznik `.hacs_managed`. SBC5 Control Center wykrywa ten znacznik i pozostawia `custom_components/sbc5_control_center` pod zarządzaniem HACS, dzięki czemu aplikacja nie nadpisuje ani nie obniża wersji kopii zarządzanej przez HACS.
+Integracja zawiera znacznik `.hacs_managed`. Główna aplikacja wykrywa ten znacznik i nie nadpisuje ani nie obniża wersji kopii zarządzanej przez HACS.
 
 ### Walidacja
 
-Każdy push i pull request uruchamia walidację repozytorium HACS, Home Assistant Hassfest, kompilację Pythona i walidację JSON.
+Każdy push i pull request powinien przed publikacją przejść walidację repozytorium, kontrole Home Assistant Hassfest, kompilację Pythona i walidację JSON.
 
 ### Wsparcie
 
-- Problemy integracji/HACS: **[issue tracker integracji](https://github.com/krlmdfk/sbc5-control-center-integration/issues)**
-- Problemy aplikacji/runtime, chłodzenia, dostępu do hosta, konfiguracji boot i diagnostyki Raspberry Pi: **[issue tracker głównego projektu](https://github.com/krlmdfk/sbc5-control-center/issues)**
+- Problemy integracji/HACS: [issue tracker integracji](https://github.com/krlmdfk/sbc5-control-center-integration/issues)
+- Runtime, chłodzenie, dostęp do hosta, konfiguracja boot lub diagnostyka Raspberry Pi: [issue tracker głównego projektu](https://github.com/krlmdfk/sbc5-control-center/issues)
 
-### Licencja
+### License / Licencja
 
-Apache License 2.0. SBC5 Control Center jest niezależnym projektem i nie jest oficjalnie wspierany ani zatwierdzony przez Raspberry Pi Ltd., Home Assistant ani Open Home Foundation.
+Apache License 2.0. SBC5 Control Center is an independent project and is not endorsed by Raspberry Pi Ltd., Home Assistant or the Open Home Foundation.

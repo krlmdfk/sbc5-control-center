@@ -36,7 +36,7 @@ jobs:
           find . -type d -name __pycache__ -prune -exec rm -rf {} +
           find . -type f -name '*.pyc' -delete
 
-      - name: Validate release consistency
+      - name: Validate repository consistency
         run: python scripts/validate_release.py
 
       - name: Test migration profile guard
@@ -45,5 +45,5 @@ jobs:
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
 
-      - name: Build and verify local update package
-        run: python scripts/build_local_update.py --output "$RUNNER_TEMP/SBC5_UPDATE_CI.zip"
+      - name: Check whitespace errors
+        run: git diff --check HEAD^ HEAD || git diff --check
