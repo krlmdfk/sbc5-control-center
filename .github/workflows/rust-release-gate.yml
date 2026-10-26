@@ -54,6 +54,8 @@ jobs:
               "local_apps/sbc5_control_center/rust-core/Cargo.toml",
               "local_apps/sbc5_control_center/rust-core/src/main.rs",
               "local_apps/sbc5_control_center/RUST_MIGRATION.md",
+              "local_apps/sbc5_control_center/migration_manager_v2.py",
+              "scripts/test_canary_migration.py",
           ]
           for rel in required:
               if not Path(rel).is_file():
@@ -78,6 +80,7 @@ jobs:
       - name: Run migration regression tests
         run: |
           python scripts/test_migration_profile_guard.py
+          python scripts/test_canary_migration.py
           python scripts/test_runtime_robustness.py
 
       - name: Build verified 3.0.0 local update
