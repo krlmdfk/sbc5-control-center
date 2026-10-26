@@ -58,6 +58,9 @@ def main() -> int:
             "config_gpu_profile": "factory",
             "config_gpu": {},
             "config_txt_manager": {"enabled": False},
+            "custom_target_c": 50.0,
+            "ai_cooling_section_enabled": False,
+            "ai_cooling_mode": "learning",
         }
         write_json(data / "options.json", store_defaults)
         write_json(mm.PROFILE_SYNC_MARKER, {"signature": "stale-store-default-signature"})
@@ -70,6 +73,9 @@ def main() -> int:
             "config_gpu_profile": "balanced",
             "config_gpu": {"core_freq": 950, "isp_freq": 950, "v3d_freq": 1000},
             "config_txt_manager": {"enabled": True},
+            "custom_target_c": 49.0,
+            "ai_cooling_section_enabled": True,
+            "ai_cooling_mode": "assist",
         }
         write_json(payload / "options.json", source_options)
         write_json(payload / "cpu_profile_state.json", {"enabled": True, "requested_profile": "mild", "requested_config": {"arm_freq": 2500}})
@@ -108,6 +114,15 @@ def main() -> int:
         merged = json.loads((data / "options.json").read_text(encoding="utf-8"))
         assert merged["config_cpu_profile"] == "mild" and merged["section_cpu_enabled"] is True
         assert merged["config_gpu_profile"] == "balanced" and merged["section_gpu_enabled"] is True
+        assert merged["custom_target_c"] == 49.0
+        assert merged["ai_cooling_section_enabled"] is True
+        assert merged["ai_cooling_mode"] == "assist"
+
+        runtime = (ROOT / "local_apps" / "sbc5_control_center" / "run_legacy.sh").read_text(encoding="utf-8")
+        assert "supervisor_sync_migrated_options_to_store()" in runtime
+        guard_body = runtime.split("migration_profile_guard_sync() {", 1)[1].split("supervisor_profile_reconcile_startup() {", 1)[0]
+        assert "supervisor_sync_migrated_options_to_store" in guard_body
+        assert guard_body.index("supervisor_sync_migrated_options_to_store") < guard_body.index("migration_profile_guard_finalize")
         marker = json.loads(mm.IMPORT_MARKER.read_text(encoding="utf-8"))
         assert marker["profile_sync_guard"] == "pending"
 

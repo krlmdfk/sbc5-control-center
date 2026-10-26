@@ -1715,6 +1715,49 @@ supervisor_sync_profile_state_to_store() {
   return 1
 }
 
+supervisor_sync_migrated_options_to_store() {
+  # During Store/canary migration /data/options.json is imported after the
+  # container has already started. Supervisor keeps a separate persistent
+  # options store for each App slug and would otherwise restore its stale
+  # defaults on the next container start. Persist the imported options into
+  # Supervisor before finalizing the migration guard.
+  #
+  # Only keys already present in the target App's native options are copied.
+  # This keeps target-only/new-schema defaults and prevents old/foreign keys
+  # from being submitted to Supervisor. Objects are recursively overlaid;
+  # arrays/scalars are replaced by the imported value.
+  [ -n "${SUPERVISOR_TOKEN:-}" ] || return 1
+  [ -r "$OPTIONS_FILE" ] || return 1
+  local sup="${1:-}" imported merged current_norm desired_norm payload out
+  [ -n "$sup" ] || sup="$(supervisor_own_options_json)" || return 1
+  imported="$(jq -c 'if type == "object" then . else {} end' "$OPTIONS_FILE" 2>/dev/null)" || return 1
+  merged="$(jq -cn --argjson base "$sup" --argjson src "$imported" '
+    def overlay_known($b; $s):
+      if (($b|type) == "object") and (($s|type) == "object") then
+        reduce ($s | keys_unsorted[]) as $k ($b;
+          if ($b | has($k)) then .[$k] = overlay_known($b[$k]; $s[$k]) else . end)
+      else $s end;
+    overlay_known($base; $src)
+  ' 2>/dev/null)" || return 1
+  current_norm="$(jq -cS . <<<"$sup" 2>/dev/null)" || return 1
+  desired_norm="$(jq -cS . <<<"$merged" 2>/dev/null)" || return 1
+  if [ "$current_norm" = "$desired_norm" ]; then
+    supervisor_profile_marker_write "$merged" "migration_options_already_current" || true
+    return 0
+  fi
+  payload="$(jq -cn --argjson options "$merged" '{options:$options}')"
+  out="/tmp/sbc5_supervisor_migration_options.$$"
+  if supervisor_post "/addons/self/options" "$payload" "$out"; then
+    supervisor_profile_marker_write "$merged" "migration_options_handoff" || true
+    log "Store Migration: pełny zaimportowany stan opcji zapisano do trwałej Konfiguracji Supervisor dla bieżącej instancji."
+    rm -f "$out"
+    return 0
+  fi
+  rm -f "$out"
+  log "Store Migration: nie udało się utrwalić pełnych zaimportowanych opcji w Supervisor; guard pozostaje pending i nie dopuści do nadpisania stanu przy restarcie."
+  return 1
+}
+
 migration_profile_guard_active() {
   [ -r "$STORE_MIGRATION_PROFILE_GUARD_FILE" ] || return 1
   jq -e '.state == "pending"' "$STORE_MIGRATION_PROFILE_GUARD_FILE" >/dev/null 2>&1
@@ -1727,20 +1770,22 @@ migration_profile_guard_finalize() {
     '.state="finalized" | .completed_at=$completed' \
     "$STORE_MIGRATION_PROFILE_GUARD_FILE" > "$tmp" 2>/dev/null || { rm -f "$tmp"; return 1; }
   mv -f "$tmp" "$STORE_MIGRATION_PROFILE_GUARD_FILE"
-  log "Store Migration: profile_sync_guard=finalized — trwałe profile CPU/GPU zapisano do natywnej Konfiguracji Supervisor."
+  log "Store Migration: profile_sync_guard=finalized — pełne opcje migracji oraz trwałe profile CPU/GPU zapisano do natywnej Konfiguracji Supervisor."
 }
 
 migration_profile_guard_sync() {
   local sup="${1:-}"
   migration_profile_guard_active || return 1
-  # Imported /data state is authoritative until it is copied to the Store identity's
-  # native options. Never interpret stale Factory/off defaults as an explicit edit.
+  # Imported /data state is authoritative until the complete imported App
+  # configuration is copied to this Store/canary slug's persistent Supervisor
+  # options. CPU/GPU durable state is folded into options.json first, then the
+  # whole known-schema option tree is persisted atomically through Supervisor.
   rm -f "$SUPERVISOR_PROFILE_SYNC_FILE" 2>/dev/null || true
   cpu_profile_restore_options_from_state || true
   gpu_profile_restore_options_from_state || true
   [ -n "$sup" ] || sup="$(supervisor_own_options_json 2>/dev/null || true)"
   [ -n "$sup" ] || return 0
-  if supervisor_sync_profile_state_to_store "$sup"; then
+  if supervisor_sync_migrated_options_to_store "$sup"; then
     migration_profile_guard_finalize || true
   fi
   return 0
