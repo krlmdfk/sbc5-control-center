@@ -17,7 +17,7 @@ LABEL \
   io.hass.type="app" \
   io.hass.arch="${BUILD_ARCH}" \
   io.sbc5.runtime="rust-hybrid" \
-  io.sbc5.rust-core="3.0.0"
+  io.sbc5.rust-core="${BUILD_VERSION}"
 
 COPY --from=rust-builder /build/target/release/sbc5-core /usr/local/bin/sbc5-core
 COPY run.sh /
@@ -41,12 +41,11 @@ COPY namespace_native_guard.sh /namespace_native_guard.sh
 COPY migration_manager.py /migration_manager.py
 COPY migration_manager_v2.py /migration_manager_v2.py
 
-# The compatibility control plane still contains its own internal version constants.
-# Keep them aligned with the 3.0 package without rewriting the large safety-critical
-# script, so its existing runtime/update logic continues to behave identically.
+# The compatibility control plane still contains internal version constants.
+# Align them at image-build time with the Supervisor App version.
 RUN sed -i \
-  -e 's/^APP_VERSION="[^"]*"$/APP_VERSION="3.0.0"/' \
-  -e 's/^REQUIRED_PACKAGE_VERSION="[^"]*"$/REQUIRED_PACKAGE_VERSION="3.0.0"/' \
+  -e "s/^APP_VERSION=\"[^\"]*\"$/APP_VERSION=\"${BUILD_VERSION}\"/" \
+  -e "s/^REQUIRED_PACKAGE_VERSION=\"[^\"]*\"$/REQUIRED_PACKAGE_VERSION=\"${BUILD_VERSION}\"/" \
   /run_legacy.sh
 
 RUN mkdir -p /usr/share/licenses/sbc5-control-center
