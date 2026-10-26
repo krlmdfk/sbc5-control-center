@@ -4,12 +4,14 @@
   </a>
 </p>
 
+
+> Update delivery: Home Assistant Apps uses the repository `config.yaml` version; HACS uses published GitHub Releases. Both repositories publish releases automatically after green CI.
 # SBC5 Control Center — Information / Informacje
 
 | Parameter / Parametr | Value / Wartość |
 |---|---|
-| App version / Wersja aplikacji | **2.8.29** |
-| Card UI | **2.8.29** |
+| App version / Wersja aplikacji | **2.8.30** |
+| Card UI | **2.8.30** |
 | Status / Stan | **stable** |
 | Architecture / Architektura | `aarch64` |
 | Home Assistant OS | `>= 18.3` |
@@ -25,6 +27,14 @@
 ### Purpose
 
 For a new installation, the canonical step-by-step entry point is **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**.
+
+### Installation and distribution model
+
+- The **App/runtime** is installed from Home Assistant **Apps** after adding `https://github.com/krlmdfk/sbc5-control-center` under **Settings → Apps → Install app → ⋮ → Repositories**.
+- The native **Home Assistant integration** is distributed separately through HACS from `https://github.com/krlmdfk/sbc5-control-center-integration`.
+- The complete Lovelace dashboard additionally requires Mushroom, card-mod and ApexCharts Card through HACS.
+
+The two repositories are intentionally separate: Apps owns the host runtime, while HACS owns `custom_components/sbc5_control_center`.
 
 SBC5 Control Center combines Active Cooler control, Adaptive PWM, local AI Cooling, CPU/OC and GPU/V3D/ISP profiles, managed `config.txt`, hardware telemetry, Restart Manager and local updates in one runtime running locally on Raspberry Pi 5 with Home Assistant OS.
 
@@ -65,6 +75,8 @@ Home Assistant's device registry receives Raspberry Pi model, board revision, ha
 
 Local ZIP packages are verified against a manifest and SHA-256. A full update may require a Home Assistant restart, while a complete Raspberry Pi restart is requested only when the effective boot configuration actually changed.
 
+SBC5 supports a hybrid update model. Store-managed installations use Home Assistant Apps as the canonical full-runtime channel; verified local ZIP packages can still apply UI-only updates directly and can trigger a full Store update when the exact same version is published in Apps. Historical local installations keep direct full-ZIP updates. The Local → Store Migration Manager transfers only allow-listed durable state through a SHA-256-protected handoff and creates rollback data before import.
+
 ### Companion HACS integration
 
 Native Home Assistant entities are distributed through the companion repository:
@@ -80,6 +92,14 @@ The HACS integration requires this App/runtime to be installed and running.
 ### Przeznaczenie
 
 Dla nowej instalacji kanonicznym przewodnikiem krok po kroku jest **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**.
+
+### Model instalacji i dystrybucji
+
+- **App/runtime** instaluje się ze sklepu **Apps** Home Assistant po dodaniu `https://github.com/krlmdfk/sbc5-control-center` w **Ustawienia → Apps → Install app / Zainstaluj aplikację → ⋮ → Repositories / Repozytoria**.
+- Natywna **integracja Home Assistant** jest dystrybuowana osobno przez HACS z `https://github.com/krlmdfk/sbc5-control-center-integration`.
+- Kompletny dashboard Lovelace wymaga dodatkowo Mushroom, card-mod i ApexCharts Card przez HACS.
+
+Rozdzielenie repozytoriów jest celowe: Apps zarządza runtime hosta, a HACS zarządza `custom_components/sbc5_control_center`.
 
 SBC5 Control Center łączy obsługę Active Coolera, Adaptive PWM, lokalne AI Cooling, profile CPU/OC i GPU/V3D/ISP, zarządzanie `config.txt`, telemetrię sprzętową, Restart Manager oraz lokalne aktualizacje w jednym runtime działającym lokalnie na Raspberry Pi 5 z Home Assistant OS.
 
@@ -119,6 +139,8 @@ Rejestr urządzeń Home Assistant otrzymuje model Raspberry Pi, rewizję płyty,
 ### Aktualizacje i Restart Manager
 
 Lokalne paczki ZIP są sprawdzane przez manifest i SHA-256. Aktualizacja pełna może wymagać restartu Home Assistant, natomiast pełny restart Raspberry Pi jest zgłaszany wyłącznie wtedy, gdy wynikowa konfiguracja boot faktycznie się zmieniła.
+
+SBC5 obsługuje hybrydowy model aktualizacji. Instalacja sklepowa traktuje Home Assistant Apps jako kanoniczny kanał pełnego runtime; zweryfikowane lokalne ZIP-y nadal mogą bezpośrednio aktualizować UI-only i mogą wyzwolić pełną aktualizację sklepową, gdy identyczna wersja jest opublikowana w Apps. Historyczna instalacja lokalna zachowuje bezpośrednie pełne aktualizacje ZIP. Migration Manager Local → Store przenosi wyłącznie jawnie dozwolony trwały stan przez handoff zabezpieczony SHA-256 i przed importem tworzy dane rollback.
 
 ### Towarzysząca integracja HACS
 

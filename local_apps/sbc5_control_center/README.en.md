@@ -2,9 +2,17 @@
 
 > Local control, diagnostics and configuration center for Raspberry Pi 5 running Home Assistant OS.
 
-**App release:** 2.8.29 · **Card UI:** 2.8.29 · **HA OS:** `>= 18.3` · **Core:** `>= 2026.10.1` · **License:** Apache-2.0
+**App release:** 2.8.30 · **Card UI:** 2.8.30 · **HA OS:** `>= 18.3` · **Core:** `>= 2026.10.1` · **License:** Apache-2.0
 
 SBC5 Control Center combines Active Cooler control, Adaptive PWM, local AI Cooling, CPU/PMIC/USB telemetry, guarded CPU overclocking profiles, managed `config.txt`, restart orchestration, local ZIP updates and Lovelace diagnostics.
+
+## Install from Home Assistant Apps
+
+1. Open **Settings → Apps → Install app → ⋮ → Repositories**.
+2. Add `https://github.com/krlmdfk/sbc5-control-center`.
+3. Refresh the store, install **SBC5 Control Center**, enable **Start on boot**, and start it.
+4. Install the companion integration separately through HACS from `https://github.com/krlmdfk/sbc5-control-center-integration`.
+
 **Configuration UI:** save and refresh actions expose busy/success/error feedback and prevent duplicate clicks while a request is running.
 
 ## Fan profile reconciliation
@@ -39,3 +47,10 @@ The main Lovelace card exposes the GPU / V3D / ISP profiles directly. Choose **F
 ## Hardware identity and firmware diagnostics
 
 The Home Assistant device registry receives the Raspberry Pi model, board revision/model ID, hardware revision, SBC5 software version, serial number and MAC. Diagnostic entities expose Home Assistant OS, kernel, architecture, Raspberry Pi firmware and EEPROM bootloader version. Static identity collection is cached for 300 seconds.
+
+
+## Hybrid update channel / Hybrydowy kanał aktualizacji
+
+Store-managed SBC5 uses Home Assistant Apps as the canonical full-runtime update channel. Verified local ZIPs remain supported for UI-only updates and, for a Store installation, may trigger the native Apps update when the exact same version is published. Historical local installations retain direct full-ZIP rebuilds. The 2.8.30 Migration Manager provides a SHA-256-protected Local → Store handoff with rollback.
+
+Instalacja sklepowa SBC5 używa Home Assistant Apps jako kanonicznego kanału pełnych aktualizacji runtime. Zweryfikowane lokalne ZIP-y pozostają obsługiwane dla UI-only, a w instalacji sklepowej mogą wyzwolić natywną aktualizację Apps, gdy identyczna wersja jest opublikowana. Historyczna instalacja lokalna zachowuje bezpośrednie pełne przebudowy ZIP. Migration Manager 2.8.30 zapewnia handoff Local → Store zabezpieczony SHA-256 i rollback.

@@ -4,6 +4,8 @@
   </a>
 </p>
 
+
+> Update delivery: Home Assistant Apps uses the repository `config.yaml` version; HACS uses published GitHub Releases. Both repositories publish releases automatically after green CI.
 # SBC5 Control Center — Documentation / Dokumentacja
 
 **[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**
@@ -51,13 +53,16 @@ Persistent AI model data, calibration data, profiles, and update markers are sto
 
 For a **first installation from zero**, use **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**. It includes the Home Assistant App repository path, App/runtime installation, first-start checks, HACS integration installation, required frontend dependencies and final verification.
 
-For an already prepared SBC5 environment:
+For an already prepared SBC5 environment, or to install the App directly from GitHub through the Home Assistant Apps store:
 
-1. Install the SBC5 Control Center App.
-2. Start it and verify that `Platform Guard` and `Host Access` report a healthy state.
-3. Restart Home Assistant if the installer requires the package or integration to be reloaded.
-4. Add `dashboard/sbc5_control_center_diagnostics_card.yaml` and, optionally, `dashboard/update_status_card.yaml`.
-5. Verify that the **SBC5 Control Center** device is present in the Home Assistant device registry.
+1. Open **Settings → Apps → Install app → ⋮ → Repositories** and add `https://github.com/krlmdfk/sbc5-control-center`.
+2. Refresh the Apps store, install **SBC5 Control Center**, enable **Start on boot**, and start it.
+3. Verify that `Platform Guard` and `Host Access` report a healthy state.
+4. Add `https://github.com/krlmdfk/sbc5-control-center-integration` separately in **HACS → ⋮ → Custom repositories** as category **Integration**, then install the companion integration.
+5. Restart Home Assistant if the installer/HACS requires the package or integration to be reloaded.
+6. Install Mushroom, card-mod and ApexCharts Card through HACS for the complete dashboard.
+7. Add `dashboard/sbc5_control_center_diagnostics_card.yaml` and, optionally, `dashboard/update_status_card.yaml`.
+8. Verify that the **SBC5 Control Center** device is present in the Home Assistant device registry.
 
 A concise first-start procedure is available in `docs/QUICK_SETUP.md`.
 
@@ -159,11 +164,18 @@ Before boot changes, SBC5 creates a backup of the managed configuration. A rollb
 
 Overclocking, Device Tree settings, USB limits, and boot configuration can affect system stability. Change them incrementally and verify the actual runtime state after every full restart. Do not ignore throttling, power, or temperature warnings.
 
-### 17. Reference files
+### 17. Store migration and hybrid updates
+
+SBC5 can migrate from the historical local App identity to the Apps Store identity without directly accessing another App's private `/data`. The local source exports an allow-listed handoff to `/config/sbc5_control_center/migration/store_handoff_v1/`; every file is verified by SHA-256. The Store identity refuses to start the controller while the local source is still running, imports the handoff before profile/bootstrap startup, and creates a rollback backup under its own `/data/migration_backups/`.
+
+For Store-managed installations, full runtime updates are owned by Home Assistant Apps. A verified local ZIP may trigger that native Store update only when the ZIP version exactly matches the Store's `version_latest`. UI-only/dashboard-only ZIP updates remain direct. Historical local installations retain direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md`.
+
+### 18. Reference files
 
 - `docs/QUICK_SETUP.md` — quick setup;
 - `docs/CONFIG_TXT_REFERENCE.md` — `config.txt` parameters;
 - `docs/LOCAL_ZIP_UPDATE.md` — local updates;
+- `docs/STORE_MIGRATION.md` — Local → Apps Store migration and hybrid updates;
 - `docs/GPU_V3D_ISP_PROFILES.md` — GPU profiles;
 - `CHANGELOG.md` — release history.
 
@@ -206,13 +218,16 @@ Dane trwałe modelu AI, kalibracji, profili i markerów aktualizacji są przecho
 
 Przy **pierwszej instalacji od zera** użyj **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**. Przewodnik obejmuje dodanie repozytorium aplikacji w Home Assistant, instalację App/runtime, kontrolę pierwszego startu, integrację HACS, wymagane zależności frontendowe i końcową weryfikację.
 
-Dla przygotowanego już środowiska SBC5:
+Dla przygotowanego już środowiska SBC5 lub przy instalacji aplikacji bezpośrednio z GitHub przez sklep Apps Home Assistant:
 
-1. Zainstaluj aplikację SBC5 Control Center.
-2. Uruchom ją i sprawdź, czy `Platform Guard` oraz `Host Access` zgłaszają stan prawidłowy.
-3. Zrestartuj Home Assistant, jeśli instalator wymaga przeładowania package lub integracji.
-4. Dodaj kartę `dashboard/sbc5_control_center_diagnostics_card.yaml` oraz opcjonalną `dashboard/update_status_card.yaml`.
-5. Zweryfikuj obecność urządzenia **SBC5 Control Center** w rejestrze urządzeń.
+1. Otwórz **Ustawienia → Apps → Install app / Zainstaluj aplikację → ⋮ → Repositories / Repozytoria** i dodaj `https://github.com/krlmdfk/sbc5-control-center`.
+2. Odśwież sklep Apps, zainstaluj **SBC5 Control Center**, włącz **Start on boot / Uruchamiaj przy starcie** i uruchom aplikację.
+3. Sprawdź, czy `Platform Guard` oraz `Host Access` zgłaszają stan prawidłowy.
+4. Dodaj osobno `https://github.com/krlmdfk/sbc5-control-center-integration` w **HACS → ⋮ → Custom repositories / Niestandardowe repozytoria** jako **Integration / Integracja**, a następnie zainstaluj integrację towarzyszącą.
+5. Zrestartuj Home Assistant, jeśli instalator/HACS wymaga przeładowania package lub integracji.
+6. Dla kompletnego dashboardu zainstaluj przez HACS Mushroom, card-mod i ApexCharts Card.
+7. Dodaj kartę `dashboard/sbc5_control_center_diagnostics_card.yaml` oraz opcjonalną `dashboard/update_status_card.yaml`.
+8. Zweryfikuj obecność urządzenia **SBC5 Control Center** w rejestrze urządzeń.
 
 Szczegółowa ścieżka startowa znajduje się w `docs/QUICK_SETUP.md`.
 
@@ -314,10 +329,17 @@ Przed zmianami boot SBC5 tworzy backup zarządzanej konfiguracji. Przy błędzie
 
 Overclocking, Device Tree, limity USB i ustawienia boot mogą wpływać na stabilność. Zmieniaj je etapami i po każdym pełnym restarcie weryfikuj rzeczywisty stan runtime. Nie ignoruj komunikatów o throttlingu, problemach z zasilaniem lub temperaturze.
 
-### 17. Pliki referencyjne
+### 17. Migracja do sklepu i aktualizacje hybrydowe
+
+SBC5 potrafi przejść z historycznej lokalnej tożsamości aplikacji do tożsamości Apps Store bez bezpośredniego dostępu do prywatnego `/data` drugiej aplikacji. Lokalna instancja eksportuje jawnie dozwolony handoff do `/config/sbc5_control_center/migration/store_handoff_v1/`, a każdy plik jest weryfikowany SHA-256. Instancja sklepowa nie uruchamia regulatora, dopóki lokalne źródło nadal działa, importuje handoff przed bootstrapem profili i tworzy backup rollback we własnym `/data/migration_backups/`.
+
+W instalacji sklepowej pełny runtime jest aktualizowany przez Home Assistant Apps. Zweryfikowany lokalny ZIP może wyzwolić tę natywną aktualizację tylko wtedy, gdy wersja ZIP dokładnie odpowiada `version_latest` sklepu. Aktualizacje UI-only/dashboard-only pozostają bezpośrednie. Historyczna instalacja lokalna zachowuje bezpośrednie pełne przebudowy z ZIP. Szczegóły: `docs/STORE_MIGRATION.md`.
+
+### 18. Pliki referencyjne
 
 - `docs/QUICK_SETUP.md` — szybka konfiguracja;
 - `docs/CONFIG_TXT_REFERENCE.md` — parametry `config.txt`;
 - `docs/LOCAL_ZIP_UPDATE.md` — lokalne aktualizacje;
+- `docs/STORE_MIGRATION.md` — migracja Local → Apps Store i aktualizacje hybrydowe;
 - `docs/GPU_V3D_ISP_PROFILES.md` — profile GPU;
 - `CHANGELOG.md` — historia zmian.

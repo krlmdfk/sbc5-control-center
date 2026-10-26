@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 2.8.29
+version: 2.8.30
 slug: sbc5_control_center
-description: "SBC5 Control Center 2.8.29 — App Store and automatic update delivery release. Adds the required Home Assistant Apps repository metadata, supports runtime slugs used by custom App repositories, publishes GitHub Releases automatically after green CI for both the main App and HACS integration, and documents automatic update detection. No cooling, AI, CPU/GPU or boot-control algorithm changes."
+description: "SBC5 Control Center 2.8.30 — Migration/Hybrid release: safe local-to-Apps Store handoff preserves AI, fan calibration, CPU/GPU profiles and user options with SHA-256 validation and rollback; hybrid local ZIP updates delegate full Store runtime updates to Supervisor while retaining direct UI-only ZIP support. No cooling or AI control algorithm changes."
 arch:
 - aarch64
 homeassistant: 2026.10.1

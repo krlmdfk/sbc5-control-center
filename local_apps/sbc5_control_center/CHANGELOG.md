@@ -1,5 +1,17 @@
 # Changelog — SBC5 Control Center
 
+## 2.8.30 — 2026-10-26
+
+### English
+
+- Migration/Hybrid release: safe local-to-Apps Store handoff preserves AI, fan calibration, CPU/GPU profiles and user options with SHA-256 validation and rollback; hybrid local ZIP updates delegate full Store runtime updates to Supervisor while retaining direct UI-only ZIP support. No cooling or AI control algorithm changes.
+- Restart requirement: `home_assistant`.
+
+### Polski
+
+- Wydanie Migration/Hybrid: bezpieczny handoff Local → Apps Store zachowuje AI, kalibrację wentylatora, profile CPU/GPU i opcje użytkownika z walidacją SHA-256 oraz rollbackiem; hybrydowe lokalne ZIP-y delegują pełną aktualizację runtime wersji sklepowej do Supervisora, zachowując bezpośrednie aktualizacje UI-only. Bez zmian algorytmów chłodzenia ani sterowania AI.
+- Wymagany restart: `home_assistant`.
+
 ## 2.8.29 — 2026-10-26
 
 ### English

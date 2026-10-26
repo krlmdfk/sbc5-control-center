@@ -1,11 +1,17 @@
-# Lokalne aktualizacje ZIP
+# SBC5 Control Center — Local ZIP / Hybrid Update
 
-Od 2.8.13 obowiązuje wspólne wersjonowanie App + Card UI. Skaner wybiera wyłącznie pełne wydania `update_scope: full`.
+## Current update model
 
-Wymagania manifestu:
-- `version`, `package_version` i `card_ui_version` muszą być identyczne;
-- wszystkie pliki są weryfikowane SHA-256;
-- `restart_required` może być `none`, `home_assistant` lub `host`;
-- paczki `dashboard_only` / `ui_only` są odrzucane, aby nie dopuścić do rozjazdu numerów wersji.
+SBC5 supports both Home Assistant Apps and verified local ZIP packages, but the full runtime remains owned by the installation channel recognized by Supervisor.
 
-Po starcie pełnego buildu aplikacja usuwa niezależny override UI i próbuje bezpiecznie zsynchronizować pojedynczą kartę Lovelace z kartą dostarczoną przez build.
+- **Historical local installation (`local_sbc5_control_center`)** — a verified full ZIP may replace the local App source and trigger a rebuild.
+- **Store-managed installation (`*_sbc5_control_center`)** — a dashboard/UI-only ZIP is applied directly. A verified full ZIP is accepted as a trigger only when its version exactly matches the version currently published by Home Assistant Apps; SBC5 then delegates the actual runtime replacement to Supervisor's native Store update endpoint.
+- **HACS integration** — remains independently managed by HACS.
+
+This prevents a local ZIP from silently changing the runtime of a Store-managed App without Supervisor knowing about the version change.
+
+Canonical ZIP directory: `/config/sbc5_control_center_updates/`.
+
+The package is verified by `update-manifest.json`, SHA-256, platform requirements and update scope before any change is applied.
+
+For the one-time Local → Apps Store handoff, see `STORE_MIGRATION.md`.

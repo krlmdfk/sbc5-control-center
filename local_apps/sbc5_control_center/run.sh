@@ -1,8 +1,8 @@
 #!/bin/bash
 set -u
 
-APP_VERSION="2.8.29"
-REQUIRED_PACKAGE_VERSION="2.8.29"
+APP_VERSION="2.8.30"
+REQUIRED_PACKAGE_VERSION="2.8.30"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -20,6 +20,9 @@ REQUIRED_HAOS="18.3"
 NAMESPACE_RUNTIME_ROLE="sbc5"
 NAMESPACE_MIGRATION_DIR="/homeassistant/sbc5_control_center/migration"
 NAMESPACE_CONTROL_FILE="$NAMESPACE_MIGRATION_DIR/control_owner.json"
+STORE_MIGRATION_SCRIPT="/migration_manager.py"
+STORE_MIGRATION_STATUS_FILE="/data/store_migration_status.json"
+STORE_MIGRATION_SHARED_DIR="/homeassistant/sbc5_control_center/migration/store_handoff_v1"
 PLATFORM_COMPATIBILITY_FILE="/data/platform_compatibility.json"
 RESTART_STATE_FILE="/data/restart_required.json"
 RESTART_NOTIFICATION_ID="sbc5_restart_required"
@@ -2759,14 +2762,50 @@ install_dashboard_only_update() {
   return 0
 }
 
+delegate_store_update_from_local_package() {
+  local slug="$1" version="$2" zip="$3" info latest current_state response
+  [ -n "$slug" ] || return 1
+  # Refresh store metadata so a newly published release is visible before comparing.
+  supervisor_post "/store/reload" '{}' /tmp/sbc5_store_reload.json || true
+  info="$(curl -fsS --connect-timeout 3 --max-time 8 \
+    -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
+    "http://supervisor/addons/${slug}/info" 2>/dev/null || true)"
+  latest="$(printf '%s' "$info" | jq -r '.data.version_latest // .version_latest // empty' 2>/dev/null || true)"
+  current_state="$(printf '%s' "$info" | jq -r '.data.state // .state // empty' 2>/dev/null || true)"
+  if [ -z "$latest" ]; then
+    log "Hybrid Update: nie można odczytać version_latest dla ${slug}; pełna aktualizacja sklepowa nie została uruchomiona."
+    return 1
+  fi
+  if [ "$latest" != "$version" ]; then
+    log "Hybrid Update: lokalny ZIP ma wersję ${version}, a sklep Apps publikuje ${latest}. Pełny runtime może być aktualizowany lokalnym poleceniem tylko wtedy, gdy identyczna wersja jest już opublikowana w sklepie."
+    return 1
+  fi
+
+  fan_control_prepare_update_handoff "$version" || true
+  jq -n --arg from "$APP_VERSION" --arg to "$version" --arg zip "$zip" --arg slug "$slug" \
+    '{from_version:$from,to_version:$to,package:$zip,update_scope:"full",channel:"store_delegate",target_slug:$slug,status:"delegated_to_store",staged_at:(now|todate)}' \
+    > "$LOCAL_UPDATE_LAST_INSTALL_FILE" 2>/dev/null || true
+
+  log "Hybrid Update: paczka ZIP ${version} została zweryfikowana; zlecam natywną aktualizację Apps dla ${slug} z backupem."
+  if supervisor_post "/store/addons/${slug}/update" '{"backup":true,"background":false}' /tmp/sbc5_store_update.json; then
+    log "Hybrid Update: Supervisor przyjął aktualizację sklepowa ${slug} -> ${version}."
+    return 0
+  fi
+  rm -f "$FAN_CONTROL_HANDOFF_FILE" 2>/dev/null || true
+  log "Hybrid Update: Supervisor odrzucił natywną aktualizację Apps. Lokalny ZIP pozostaje nienaruszony."
+  return 1
+}
+
 install_local_update() (
   load_options
   [ "$LOCAL_PACKAGE_UPDATES_ENABLED" = "true" ] || { log "Lokalne aktualizacje ZIP są wyłączone."; return 1; }
-  local active_runtime_slug
+  local active_runtime_slug installation_channel
   active_runtime_slug="$(resolve_runtime_app_slug)"
+  installation_channel="local"
   case "$active_runtime_slug" in
-    local_sbc5_control_center|local_rpi5_fan_manager) ;;
-    *) log "Instalacja ze sklepu Apps (${active_runtime_slug}): aktualizuj przez natywny mechanizm Apps, nie przez lokalny ZIP."; return 1 ;;
+    local_sbc5_control_center|local_rpi5_fan_manager) installation_channel="local" ;;
+    *_sbc5_control_center) installation_channel="store" ;;
+    *) installation_channel="unknown" ;;
   esac
 
   local now last=0
@@ -2817,6 +2856,24 @@ install_local_update() (
     cleanup_local_update_archives "verification_failed"
     rm -rf "$stage"; return 1;
   }
+
+  if [ "$installation_channel" = "unknown" ]; then
+    log "Hybrid Update: nieznany kanał instalacji (${active_runtime_slug}); odrzucam pełną aktualizację dla bezpieczeństwa."
+    rm -rf "$stage"
+    return 1
+  fi
+
+  # Store-managed full runtime updates remain owned by Supervisor. A local ZIP may
+  # still be used as the user's trigger/verifier, but SBC5 delegates the actual app
+  # replacement to the native Apps update endpoint when the same version is published.
+  if [ "$installation_channel" = "store" ] && [ "$update_scope" != "dashboard_only" ] && [ "$update_scope" != "ui_only" ]; then
+    rm -rf "$stage"
+    if delegate_store_update_from_local_package "$active_runtime_slug" "$version" "$zip"; then
+      rm -f "$LOCAL_UPDATE_CANDIDATE_FILE"
+      return 0
+    fi
+    return 1
+  fi
 
   if [ "$update_scope" = "dashboard_only" ] || [ "$update_scope" = "ui_only" ]; then
     if install_dashboard_only_update "$zip" "$version" "$stage" "$root" "$manifest_file"; then
@@ -3148,7 +3205,8 @@ verify_release_platform_requirements() {
 
 resolve_runtime_app_slug() {
   # Custom App repositories prefix the configured slug with a repository hash.
-  # Detect the installed/running SBC5 identity dynamically and retain local/legacy fallbacks.
+  # Detect the installed/running SBC5 identity dynamically and retain local/legacy
+  # fallbacks for older installations.
   local slug info state addons candidate
   [ -n "${SUPERVISOR_TOKEN:-}" ] || { printf '%s\n' 'local_sbc5_control_center'; return 0; }
 
@@ -3198,7 +3256,7 @@ publish_app_update_state() {
   local available=false
   [ "$state" = "available" ] && available=true
 
-  local payload runtime_slug runtime_namespace update_scope card_installed card_latest
+  local payload runtime_slug runtime_namespace installation_channel migration_state update_scope card_installed card_latest
   update_scope="full"
   card_installed="$(current_card_ui_version)"
   card_latest="$card_installed"
@@ -3209,7 +3267,13 @@ publish_app_update_state() {
   fi
   runtime_slug="$(resolve_runtime_app_slug)"
   runtime_namespace="legacy"
+  installation_channel="unknown"
+  case "$runtime_slug" in
+    local_sbc5_control_center|local_rpi5_fan_manager) installation_channel="local" ;;
+    *_sbc5_control_center) installation_channel="store" ;;
+  esac
   case "$runtime_slug" in local_sbc5_control_center|*_sbc5_control_center) runtime_namespace="native" ;; esac
+  migration_state="$(jq -r '.state // .migration_state // "idle"' "$STORE_MIGRATION_STATUS_FILE" 2>/dev/null || echo idle)"
   payload="$(jq -n \
     --arg state "$state" \
     --arg installed "$APP_VERSION" \
@@ -3225,6 +3289,8 @@ publish_app_update_state() {
     --arg source_message "$source_message" \
     --arg runtime_slug "$runtime_slug" \
     --arg runtime_namespace "$runtime_namespace" \
+    --arg installation_channel "$installation_channel" \
+    --arg migration_state "$migration_state" \
     --arg update_scope "$update_scope" \
     --arg card_installed "$card_installed" \
     --arg card_latest "$card_latest" \
@@ -3257,6 +3323,8 @@ publish_app_update_state() {
         source_message:$source_message,
         runtime_app_slug:$runtime_slug,
         runtime_namespace:$runtime_namespace,
+        installation_channel:$installation_channel,
+        migration_state:$migration_state,
         update_scope:$update_scope,
         card_ui_installed_version:$card_installed,
         card_ui_latest_version:$card_latest,
@@ -8912,6 +8980,40 @@ profile_reporter() {
   done
 }
 
+migration_handoff_startup() {
+  [ -x "$STORE_MIGRATION_SCRIPT" ] || return 0
+  local out rc
+  while true; do
+    out="$(SBC5CC_APP_VERSION="$APP_VERSION" python3 "$STORE_MIGRATION_SCRIPT" auto --version "$APP_VERSION" 2>&1)"
+    rc=$?
+    [ -n "$out" ] && log "Store Migration: $out"
+    case "$rc" in
+      0) return 0 ;;
+      20)
+        log "Store Migration: sklepowa instancja czeka na zatrzymanie lokalnej instancji źródłowej; regulator nie zostanie uruchomiony przed importem."
+        sleep 15
+        ;;
+      21)
+        log "Store Migration: ta lokalna instancja została już zastąpiona przez wersję sklepową. Pozostaję w bezpiecznym standby; można ją odinstalować po weryfikacji wersji sklepowej."
+        while true; do sleep 3600; done
+        ;;
+      22)
+        log "Store Migration: wykryto równolegle uruchomioną instancję sklepową. Lokalna instancja pozostaje źródłem; zatrzymaj wersję sklepową przed eksportem handoffu."
+        return 0
+        ;;
+      *)
+        log "Store Migration: nie udało się zakończyć automatycznego handoffu (rc=${rc}); zachowuję bieżące dane i nie wykonuję destrukcyjnych zmian."
+        return 0
+        ;;
+    esac
+  done
+}
+
+# v2.8.30: local -> Store migration is completed before profile bootstrap/load_options,
+# so imported AI/calibration/profile state becomes the source of truth from the first
+# controller cycle. The store identity waits until the local source is stopped.
+migration_handoff_startup
+
 # v2.8.18: restore both persistent profile requests before the first options snapshot.
 # This makes native Supervisor Configuration, Ingress and YAML start from the same source of truth.
 cpu_profile_state_bootstrap || true
@@ -8945,7 +9047,7 @@ log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, sync=${CONFIG
 log "Performance: realtime=${REALTIME_PUBLISH_INTERVAL_SECONDS}s; telemetry=${TELEMETRY_PUBLISH_INTERVAL_SECONDS}s; relay=${HOST_RELAY_INTERVAL_SECONDS}s; AI-relay=${AI_RUNTIME_RELAY_INTERVAL_SECONDS}s; PMIC=${TELEMETRY_PMIC_INTERVAL_SECONDS}s; system=${TELEMETRY_EXTENDED_INTERVAL_SECONDS}s; power/USB/config=${TELEMETRY_POWER_INTERVAL_SECONDS}s; profile=${PROFILE_REPORT_INTERVAL_SECONDS}s; profile-options=${PROFILE_OPTIONS_SYNC_INTERVAL_SECONDS}s; UX-poll=${UX_RUNTIME_POLL_SECONDS}s; boot-cache=${BOOT_CONFIG_CACHE_SECONDS}s; AI evaluator=$((AI_COOLING_EVAL_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s."
 resolve_multicore_workers
 log "Multicore Telemetry: enabled=${MULTICORE_TELEMETRY_ENABLED}; workers=${MULTICORE_WORKERS_CONFIG} -> ${MULTICORE_WORKERS_EFFECTIVE}; cpus_allowed=$(read_cpu_allowed_list 2>/dev/null || echo unknown)."
-log "Polecenia: status, reload_config, diagnose, restore_backup, curve_editor_refresh, calibrate_fan, fan_calibration_refresh, restore_active_cooler_factory, restore_rpi5_app_defaults, resume_managed_rpi5_config, set_custom_curve_template, set_custom_curve_point, reset_custom_curve_parameter, reset_custom_curve_factory, reset_all_custom_curves_factory, reset_custom_curve, apply_ai_grid_suggestion, clear_ai_grid_override, ux_self_test, set_cpu_profile, set_gpu_profile, apply_system_config, restore_system_config_backup, apply_config_txt_parameter, remove_config_txt_parameter, restore_config_manager_backup, restart_status, restart_ha_confirmed, check_app_update, install_local_update, cleanup_update_packages"
+log "Polecenia: status, reload_config, diagnose, restore_backup, curve_editor_refresh, calibrate_fan, fan_calibration_refresh, restore_active_cooler_factory, restore_rpi5_app_defaults, resume_managed_rpi5_config, set_custom_curve_template, set_custom_curve_point, reset_custom_curve_parameter, reset_custom_curve_factory, reset_all_custom_curves_factory, reset_custom_curve, apply_ai_grid_suggestion, clear_ai_grid_override, ux_self_test, set_cpu_profile, set_gpu_profile, apply_system_config, restore_system_config_backup, apply_config_txt_parameter, remove_config_txt_parameter, restore_config_manager_backup, restart_status, restart_ha_confirmed, check_app_update, install_local_update, cleanup_update_packages, migration_status, migration_export, migration_import, migration_rollback"
 PID1_COMM="$(cat /proc/1/comm 2>/dev/null | tr -d '\r\n' || true)"
 HOST_BOOT_INFO="$(host_pid_boot_root 2>/dev/null || true)"
 if [ -n "$HOST_BOOT_INFO" ]; then
@@ -9123,6 +9225,32 @@ while IFS= read -r line; do
 
   case "$command" in
     status) show_status ;;
+    migration_status)
+      SBC5CC_APP_VERSION="$APP_VERSION" python3 "$STORE_MIGRATION_SCRIPT" status 2>&1 | while IFS= read -r migration_line; do log "Store Migration: ${migration_line}"; done ;;
+    migration_export)
+      if SBC5CC_APP_VERSION="$APP_VERSION" python3 "$STORE_MIGRATION_SCRIPT" export --version "$APP_VERSION" >/tmp/sbc5_migration_export.log 2>&1; then
+        log "Store Migration: ręczny eksport zakończony; $(tr '\n' ' ' </tmp/sbc5_migration_export.log 2>/dev/null || true)"
+        ha_publish_action_result ok migration_export "Przygotowano zweryfikowany handoff danych dla wersji sklepowej."
+      else
+        rc=$?; log "Store Migration: eksport nie został wykonany (rc=${rc}); $(tr '\n' ' ' </tmp/sbc5_migration_export.log 2>/dev/null || true)"
+        ha_publish_action_result error migration_export "Eksport migracyjny nie został wykonany; sprawdź log aplikacji."
+      fi ;;
+    migration_import)
+      if SBC5CC_APP_VERSION="$APP_VERSION" python3 "$STORE_MIGRATION_SCRIPT" import --version "$APP_VERSION" >/tmp/sbc5_migration_import.log 2>&1; then
+        log "Store Migration: ręczny import zakończony; $(tr '\n' ' ' </tmp/sbc5_migration_import.log 2>/dev/null || true)"
+        ha_publish_action_result ok migration_import "Zaimportowano trwały stan lokalnej instancji. Uruchom ponownie aplikację, aby wszystkie profile zostały odczytane od początku."
+      else
+        rc=$?; log "Store Migration: import nie został wykonany (rc=${rc}); $(tr '\n' ' ' </tmp/sbc5_migration_import.log 2>/dev/null || true)"
+        ha_publish_action_result error migration_import "Import migracyjny nie został wykonany; sprawdź, czy lokalna instancja jest zatrzymana."
+      fi ;;
+    migration_rollback)
+      if SBC5CC_APP_VERSION="$APP_VERSION" python3 "$STORE_MIGRATION_SCRIPT" rollback >/tmp/sbc5_migration_rollback.log 2>&1; then
+        log "Store Migration: rollback zakończony."
+        ha_publish_action_result ok migration_rollback "Przywrócono stan wersji sklepowej sprzed importu. Uruchom ponownie aplikację."
+      else
+        log "Store Migration: rollback niedostępny lub nieudany; $(tr '\n' ' ' </tmp/sbc5_migration_rollback.log 2>/dev/null || true)"
+        ha_publish_action_result error migration_rollback "Brak poprawnego backupu migracji do przywrócenia."
+      fi ;;
     cleanup_update_packages) load_options; cleanup_local_update_archives "manual_command" ;;
     reload_config)
       load_options

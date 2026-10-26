@@ -16,6 +16,9 @@
 
 ## English
 
+> **Pierwsza instalacja App:** **Ustawienia → Apps → Install app / Zainstaluj aplikację → ⋮ → Repositories / Repozytoria** → dodaj `https://github.com/krlmdfk/sbc5-control-center`. Integrację HACS instaluj osobno z `https://github.com/krlmdfk/sbc5-control-center-integration`.
+
+
 ### 1. Requirements
 
 #### Core
@@ -313,3 +316,8 @@ Overclocking, Device Tree, limity USB i ustawienia boot mogą wpływać na stabi
 - `docs/LOCAL_ZIP_UPDATE.md` — lokalne aktualizacje;
 - `docs/GPU_V3D_ISP_PROFILES.md` — profile GPU;
 - `CHANGELOG.md` — historia zmian.
+
+
+## Store migration / Migracja do sklepu
+
+SBC5 2.8.30 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.

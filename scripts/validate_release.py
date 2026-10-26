@@ -58,16 +58,14 @@ def main() -> int:
             if "__pycache__" not in p.parts:
                 yaml.safe_load(p.read_text(encoding="utf-8"))
 
-    # Home Assistant App repository metadata.
+    # Home Assistant Apps repository metadata.
     repo_meta_path = ROOT / "repository.yaml"
     expect(repo_meta_path.is_file(), "repository.yaml missing at repository root")
     repo_meta = yaml.safe_load(repo_meta_path.read_text(encoding="utf-8"))
     expect(isinstance(repo_meta, dict), "repository.yaml must contain a mapping")
-    expect(bool(repo_meta.get("name")), "repository.yaml: name is required")
-    expect(
-        repo_meta.get("url") == "https://github.com/krlmdfk/sbc5-control-center",
-        f"repository.yaml: unexpected url={repo_meta.get('url')!r}",
-    )
+    expect(repo_meta.get("name") == "SBC5 Control Center", f"repository.yaml: unexpected name={repo_meta.get('name')!r}")
+    expect(repo_meta.get("url") == "https://github.com/krlmdfk/sbc5-control-center", f"repository.yaml: unexpected url={repo_meta.get('url')!r}")
+    expect(bool(repo_meta.get("maintainer")), "repository.yaml: maintainer is required")
 
     release = load_json(APP / "release.json")
     expected = str(release["version"])
@@ -87,6 +85,13 @@ def main() -> int:
     legacy = load_json(APP / "legacy_bridge" / "manifest.json")
     expect(str(legacy.get("version")) == expected, f"legacy bridge version={legacy.get('version')!r}, expected={expected}")
 
+    # Migration/Hybrid runtime must be packaged into the App image.
+    migration_script = APP / "migration_manager.py"
+    expect(migration_script.is_file(), "migration_manager.py missing")
+    dockerfile = (APP / "Dockerfile").read_text(encoding="utf-8")
+    expect("COPY migration_manager.py /migration_manager.py" in dockerfile, "Dockerfile does not package migration_manager.py")
+    expect("/migration_manager.py" in dockerfile and "chmod" in dockerfile, "Dockerfile does not make migration_manager.py executable")
+
     # App metadata.
     app_cfg = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
     expect(str(app_cfg.get("version")) == expected, f"config.yaml version={app_cfg.get('version')!r}, expected={expected}")
@@ -103,6 +108,9 @@ def main() -> int:
     um = load_json(um_path)
     for key in ("version", "package_version", "card_ui_version"):
         expect(str(um.get(key)) == expected, f"update-manifest {key}={um.get(key)!r}, expected={expected}")
+    expect(um.get("migration") == "local-to-store-hybrid-v1", f"update-manifest migration={um.get('migration')!r}")
+    channels = um.get("installation_channels", [])
+    expect("local" in channels and "home_assistant_apps" in channels, "update-manifest installation_channels incomplete")
 
     # Canonical integration must remain mirrored by App bridge.
     tree_issues = compare_trees(ROOT / "custom_components" / DOMAIN, APP / "bridge")
