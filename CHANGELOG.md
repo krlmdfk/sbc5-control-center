@@ -1,5 +1,51 @@
 # Changelog — SBC5 Control Center
 
+## 2.8.33 — 2026-10-26
+
+### English
+
+#### Added
+
+- Added schema-2 durable-state handoff for stable Store to newer stopped canary instances with exact target, target-version and SHA-256 fingerprint validation.
+
+#### Changed
+
+- Stable 2.8.x Store instances can act as read-only migration sources for an installed newer canary without deprecating or modifying their private /data state.
+
+#### Fixed
+
+- Foreign or stale migration handoffs are ignored instead of being treated as destructive import failures; a targeted canary waits fail-closed while the stable source is running or verification is incomplete.
+
+#### Security
+
+- Canary import is restricted to an allow-list of durable state files and requires exact per-file SHA-256 hashes plus a complete aggregate fingerprint before data is accepted.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Dodano
+
+- Dodano handoff trwałego stanu schema 2 ze stabilnej instancji Store do nowszej zatrzymanej instancji canary, z dokładną walidacją celu, wersji docelowej i fingerprintu SHA-256.
+
+#### Zmieniono
+
+- Stabilna instancja Store 2.8.x może działać jako źródło migracji tylko do odczytu dla zainstalowanej nowszej wersji canary, bez deprecjonowania ani modyfikowania własnego prywatnego /data.
+
+#### Naprawiono
+
+- Obce lub nieaktualne handoffy migracyjne są ignorowane zamiast powodować destrukcyjne błędy importu; docelowa instancja canary oczekuje w trybie fail-closed, gdy stabilne źródło działa lub weryfikacja nie jest kompletna.
+
+#### Bezpieczeństwo
+
+- Import canary jest ograniczony do listy dozwolonych plików trwałego stanu i wymaga dokładnych hashy SHA-256 każdego pliku oraz pełnego fingerprintu zbiorczego przed zaakceptowaniem danych.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 2.8.32 — 2026-10-26
 
 ### English

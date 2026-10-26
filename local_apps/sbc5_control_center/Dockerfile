@@ -29,6 +29,7 @@ COPY bridge-package.yaml /bridge-package.yaml
 COPY migration_assets /migration_assets
 COPY namespace_native_guard.sh /namespace_native_guard.sh
 COPY migration_manager.py /migration_manager.py
+COPY migration_manager_v2.py /migration_manager_v2.py
 
 RUN mkdir -p /usr/share/licenses/sbc5-control-center
 COPY LICENSE /usr/share/licenses/sbc5-control-center/LICENSE
@@ -38,7 +39,7 @@ COPY TRADEMARKS.md /usr/share/licenses/sbc5-control-center/TRADEMARKS.md
 COPY LEGAL.md /usr/share/licenses/sbc5-control-center/LEGAL.md
 COPY LICENSE_AUDIT.md /usr/share/licenses/sbc5-control-center/LICENSE_AUDIT.md
 
-RUN chmod a+x /run.sh /config_ui.py /ai_cooling.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py
+RUN chmod a+x /run.sh /config_ui.py /ai_cooling.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
 
 ENTRYPOINT ["/run.sh"]
 CMD []
