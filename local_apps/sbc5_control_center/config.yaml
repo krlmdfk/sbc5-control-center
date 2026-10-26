@@ -1,7 +1,7 @@
 name: SBC5 Control Center — Rust Canary
-version: 3.0.1
+version: 3.0.2
 slug: rust_canary_sbc5_control_center
-description: "SBC5 Control Center 3.0.1 — Rust canary validation build fixing persistence of the complete migrated Supervisor option set across App restarts."
+description: "SBC5 Control Center 3.0.2 — Rust canary retest with full migrated-option persistence and exact runtime version alignment."
 arch:
 - aarch64
 homeassistant: 2026.10.1
