@@ -307,6 +307,13 @@ ACTIVE_OVERLAY_DTBO=""
 
 
 namespace_control_allowed() {
+  # A completed namespace migration is authoritative: the canonical SBC5
+  # runtime owns control even if an obsolete control_owner.json survived
+  # an older migration/rollback cycle. During an unfinished migration the
+  # explicit owner marker remains the safety interlock.
+  if [ "$(jq -r '.phase // empty' "$NAMESPACE_MIGRATION_DIR/state.json" 2>/dev/null || true)" = "COMPLETE" ]; then
+    return 0
+  fi
   local owner="sbc5"
   if [ -s "$NAMESPACE_CONTROL_FILE" ]; then owner="$(jq -r '.owner // "legacy"' "$NAMESPACE_CONTROL_FILE" 2>/dev/null || echo legacy)"; fi
   [ "$owner" = "sbc5" ]

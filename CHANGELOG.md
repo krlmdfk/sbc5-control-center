@@ -1,5 +1,35 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.3 — 2026-10-26
+
+### English
+
+#### Changed
+
+- Rust canary runtime fix: completed namespace migration now authoritatively enables canonical Adaptive PWM control.
+
+#### Fixed
+
+- Treat namespace phase COMPLETE as canonical SBC5 control ownership even if a stale legacy owner marker survives.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Poprawka runtime Rust canary: zakończona migracja namespace nadrzędnie zezwala kanonicznemu Adaptive PWM na przejęcie sterowania.
+
+#### Naprawiono
+
+- Traktuj fazę namespace COMPLETE jako nadrzędne przejęcie sterowania przez kanoniczny SBC5 nawet przy pozostawionym starym markerze legacy.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.0.2 — 2026-10-26
 
 ### English
