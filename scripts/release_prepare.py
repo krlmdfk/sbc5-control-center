@@ -100,17 +100,6 @@ def bullets(values: list[str] | None, fallback: str | None = None) -> list[str]:
     return result
 
 
-def md_section(title: str, items: list[str], empty_text: str | None = None) -> str:
-    if not items and empty_text is None:
-        return ""
-    lines = [f"### {title}", ""]
-    if items:
-        lines.extend(f"- {item}" for item in items)
-    else:
-        lines.append(empty_text or "")
-    return "\n".join(lines) + "\n\n"
-
-
 def restart_text(restart: str, lang: str) -> str:
     en = {
         "none": "No restart is required.",
@@ -180,6 +169,8 @@ def write_release_notes(version: str, args, release: dict) -> Path:
     path = ROOT / f"RELEASE_NOTES_{version}.md"
     en = release_sections(args, "en")
     pl = release_sections(args, "pl")
+    security_en = [f"- {x}" for x in en["security"]] or ["No security-specific changes."]
+    security_pl = [f"- {x}" for x in pl["security"]] or ["Brak zmian dotyczących bezpieczeństwa."]
 
     ha_os = str(release.get("minimum_home_assistant_os", "18.3"))
     ha_core = str(release.get("minimum_home_assistant_core", "2026.10.1"))
@@ -207,7 +198,7 @@ def write_release_notes(version: str, args, release: dict) -> Path:
     out.extend([
         "### Security",
         "",
-        *(f"- {x}" for x in en["security"]) if en["security"] else ["No security-specific changes."],
+        *security_en,
         "",
         "### Upgrade notes",
         "",
@@ -256,7 +247,7 @@ def write_release_notes(version: str, args, release: dict) -> Path:
     out.extend([
         "### Bezpieczeństwo",
         "",
-        *(f"- {x}" for x in pl["security"]) if pl["security"] else ["Brak zmian dotyczących bezpieczeństwa."],
+        *security_pl,
         "",
         "### Informacje o aktualizacji",
         "",
