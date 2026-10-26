@@ -82,15 +82,15 @@ def main() -> int:
     args = ap.parse_args()
     requested = Path(args.output).expanduser()
     parent = requested.parent
-
-    # Termux/Android does not expose the traditional /tmp as a writable
-    # directory. Fall back to Python's platform-native temporary directory.
-    if not parent.exists() or not os.access(parent, os.W_OK):
-        output = Path(tempfile.gettempdir()) / requested.name
-        print(
-            f"Output directory {parent} is not writable; "
-            f"using platform temporary directory: {output}"
-        )
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+    if not parent.is_dir() or not os.access(parent, os.W_OK):
+        fallback = Path(os.environ.get("TMPDIR") or tempfile.gettempdir())
+        fallback.mkdir(parents=True, exist_ok=True)
+        output = (fallback / requested.name).resolve()
+        print(f"Output directory {parent} is not writable; using platform temporary directory: {output}")
     else:
         output = requested.resolve()
     if args.verify_only:

@@ -1,8 +1,17 @@
 #!/bin/bash
 set -u
 
-APP_VERSION="2.8.31"
-REQUIRED_PACKAGE_VERSION="2.8.31"
+# v2.8.32 Runtime Robustness: some HAOS/App container starts may expose no /tmp.
+# SBC5 has historically used /tmp for short-lived lock/cache/TSV files, so create it
+# deterministically before any runtime path is evaluated.
+if [ ! -d /tmp ]; then
+  mkdir -p /tmp 2>/dev/null || true
+fi
+chmod 1777 /tmp 2>/dev/null || true
+export TMPDIR="${TMPDIR:-/tmp}"
+
+APP_VERSION="2.8.32"
+REQUIRED_PACKAGE_VERSION="2.8.32"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -39,6 +48,8 @@ LOCAL_UPDATE_LOCK_FILE="/tmp/sbc5_local_update_install.lock"
 LOCAL_UPDATE_LAST_REQUEST_FILE="/data/local_update_last_request_epoch"
 LOCAL_UPDATE_COOLDOWN_NOTICE_FILE="/data/local_update_cooldown_notice_epoch"
 LOCAL_UPDATE_COOLDOWN_SECONDS=300
+BOOT_ACCESS_WARN_LAST_EPOCH=0
+BOOT_ACCESS_WARN_INTERVAL_SECONDS=120
 NATIVE_REPAIR_POSTED_FILE="/data/native_restart_repair_posted.json"
 HOST_SYSFS_MP="/tmp/sbc5_host_sysfs"
 BOOT_CONFIG_CACHE_FILE="/tmp/sbc5_boot_config_cache.json"
@@ -309,6 +320,16 @@ install_project_logo() {
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+boot_access_warn_throttled() {
+  local message="$1" now
+  now="$(date +%s)"
+  case "$now" in ''|*[!0-9]*) now=0 ;; esac
+  if [ "$BOOT_ACCESS_WARN_LAST_EPOCH" -eq 0 ] || [ $((now - BOOT_ACCESS_WARN_LAST_EPOCH)) -ge "$BOOT_ACCESS_WARN_INTERVAL_SECONDS" ]; then
+    log "$message"
+    BOOT_ACCESS_WARN_LAST_EPOCH="$now"
+  fi
 }
 
 # Bash 5 udostępnia EPOCHREALTIME bez uruchamiania zewnętrznego procesu.
@@ -1589,6 +1610,16 @@ supervisor_own_options_json() {
   local tmp="/tmp/sbc5_supervisor_self_info.$$"
   if ! supervisor_get "/addons/self/info" "$tmp" true; then rm -f "$tmp"; return 1; fi
   jq -c '.data.options // .options // {}' "$tmp" 2>/dev/null
+  local rc=$?
+  rm -f "$tmp"
+  return "$rc"
+}
+
+supervisor_self_security_json() {
+  [ -n "${SUPERVISOR_TOKEN:-}" ] || return 1
+  local tmp="/tmp/sbc5_supervisor_security.$$"
+  if ! supervisor_get "/addons/self/info" "$tmp" true; then rm -f "$tmp"; return 1; fi
+  jq -c '(.data // .) | {protected:(.protected // null),host_pid:(.host_pid // null),full_access:(.full_access // null),apparmor:(.apparmor // null),state:(.state // null)}' "$tmp" 2>/dev/null
   local rc=$?
   rm -f "$tmp"
   return "$rc"
@@ -5024,7 +5055,7 @@ sync_cpu_profile_from_options() {
   explicit="$(jq -r '.explicit // false' "$CPU_PROFILE_STATE_FILE" 2>/dev/null || echo false)"
   case "$profile" in factory|mild|balanced|performance|experimental|advanced) ;; *) log "CPU Profile Manager: nieznany profil '$profile'."; return 1 ;; esac
 
-  find_boot_config || { log "CPU Profile Manager: brak zapisywalnego config.txt."; return 1; }
+  find_boot_config || { boot_access_warn_throttled "Host Boot Access: config.txt niedostępny — wstrzymuję zapis profilu CPU i ustawień boot do czasu odzyskania Host PID/boot access."; return 1; }
   [ -w "$BOOT_CFG" ] || { log "CPU Profile Manager: config.txt nie jest zapisywalny: $BOOT_CFG"; cleanup_mount; return 1; }
   cpu_file="$(dirname "$BOOT_CFG")/$CPU_PROFILE_FILENAME"
   managed="$(dirname "$BOOT_CFG")/$CONFIG_MANAGER_FILENAME"
@@ -5823,7 +5854,7 @@ EOF
   done < "$custom_tmp"
   rm -f "$static_tmp" "$custom_tmp"
 
-  find_boot_config || { log "Config Options: brak zapisywalnego config.txt."; rm -f "$desired"; return 1; }
+  find_boot_config || { boot_access_warn_throttled "Host Boot Access: config.txt niedostępny — wstrzymuję zapis profilu CPU i ustawień boot do czasu odzyskania Host PID/boot access."; rm -f "$desired"; return 1; }
   [ -w "$BOOT_CFG" ] || { log "Config Options: config.txt nie jest zapisywalny: $BOOT_CFG"; rm -f "$desired"; cleanup_mount; return 1; }
   managed="$(dirname "$BOOT_CFG")/$CONFIG_MANAGER_FILENAME"
 
@@ -9051,7 +9082,7 @@ migration_handoff_startup() {
   done
 }
 
-# v2.8.31: local -> Store migration is completed before profile bootstrap/load_options,
+# v2.8.32: local -> Store migration is completed before profile bootstrap/load_options,
 # so imported AI/calibration/profile state becomes the source of truth from the first
 # controller cycle. The store identity waits until the local source is stopped.
 migration_handoff_startup
@@ -9110,7 +9141,19 @@ host_boot_probe_log
 if [ -z "${HOST_BOOT_INFO:-}" ] && [ -z "${HOST_NS_INFO:-}" ]; then
   TELEMETRY_PMIC_INTERVAL_SECONDS=120
   TELEMETRY_EXTENDED_INTERVAL_SECONDS=120
-  log "Host Access Health: DEGRADED — ciężkie odczyty PMIC/system ograniczone do 120 s do następnego restartu aplikacji."
+  SECURITY_INFO="$(supervisor_self_security_json 2>/dev/null || true)"
+  if [ -n "$SECURITY_INFO" ]; then
+    SECURITY_PROTECTED="$(jq -r '.protected // "unknown"' <<<"$SECURITY_INFO" 2>/dev/null || echo unknown)"
+    SECURITY_HOST_PID="$(jq -r '.host_pid // "unknown"' <<<"$SECURITY_INFO" 2>/dev/null || echo unknown)"
+    SECURITY_FULL_ACCESS="$(jq -r '.full_access // "unknown"' <<<"$SECURITY_INFO" 2>/dev/null || echo unknown)"
+    log "Host Access Guard: Supervisor protected=${SECURITY_PROTECTED}; host_pid=${SECURITY_HOST_PID}; full_access=${SECURITY_FULL_ACCESS}; PID1=${PID1_COMM:-?}."
+    if [ "$SECURITY_PROTECTED" = "true" ]; then
+      log "Host Access Guard: Protection Mode jest włączony — wyłącz go w Info aplikacji i uruchom aplikację ponownie, aby Host PID/config.txt/PMIC były dostępne."
+    elif [ "$SECURITY_HOST_PID" = "true" ] && [ "${PID1_COMM:-}" != "systemd" ]; then
+      log "Host Access Guard: Supervisor deklaruje host_pid=true, ale namespace hosta nie jest aktywny; bezpiecznie wstrzymuję zapisy boot. Uruchom aplikację ponownie po zmianie uprawnień."
+    fi
+  fi
+  log "Host Access Health: DEGRADED — ciężkie odczyty PMIC/system ograniczone do 120 s; zapisy boot są wstrzymane do odzyskania Host Access."
 else
   log "Host Access Health: OK — pełna diagnostyka hosta aktywna."
 fi

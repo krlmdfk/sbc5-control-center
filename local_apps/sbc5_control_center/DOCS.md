@@ -309,6 +309,11 @@ Przed zmianami boot SBC5 tworzy backup zarządzanej konfiguracji. Przy błędzie
 
 Overclocking, Device Tree, limity USB i ustawienia boot mogą wpływać na stabilność. Zmieniaj je etapami i po każdym pełnym restarcie weryfikuj rzeczywisty stan runtime. Nie ignoruj komunikatów o throttlingu, problemach z zasilaniem lub temperaturze.
 
+
+### Host Access / Protection Mode
+
+SBC5 requires **Protection Mode disabled** so declared `host_pid`/full-access permissions expose host `config.txt`, PMIC and firmware diagnostics. If the log reports `Host Access Health: DEGRADED` or `PID1=run.sh`, disable Protection Mode in the App Info page and restart the App. While Host Access is unavailable, boot/config writes are suspended and repeated warnings are throttled.
+
 ### 17. Pliki referencyjne
 
 - `docs/QUICK_SETUP.md` — szybka konfiguracja;
@@ -320,4 +325,4 @@ Overclocking, Device Tree, limity USB i ustawienia boot mogą wpływać na stabi
 
 ## Store migration / Migracja do sklepu
 
-SBC5 2.8.31 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.
+SBC5 2.8.32 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.

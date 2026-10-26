@@ -321,6 +321,10 @@ W razie problemu sprawdź kolejno:
 5. profil zapisany oraz aktywny po boot;
 6. status bridge i wersję package/Card UI.
 
+Jeżeli log pokazuje `Host Access Health: DEGRADED`, `PID1=run.sh`, brak `config.txt`, PMIC lub `/dev/vcio_gencmd`, sprawdź w **Apps → SBC5 Control Center → Info**, czy **Protection Mode jest wyłączony**. Aplikacja deklaruje `host_pid: true` i pełny dostęp hosta; po zmianie Protection Mode uruchom ponownie aplikację. W stanie DEGRADED SBC5 nie wykonuje zapisów boot/config i ogranicza powtarzane ostrzeżenia, aby nie obciążać logu.
+
+Runtime korzysta z krótkotrwałych plików roboczych. Przy starcie SBC5 gwarantuje istnienie zapisywalnego `/tmp` z prawami `1777`, a narzędzia wydaniowe korzystają z natywnego katalogu tymczasowego platformy zamiast zakładać istnienie `/tmp` w Termux.
+
 ### 15. Backup i odzyskiwanie
 
 Przed zmianami boot SBC5 tworzy backup zarządzanej konfiguracji. Przy błędzie zapisu lub weryfikacji używany jest rollback. Dla problemów z chłodzeniem zawsze zachowany jest bezpieczny fallback do sterowania kernela, jeśli użytkownikowy profil nie może zostać aktywowany.

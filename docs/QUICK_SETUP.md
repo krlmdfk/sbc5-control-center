@@ -33,7 +33,9 @@
 2. Open **⋮ → Repositories**.
 3. Add `https://github.com/krlmdfk/sbc5-control-center`.
 4. Refresh the Apps store and open **SBC5 Control Center**.
-5. Choose **Install**, enable **Start on boot**, then choose **Start**.
+5. Choose **Install**.
+6. In **Info**, disable **Protection Mode** (required for Host PID, `config.txt`, PMIC and firmware diagnostics).
+7. Enable **Start on boot**, then choose **Start**.
 
 > Do not add the App repository to HACS. HACS uses the separate integration repository `https://github.com/krlmdfk/sbc5-control-center-integration`.
 
@@ -95,7 +97,7 @@ A full Raspberry Pi restart is not required merely because the version number ch
 
 ### 10. Troubleshooting
 
-Check in this order: App log → Host Access → Cooling Problem → power/throttling → Config Differs From Active → Restart Required → Package/Card UI version.
+Check in this order: App log → Host Access → Cooling Problem → power/throttling → Config Differs From Active → Restart Required → Package/Card UI version. If Host Access is DEGRADED or `PID1=run.sh`, verify that Protection Mode is disabled and restart the App.
 
 Full documentation: `DOCUMENTATION.md`.
 
@@ -120,7 +122,9 @@ Full documentation: `DOCUMENTATION.md`.
 2. Otwórz **⋮ → Repositories / Repozytoria**.
 3. Dodaj `https://github.com/krlmdfk/sbc5-control-center`.
 4. Odśwież sklep Apps i otwórz **SBC5 Control Center**.
-5. Wybierz **Install / Zainstaluj**, włącz **Start on boot / Uruchamiaj przy starcie**, a następnie **Start / Uruchom**.
+5. Wybierz **Install / Zainstaluj**.
+6. W **Info** wyłącz **Protection Mode** (wymagane dla Host PID, `config.txt`, PMIC i diagnostyki firmware).
+7. Włącz **Start on boot / Uruchamiaj przy starcie**, a następnie **Start / Uruchom**.
 
 > Repozytorium aplikacji nie jest repozytorium HACS. Do HACS dodaje się osobno `https://github.com/krlmdfk/sbc5-control-center-integration` jako **Integration / Integracja**.
 

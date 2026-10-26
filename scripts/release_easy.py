@@ -11,6 +11,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,7 +60,7 @@ def prepare(args) -> int:
     run(["python", "scripts/update_manifest_hashes.py"], ROOT)
     run(["python", "scripts/validate_release.py"], ROOT)
     run(["python", "scripts/test_migration_profile_guard.py"], ROOT)
-    run(["python", "scripts/build_local_update.py", "--output", f"/tmp/SBC5_UPDATE_{args.version}.zip"], ROOT)
+    run(["python", "scripts/build_local_update.py", "--output", str(Path(tempfile.gettempdir()) / f"SBC5_UPDATE_{args.version}.zip")], ROOT)
     run(["git", "diff", "--check"], ROOT)
     run(["git", "diff", "--check"], hacs)
 

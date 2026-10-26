@@ -1,5 +1,17 @@
 # Changelog — SBC5 Control Center
 
+## 2.8.32 — 2026-10-26
+
+### English
+
+- Runtime robustness hotfix: guarantees writable runtime scratch storage, hardens AI qualification templates against partial telemetry, throttles repeated boot/config write warnings when Host Access is unavailable, and adds explicit Protection Mode/Host PID diagnostics. No Adaptive PWM, AI Cooling model/qualification, fan calibration, CPU/GPU profile, or boot-control algorithm changes.
+- Restart requirement: `home_assistant`.
+
+### Polski
+
+- Hotfix odporności runtime: gwarantuje zapisywalny katalog roboczy runtime, zabezpiecza szablony kwalifikacji AI na niepełną telemetrię, ogranicza powtarzane komunikaty o niedostępnym config.txt i dodaje jawną diagnostykę Protection Mode/Host PID. Bez zmian Adaptive PWM, modelu/kwalifikacji AI Cooling, kalibracji wentylatora, profili CPU/GPU ani algorytmów sterowania boot.
+- Wymagany restart: `home_assistant`.
+
 ## 2.8.31 — 2026-10-26
 
 ### English

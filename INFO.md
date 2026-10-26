@@ -10,8 +10,8 @@
 
 | Parameter / Parametr | Value / Wartość |
 |---|---|
-| App version / Wersja aplikacji | **2.8.31** |
-| Card UI | **2.8.31** |
+| App version / Wersja aplikacji | **2.8.32** |
+| Card UI | **2.8.32** |
 | Status / Stan | **stable** |
 | Architecture / Architektura | `aarch64` |
 | Home Assistant OS | `>= 18.3` |
@@ -60,6 +60,8 @@ AI Cooling runs locally and is secondary to the classical controller. The model 
 ### CPU, GPU and `config.txt`
 
 CPU/OC and GPU/V3D/ISP profiles maintain persistent desired state synchronized between Ingress, Lovelace, `config.txt` and native Home Assistant configuration. A real boot-parameter change requests a full Raspberry Pi restart. Managed files are compared semantically, so changing only an App version/comment must not trigger a host restart.
+
+Host-level boot, PMIC and firmware access requires the App to run with **Protection Mode disabled**, matching its declared `host_pid`, `full_access`, `SYS_ADMIN` and `SYS_PTRACE` permissions. If Host Access is unavailable, SBC5 keeps cooling telemetry/control on safe available paths, suspends boot/config writes, throttles repeated warnings and reports the Supervisor protection/Host PID state explicitly. Runtime scratch files are created in a guaranteed writable temporary directory.
 
 ### Lovelace interface
 
@@ -125,6 +127,8 @@ AI Cooling działa lokalnie i wtórnie wobec klasycznego regulatora. Model rozr�
 ### CPU, GPU i `config.txt`
 
 Profile CPU/OC oraz GPU/V3D/ISP mają trwały stan żądany synchronizowany między Ingress, kartą Lovelace, `config.txt` i natywną Konfiguracją Home Assistanta. Rzeczywista zmiana parametrów boot powoduje żądanie pełnego restartu Raspberry Pi. Pliki zarządzane są porównywane semantycznie, więc sama zmiana wersji aplikacji lub komentarza nie powoduje restartu hosta.
+
+Dostęp do konfiguracji boot, PMIC i firmware hosta wymaga uruchomienia aplikacji z **wyłączonym Protection Mode**, zgodnie z deklarowanymi uprawnieniami `host_pid`, `full_access`, `SYS_ADMIN` i `SYS_PTRACE`. Gdy Host Access jest niedostępny, SBC5 zachowuje bezpieczne dostępne ścieżki chłodzenia/telemetrii, wstrzymuje zapisy konfiguracji boot, ogranicza powtarzane komunikaty i jawnie raportuje stan Protection/Host PID z Supervisora. Pliki tymczasowe runtime są tworzone w gwarantowanym zapisywalnym katalogu roboczym.
 
 ### Interfejs Lovelace
 

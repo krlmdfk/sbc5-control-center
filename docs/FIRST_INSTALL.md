@@ -18,6 +18,18 @@ SBC5 Control Center has two required project layers and one optional dashboard l
 
 Install them in exactly that order: **App/runtime → integration → frontend dependencies/dashboard**.
 
+### Installation in 5 minutes
+
+[![Add SBC5 Control Center App repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fkrlmdfk%2Fsbc5-control-center)
+
+1. **Settings → Apps → Install app → ⋮ → Repositories** → add `https://github.com/krlmdfk/sbc5-control-center`.
+2. Install **SBC5 Control Center**, disable **Protection Mode**, enable **Start on boot**, start the App and verify `Platform Guard: OK` + `Host Access: SUCCESS`.
+3. **HACS → ⋮ → Custom repositories** → add `https://github.com/krlmdfk/sbc5-control-center-integration` as **Integration**.
+4. Install the SBC5 integration and, for the full dashboard, **Mushroom**, **card-mod**, and **ApexCharts Card**.
+5. Restart Home Assistant when requested and add/verify **SBC5 Control Center** under **Settings → Devices & services**.
+
+> The main App repository belongs in the Home Assistant **Apps repository list**. The integration repository belongs in **HACS Custom repositories**. They are not interchangeable.
+
 ### 2. Requirements
 
 Before starting, verify:
@@ -31,9 +43,6 @@ Before starting, verify:
 For the complete Lovelace dashboard you will also need HACS.
 
 ### 3. Add the SBC5 App repository to Home Assistant
-
-[![Add SBC5 Control Center App repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fkrlmdfk%2Fsbc5-control-center)
-
 
 1. Open **Settings → Apps**.
 2. Choose **Install app**.
@@ -52,10 +61,11 @@ If the App does not appear, refresh the App store and verify that the repository
 
 1. Open **SBC5 Control Center** in the App store.
 2. Choose **Install**.
-3. After installation, enable **Start on boot**.
-4. Optionally enable **Show in sidebar**.
-5. Choose **Start**.
-6. Open the **Log** tab.
+3. In **Info**, disable **Protection Mode**. SBC5 needs Host PID/full host access for `config.txt`, PMIC and firmware diagnostics.
+4. Enable **Start on boot**.
+5. Optionally enable **Show in sidebar**.
+6. Choose **Start**.
+7. Open the **Log** tab.
 
 A healthy first start should show, among other messages:
 
@@ -186,6 +196,16 @@ SBC5 Control Center składa się z dwóch wymaganych warstw projektu oraz opcjon
 
 Instaluj dokładnie w tej kolejności: **App/runtime → integracja → zależności frontendowe/dashboard**.
 
+### Instalacja w 5 minut
+
+1. **Ustawienia → Apps → Install app / Zainstaluj aplikację → ⋮ → Repositories / Repozytoria** → dodaj `https://github.com/krlmdfk/sbc5-control-center`.
+2. Zainstaluj **SBC5 Control Center**, wyłącz **Protection Mode**, włącz **Start on boot / Uruchamiaj przy starcie**, uruchom aplikację i sprawdź `Platform Guard: OK` + `Host Access: SUCCESS`.
+3. **HACS → ⋮ → Custom repositories / Niestandardowe repozytoria** → dodaj `https://github.com/krlmdfk/sbc5-control-center-integration` jako **Integration / Integracja**.
+4. Zainstaluj integrację SBC5 oraz, dla pełnego dashboardu, **Mushroom**, **card-mod** i **ApexCharts Card**.
+5. Uruchom ponownie Home Assistant, gdy będzie to wymagane, a następnie dodaj/sprawdź **SBC5 Control Center** w **Ustawienia → Urządzenia i usługi**.
+
+> Główne repozytorium App dodaje się do listy repozytoriów sklepu **Apps** Home Assistant. Repozytorium integracji dodaje się do **HACS → Niestandardowe repozytoria**. Nie są zamienne.
+
 ### 2. Wymagania
 
 Przed rozpoczęciem sprawdź:
@@ -217,10 +237,11 @@ Jeżeli aplikacja nie pojawia się na liście, odśwież sklep i sprawdź, czy a
 
 1. Otwórz **SBC5 Control Center** w sklepie aplikacji.
 2. Wybierz **Install / Zainstaluj**.
-3. Po instalacji włącz **Start on boot / Uruchamiaj przy starcie**.
-4. Opcjonalnie włącz **Show in sidebar / Pokaż na pasku bocznym**.
-5. Wybierz **Start / Uruchom**.
-6. Otwórz zakładkę **Log**.
+3. W **Info** wyłącz **Protection Mode**. SBC5 wymaga Host PID/pełnego dostępu hosta dla `config.txt`, PMIC i diagnostyki firmware.
+4. Włącz **Start on boot / Uruchamiaj przy starcie**.
+5. Opcjonalnie włącz **Show in sidebar / Pokaż na pasku bocznym**.
+6. Wybierz **Start / Uruchom**.
+7. Otwórz zakładkę **Log**.
 
 Prawidłowy pierwszy start powinien pokazać między innymi:
 
@@ -336,3 +357,10 @@ Instalacja jest zakończona, gdy:
 - karta SBC5 wyświetla się bez błędów brakujących elementów.
 
 Dopiero po takim uruchomieniu bazowym przechodź do Adaptive PWM, AI Cooling, profili CPU/GPU i konfiguracji zaawansowanej.
+## Automatic update detection / Automatyczne wykrywanie aktualizacji
+
+**Apps:** Home Assistant Supervisor refreshes custom Git repositories and exposes a native App update when the repository `config.yaml` version is newer than the installed version. Use **Check for updates / Sprawdź aktualizacje** only when you want an immediate refresh.
+
+**HACS:** HACS stable versions come from published GitHub Releases; a tag alone is not enough. SBC5 repositories now publish their tag and GitHub Release automatically after successful CI. Custom HACS repositories are refreshed automatically by HACS; **Update information / Aktualizuj informacje** forces an immediate check.
+
+**SBC5:** the App additionally checks the canonical GitHub release metadata every 6 hours, so its own update sensor can notify independently of the store refresh cycles.

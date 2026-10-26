@@ -2,7 +2,7 @@
 
 > Local control, diagnostics and configuration center for Raspberry Pi 5 running Home Assistant OS.
 
-**App release:** 2.8.31 · **Card UI:** 2.8.31 · **HA OS:** `>= 18.3` · **Core:** `>= 2026.10.1` · **License:** Apache-2.0
+**App release:** 2.8.32 · **Card UI:** 2.8.32 · **HA OS:** `>= 18.3` · **Core:** `>= 2026.10.1` · **License:** Apache-2.0
 
 SBC5 Control Center combines Active Cooler control, Adaptive PWM, local AI Cooling, CPU/PMIC/USB telemetry, guarded CPU overclocking profiles, managed `config.txt`, restart orchestration, local ZIP updates and Lovelace diagnostics.
 
@@ -51,6 +51,8 @@ The Home Assistant device registry receives the Raspberry Pi model, board revisi
 
 ## Hybrid update channel / Hybrydowy kanał aktualizacji
 
-Store-managed SBC5 uses Home Assistant Apps as the canonical full-runtime update channel. Verified local ZIPs remain supported for UI-only updates and, for a Store installation, may trigger the native Apps update when the exact same version is published. Historical local installations retain direct full-ZIP rebuilds. The 2.8.31 Migration Manager provides a SHA-256-protected Local → Store handoff with rollback.
+Store-managed SBC5 uses Home Assistant Apps as the canonical full-runtime update channel. Verified local ZIPs remain supported for UI-only updates and, for a Store installation, may trigger the native Apps update when the exact same version is published. Historical local installations retain direct full-ZIP rebuilds. The 2.8.32 Migration Manager provides a SHA-256-protected Local → Store handoff with rollback.
 
-Instalacja sklepowa SBC5 używa Home Assistant Apps jako kanonicznego kanału pełnych aktualizacji runtime. Zweryfikowane lokalne ZIP-y pozostają obsługiwane dla UI-only, a w instalacji sklepowej mogą wyzwolić natywną aktualizację Apps, gdy identyczna wersja jest opublikowana. Historyczna instalacja lokalna zachowuje bezpośrednie pełne przebudowy ZIP. Migration Manager 2.8.31 zapewnia handoff Local → Store zabezpieczony SHA-256 i rollback.
+**Host access:** keep **Protection Mode disabled** for SBC5. Host PID/full access is required for `config.txt`, PMIC and firmware diagnostics; when unavailable SBC5 suspends boot writes and reports the protection/Host PID state explicitly.
+
+Instalacja sklepowa SBC5 używa Home Assistant Apps jako kanonicznego kanału pełnych aktualizacji runtime. Zweryfikowane lokalne ZIP-y pozostają obsługiwane dla UI-only, a w instalacji sklepowej mogą wyzwolić natywną aktualizację Apps, gdy identyczna wersja jest opublikowana. Historyczna instalacja lokalna zachowuje bezpośrednie pełne przebudowy ZIP. Migration Manager 2.8.32 zapewnia handoff Local → Store zabezpieczony SHA-256 i rollback.

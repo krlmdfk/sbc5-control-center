@@ -4,6 +4,7 @@ ARG BUILD_VERSION
 ARG BUILD_ARCH
 
 RUN apk add --no-cache jq curl dtc coreutils util-linux unzip python3 py3-websockets raspberrypi-utils-vcgencmd
+RUN install -d -m 1777 /tmp
 
 LABEL \
   io.hass.version="${BUILD_VERSION}" \
