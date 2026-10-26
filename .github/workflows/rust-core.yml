@@ -1,0 +1,65 @@
+name: Rust Core CI
+
+on:
+  push:
+    branches:
+      - main
+      - migration/rust-3.0.0
+    paths:
+      - 'local_apps/sbc5_control_center/rust-core/**'
+      - 'local_apps/sbc5_control_center/Dockerfile'
+      - 'local_apps/sbc5_control_center/run.sh'
+      - '.github/workflows/rust-core.yml'
+  pull_request:
+    paths:
+      - 'local_apps/sbc5_control_center/rust-core/**'
+      - 'local_apps/sbc5_control_center/Dockerfile'
+      - 'local_apps/sbc5_control_center/run.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  rust-core:
+    name: Rust Core / ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+    defaults:
+      run:
+        working-directory: local_apps/sbc5_control_center/rust-core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.85
+        run: |
+          rustup toolchain install 1.85.0 --profile minimal
+          rustup +1.85.0 target add "${{ matrix.target }}"
+
+      - name: Check native core
+        run: cargo +1.85.0 check --target "${{ matrix.target }}"
+
+      - name: Release build (host)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+          cargo +1.85.0 build --release --target x86_64-unknown-linux-musl
+          ./target/x86_64-unknown-linux-musl/release/sbc5-core version
+          ./target/x86_64-unknown-linux-musl/release/sbc5-core self-test
+
+  shell-compatibility:
+    name: Compatibility bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate bootstrap shell
+        run: |
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
