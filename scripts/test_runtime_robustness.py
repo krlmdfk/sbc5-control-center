@@ -23,7 +23,8 @@ assert 'self-test' in bootstrap
 assert 'SBC5_RUST_CORE_ENABLED=true' in bootstrap
 assert 'SBC5_RUST_CORE_ENABLED=false' in bootstrap
 assert 'exec /run_legacy.sh' in bootstrap
-assert 'COPY run_legacy.sh /run_legacy.sh' in docker
+assert 'COPY run_legacy.sh ' in docker
+assert 'chmod a+x /run.sh /run_legacy.sh' in docker
 
 # Host-access warning throttling and Supervisor diagnostics remain authoritative
 # in the compatibility control plane during the stable 3.0.0 migration.
