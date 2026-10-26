@@ -1,7 +1,7 @@
 # SBC5 Control Center — Technical Documentation
 
-**Documentation version:** 2.8.33
-**Card UI:** 2.8.33
+**Documentation version:** 2.8.34
+**Card UI:** 2.8.34
 
 **Load model:** temperature/RPM/PWM use the lightweight 5 s path, Adaptive PWM runs every 10 s, full bridge telemetry every 15 s, the compact AI relay is evaluated every 15 s and published on change with a 5-minute keepalive, the heavy host relay every 30 s, and Supervisor profile reconciliation every 30 s. Diagnostic AI history entities remain sampled every 30 s.
 **Minimum:** HA OS 18.3, Home Assistant Core 2026.10.1
@@ -31,7 +31,7 @@ Canonical local update path: `/config/sbc5_control_center_updates/`. Historical 
 ## Web UI and Lovelace
 
 The **Save configuration** and **Refresh** buttons expose busy, success and error states directly on the button. The active request disables its button to prevent duplicate submissions, and the feedback automatically returns to the default label.
-The web UI manages cooling, AI, CPU/OC, config.txt, updates and card synchronization. Managed config.txt synchronization compares boot content semantically; a version-only header comment change does not request a Raspberry Pi reboot. Card UI 2.8.33 exposes CPU OC status/profile controls, four-core clocks and cooling-profile reconciliation status. Advanced OC is selectable from both the web UI and Lovelace; manual values remain editable in Configuration.
+The web UI manages cooling, AI, CPU/OC, config.txt, updates and card synchronization. Managed config.txt synchronization compares boot content semantically; a version-only header comment change does not request a Raspberry Pi reboot. Card UI 2.8.34 exposes CPU OC status/profile controls, four-core clocks and cooling-profile reconciliation status. Advanced OC is selectable from both the web UI and Lovelace; manual values remain editable in Configuration.
 
 CPU/OC and GPU/V3D/ISP profile controls are collapsed by default on the Lovelace card. Tapping the corresponding status tile expands or collapses its controls independently; holding the tile opens More Info.
 
@@ -66,4 +66,4 @@ The Home Assistant device registry receives the Raspberry Pi model, board revisi
 
 ## Store migration / Migracja do sklepu
 
-SBC5 2.8.33 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.
+SBC5 2.8.34 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.

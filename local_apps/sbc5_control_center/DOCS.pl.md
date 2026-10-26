@@ -325,4 +325,4 @@ SBC5 requires **Protection Mode disabled** so declared `host_pid`/full-access pe
 
 ## Store migration / Migracja do sklepu
 
-SBC5 2.8.33 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.
+SBC5 2.8.34 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.

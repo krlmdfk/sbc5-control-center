@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 2.8.34 — 2026-10-26
+
+### English
+
+#### Changed
+
+- Migration-routing hotfix: a completed legacy handoff no longer blocks exporting preserved stable state to a newer stopped Rust canary.
+
+#### Fixed
+
+- Treat an already imported legacy handoff addressed to the current Store identity as historical when a newer stopped canary is available.
+- Preserve the legacy backup and audit trail while allowing a fresh schema 2 canary handoff to be created.
+
+#### Security
+
+- No fan-control, Adaptive PWM, AI Cooling, CPU/GPU profile or boot-control algorithm changes.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Hotfix routingu migracji: zakończony starszy handoff nie blokuje już eksportu zachowanego stanu stabilnej aplikacji do nowszej zatrzymanej canary Rust.
+
+#### Naprawiono
+
+- Traktuj już zaimportowany starszy handoff skierowany do bieżącej instancji Store jako historyczny, gdy dostępna jest nowsza zatrzymana canary.
+- Zachowaj starszy backup i ślad audytowy, jednocześnie umożliwiając utworzenie świeżego handoffu schema 2 do canary.
+
+#### Bezpieczeństwo
+
+- Brak zmian algorytmów sterowania wentylatorem, Adaptive PWM, AI Cooling, profili CPU/GPU i konfiguracji boot.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 2.8.33 — 2026-10-26
 
 ### English
