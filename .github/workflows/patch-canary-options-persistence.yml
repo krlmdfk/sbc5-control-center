@@ -1,0 +1,160 @@
+name: Patch Rust canary migration options persistence
+
+on:
+  push:
+    branches:
+      - test/rust-3.0.0-canary
+    paths:
+      - .github/workflows/patch-canary-options-persistence.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/rust-3.0.0-canary
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply migration options persistence fix
+        shell: python
+        run: |
+          from pathlib import Path
+
+          run = Path('local_apps/sbc5_control_center/run_legacy.sh')
+          text = run.read_text(encoding='utf-8')
+
+          marker = '''migration_profile_guard_active() {
+          '''
+          if marker not in text:
+              raise SystemExit('migration_profile_guard_active marker not found')
+
+          helper = r'''supervisor_sync_migrated_options_to_store() {
+            # During Store/canary migration /data/options.json is imported after the
+            # container has already started. Supervisor keeps a separate persistent
+            # options store for each App slug and would otherwise restore its stale
+            # defaults on the next container start. Persist the imported options into
+            # Supervisor before finalizing the migration guard.
+            #
+            # Only keys already present in the target App's native options are copied.
+            # This keeps target-only/new-schema defaults and prevents old/foreign keys
+            # from being submitted to Supervisor. Objects are recursively overlaid;
+            # arrays/scalars are replaced by the imported value.
+            [ -n "${SUPERVISOR_TOKEN:-}" ] || return 1
+            [ -r "$OPTIONS_FILE" ] || return 1
+            local sup="${1:-}" imported merged current_norm desired_norm payload out
+            [ -n "$sup" ] || sup="$(supervisor_own_options_json)" || return 1
+            imported="$(jq -c 'if type == "object" then . else {} end' "$OPTIONS_FILE" 2>/dev/null)" || return 1
+            merged="$(jq -cn --argjson base "$sup" --argjson src "$imported" '
+              def overlay_known($b; $s):
+                if (($b|type) == "object") and (($s|type) == "object") then
+                  reduce ($s | keys_unsorted[]) as $k ($b;
+                    if ($b | has($k)) then .[$k] = overlay_known($b[$k]; $s[$k]) else . end)
+                else $s end;
+              overlay_known($base; $src)
+            ' 2>/dev/null)" || return 1
+            current_norm="$(jq -cS . <<<"$sup" 2>/dev/null)" || return 1
+            desired_norm="$(jq -cS . <<<"$merged" 2>/dev/null)" || return 1
+            if [ "$current_norm" = "$desired_norm" ]; then
+              supervisor_profile_marker_write "$merged" "migration_options_already_current" || true
+              return 0
+            fi
+            payload="$(jq -cn --argjson options "$merged" '{options:$options}')"
+            out="/tmp/sbc5_supervisor_migration_options.$$"
+            if supervisor_post "/addons/self/options" "$payload" "$out"; then
+              supervisor_profile_marker_write "$merged" "migration_options_handoff" || true
+              log "Store Migration: pełny zaimportowany stan opcji zapisano do trwałej Konfiguracji Supervisor dla bieżącej instancji."
+              rm -f "$out"
+              return 0
+            fi
+            rm -f "$out"
+            log "Store Migration: nie udało się utrwalić pełnych zaimportowanych opcji w Supervisor; guard pozostaje pending i nie dopuści do nadpisania stanu przy restarcie."
+            return 1
+          }
+
+          '''
+          if 'supervisor_sync_migrated_options_to_store()' not in text:
+              text = text.replace(marker, helper + marker, 1)
+
+          old = r'''migration_profile_guard_sync() {
+            local sup="${1:-}"
+            migration_profile_guard_active || return 1
+            # Imported /data state is authoritative until it is copied to the Store identity's
+            # native options. Never interpret stale Factory/off defaults as an explicit edit.
+            rm -f "$SUPERVISOR_PROFILE_SYNC_FILE" 2>/dev/null || true
+            cpu_profile_restore_options_from_state || true
+            gpu_profile_restore_options_from_state || true
+            [ -n "$sup" ] || sup="$(supervisor_own_options_json 2>/dev/null || true)"
+            [ -n "$sup" ] || return 0
+            if supervisor_sync_profile_state_to_store "$sup"; then
+              migration_profile_guard_finalize || true
+            fi
+            return 0
+          }
+          '''
+          new = r'''migration_profile_guard_sync() {
+            local sup="${1:-}"
+            migration_profile_guard_active || return 1
+            # Imported /data state is authoritative until the complete imported App
+            # configuration is copied to this Store/canary slug's persistent Supervisor
+            # options. CPU/GPU durable state is folded into options.json first, then the
+            # whole known-schema option tree is persisted atomically through Supervisor.
+            rm -f "$SUPERVISOR_PROFILE_SYNC_FILE" 2>/dev/null || true
+            cpu_profile_restore_options_from_state || true
+            gpu_profile_restore_options_from_state || true
+            [ -n "$sup" ] || sup="$(supervisor_own_options_json 2>/dev/null || true)"
+            [ -n "$sup" ] || return 0
+            if supervisor_sync_migrated_options_to_store "$sup"; then
+              migration_profile_guard_finalize || true
+            fi
+            return 0
+          }
+          '''
+          if old not in text:
+              raise SystemExit('migration_profile_guard_sync block not found')
+          text = text.replace(old, new, 1)
+
+          text = text.replace(
+              'Store Migration: profile_sync_guard=finalized — trwałe profile CPU/GPU zapisano do natywnej Konfiguracji Supervisor.',
+              'Store Migration: profile_sync_guard=finalized — pełne opcje migracji oraz trwałe profile CPU/GPU zapisano do natywnej Konfiguracji Supervisor.',
+              1,
+          )
+          run.write_text(text, encoding='utf-8')
+
+          test = Path('scripts/test_migration_profile_guard.py')
+          t = test.read_text(encoding='utf-8')
+          t = t.replace(
+              '"config_txt_manager": {"enabled": False},\n        }',
+              '"config_txt_manager": {"enabled": False},\n            "custom_target_c": 50.0,\n            "ai_cooling_section_enabled": False,\n            "ai_cooling_mode": "learning",\n        }',
+              1,
+          )
+          t = t.replace(
+              '"config_txt_manager": {"enabled": True},\n        }',
+              '"config_txt_manager": {"enabled": True},\n            "custom_target_c": 49.0,\n            "ai_cooling_section_enabled": True,\n            "ai_cooling_mode": "assist",\n        }',
+              1,
+          )
+          needle = '        assert merged["config_gpu_profile"] == "balanced" and merged["section_gpu_enabled"] is True\n'
+          extra = '''        assert merged["custom_target_c"] == 49.0\n        assert merged["ai_cooling_section_enabled"] is True\n        assert merged["ai_cooling_mode"] == "assist"\n\n        runtime = (ROOT / "local_apps" / "sbc5_control_center" / "run_legacy.sh").read_text(encoding="utf-8")\n        assert "supervisor_sync_migrated_options_to_store()" in runtime\n        guard_body = runtime.split("migration_profile_guard_sync() {", 1)[1].split("supervisor_profile_reconcile_startup() {", 1)[0]\n        assert "supervisor_sync_migrated_options_to_store" in guard_body\n        assert guard_body.index("supervisor_sync_migrated_options_to_store") < guard_body.index("migration_profile_guard_finalize")\n'''
+          if needle not in t:
+              raise SystemExit('test assertion insertion point not found')
+          t = t.replace(needle, needle + extra, 1)
+          test.write_text(t, encoding='utf-8')
+      - name: Validate patched files
+        run: |
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          python scripts/test_migration_profile_guard.py
+          python scripts/test_canary_migration.py
+          python scripts/test_runtime_robustness.py
+          git diff --check
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add local_apps/sbc5_control_center/run_legacy.sh scripts/test_migration_profile_guard.py
+          git commit -m "Persist full migrated options across canary restarts"
+          git push origin HEAD:test/rust-3.0.0-canary
