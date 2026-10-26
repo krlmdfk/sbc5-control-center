@@ -1,0 +1,7 @@
+title: SBC5 Control Center
+description: Raspberry Pi 5 fan control, AI cooling, monitoring, overclocking and diagnostics for Home Assistant OS.
+url: https://krlmdfk.github.io
+baseurl: /sbc5-control-center
+theme: jekyll-theme-cayman
+lang: en
+show_downloads: false
