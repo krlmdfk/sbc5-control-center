@@ -1,15 +1,15 @@
-name: SBC5 Control Center
+name: SBC5 Control Center — Rust Canary
 version: 3.0.0
-slug: sbc5_control_center
-description: "SBC5 Control Center 3.0.0 — Rust Core migration: native low-overhead host telemetry and runtime health with automatic compatibility fallback. Existing Adaptive PWM safety, AI Cooling learning data, fan calibration, CPU/GPU profiles and persistent state remain compatible."
+slug: rust_canary_sbc5_control_center
+description: "SBC5 Control Center 3.0.0 Rust Canary — isolated HAOS validation instance for preserved-state migration testing. Manual boot only; keep stopped until the stable source exports a verified handoff."
 arch:
 - aarch64
 homeassistant: 2026.10.1
 breaking_versions:
 - 2.0.0
-stage: stable
+stage: experimental
 startup: application
-boot: auto
+boot: manual
 init: false
 stdin: true
 full_access: true
@@ -260,5 +260,5 @@ schema:
   adaptive_pwm_down_confirm_cycles: int(1,6)
 ingress: true
 ingress_port: 8099
-panel_icon: mdi:tune-variant
-panel_title: SBC5 Control Center
+panel_icon: mdi:test-tube
+panel_title: SBC5 Rust Canary
