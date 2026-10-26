@@ -7,8 +7,8 @@
 <h1 align="center">SBC5 Control Center</h1>
 
 <p align="center">
-  Raspberry Pi 5 control, cooling, diagnostics and optimization center for Home Assistant OS.<br>
-  Centrum sterowania, chłodzenia, diagnostyki i optymalizacji Raspberry Pi 5 dla Home Assistant OS.
+  Raspberry Pi 5 fan control, AI-assisted cooling, system monitoring, CPU/GPU profiles, overclocking, diagnostics and optimization for Home Assistant OS.<br>
+  Centrum sterowania wentylatorem, chłodzenia AI, monitoringu, profili CPU/GPU, overclockingu, diagnostyki i optymalizacji Raspberry Pi 5 dla Home Assistant OS.
 </p>
 
 <p align="center">
@@ -28,6 +28,7 @@
 </p>
 
 <p align="center">
+  <a href="https://krlmdfk.github.io/sbc5-control-center/"><strong>Project Website</strong></a> ·
   <a href="https://github.com/krlmdfk/sbc5-control-center"><strong>Main App</strong></a> ·
   <a href="https://github.com/krlmdfk/sbc5-control-center-integration"><strong>HACS Integration</strong></a> ·
   <a href="docs/FIRST_INSTALL.md"><strong>🚀 First Installation / Pierwsza instalacja</strong></a> ·
@@ -42,7 +43,9 @@
 
 ## English
 
-SBC5 Control Center combines Active Cooler control, Adaptive PWM, local AI Cooling, Raspberry Pi 5 telemetry, CPU/OC and GPU/V3D/ISP profiles, managed `config.txt`, Restart Manager, and safe local updates in one Home Assistant OS companion runtime.
+SBC5 Control Center combines **Raspberry Pi 5 fan control for Home Assistant**, Active Cooler management, Adaptive PWM, local AI Cooling, temperature and RPM monitoring, CPU/OC and GPU/V3D/ISP profiles, managed `config.txt`, Restart Manager, hardware diagnostics and safe local updates in one Home Assistant OS companion runtime.
+
+It can be used as a **Raspberry Pi 5 monitoring dashboard for Home Assistant**, a temperature-aware PWM fan controller, an AI-assisted thermal management system, an overclocking and performance monitor, and a hardware diagnostics platform.
 
 ### Project repositories
 
@@ -65,6 +68,19 @@ SBC5 Control Center combines Active Cooler control, Adaptive PWM, local AI Cooli
 | **System** | power, PMIC, memory, storage, throttling, network, firmware and bootloader diagnostics |
 | **`config.txt`** | managed blocks, backup, validation, rollback, semantic change detection |
 | **Updates** | local ZIP, manifest, SHA-256 verification, Health Check, Restart Manager |
+
+### Popular use cases
+
+- Raspberry Pi 5 fan control in Home Assistant
+- Raspberry Pi 5 Active Cooler control and RPM monitoring
+- Raspberry Pi 5 CPU temperature and per-core frequency monitoring
+- Raspberry Pi 5 GPU/V3D/ISP monitoring and profiles
+- adaptive PWM cooling and custom fan curves
+- local AI-assisted and workload-aware cooling
+- Raspberry Pi 5 overclocking and performance profiles
+- hardware, PMIC, power, storage and throttling diagnostics
+- Home Assistant Lovelace Raspberry Pi monitoring dashboard
+- managed Raspberry Pi `config.txt` backup, validation and rollback
 
 ### Mobile-first Lovelace
 
@@ -114,10 +130,12 @@ Full guide: [`docs/QUICK_SETUP.md`](docs/QUICK_SETUP.md).
 
 ### Documentation
 
+- [Project website / GitHub Pages](https://krlmdfk.github.io/sbc5-control-center/)
 - [First Installation / Pierwsza instalacja](docs/FIRST_INSTALL.md)
 - [Current project information](INFO.md)
 - [Full documentation](DOCUMENTATION.md)
 - [Quick Setup](docs/QUICK_SETUP.md)
+- [Discoverability & search coverage](DISCOVERABILITY.md)
 - [Changelog](CHANGELOG.md)
 - [`config.txt` reference](docs/CONFIG_TXT_REFERENCE.md)
 - [Local ZIP updates](docs/LOCAL_ZIP_UPDATE.md)
@@ -132,7 +150,7 @@ SBC5 Control Center is an independent project. Raspberry Pi and Home Assistant a
 
 ## Polski
 
-SBC5 Control Center łączy obsługę Active Coolera, Adaptive PWM, lokalne AI Cooling, telemetrię Raspberry Pi 5, profile CPU/OC i GPU/V3D/ISP, zarządzanie `config.txt`, Restart Manager oraz bezpieczne lokalne aktualizacje w jednym środowisku współpracującym z Home Assistant OS.
+SBC5 Control Center łączy sterowanie wentylatorem i Active Coolerem Raspberry Pi 5, Adaptive PWM, lokalne AI Cooling, monitoring temperatury i RPM, telemetrię Raspberry Pi 5, profile CPU/OC i GPU/V3D/ISP, zarządzanie `config.txt`, Restart Manager oraz bezpieczne lokalne aktualizacje w jednym środowisku współpracującym z Home Assistant OS.
 
 ### Repozytoria projektu
 
@@ -167,19 +185,6 @@ Główna karta jest zoptymalizowana pod telefon. Szczegółowe sekcje pozostają
 
 Układ części wydajnościowej: **wykres temperatury CPU/PWM → CPU / Overclocking → GPU/V3D/ISP**.
 
-### Architektura
-
-```text
-Home Assistant OS
-├── SBC5 Control Center App/runtime
-│   ├── cooling / AI / profiles / config.txt
-│   ├── update + restart manager
-│   └── host telemetry
-├── natywna integracja: sbc5_control_center
-├── package Home Assistant
-└── karty Lovelace
-```
-
 ### Zależności Lovelace
 
 Natywna integracja SBC5 działa niezależnie od zewnętrznych kart frontendowych. Do działania **kompletnego dashboardu SBC5 Control Center** zainstaluj przez HACS:
@@ -204,9 +209,11 @@ Pełna instrukcja: [`docs/QUICK_SETUP.md`](docs/QUICK_SETUP.md).
 
 ### Dokumentacja
 
+- [Strona projektu / GitHub Pages](https://krlmdfk.github.io/sbc5-control-center/)
 - [Informacje o aktualnym stanie](INFO.md)
 - [Pełna dokumentacja](DOCUMENTATION.md)
 - [Quick Setup](docs/QUICK_SETUP.md)
+- [Discoverability & search coverage](DISCOVERABILITY.md)
 - [Changelog](CHANGELOG.md)
 - [Reference `config.txt`](docs/CONFIG_TXT_REFERENCE.md)
 - [Aktualizacje lokalne ZIP](docs/LOCAL_ZIP_UPDATE.md)
