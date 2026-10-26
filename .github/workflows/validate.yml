@@ -38,3 +38,9 @@ jobs:
 
       - name: Validate release consistency
         run: python scripts/validate_release.py
+
+      - name: Test migration profile guard
+        run: python scripts/test_migration_profile_guard.py
+
+      - name: Build and verify local update package
+        run: python scripts/build_local_update.py --output /tmp/SBC5_UPDATE_CI.zip

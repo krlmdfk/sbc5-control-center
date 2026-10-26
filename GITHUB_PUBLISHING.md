@@ -24,3 +24,8 @@ Integracja przeznaczona do instalacji przez HACS jest publikowana oddzielnie w `
 ## Zalecane topics
 
 `home-assistant`, `raspberry-pi-5`, `raspberry-pi`, `cooling`, `monitoring`, `overclocking`, `hacs`, `sbc5`
+
+
+## Automatyczne artefakty wydania
+
+Po zielonym `Validate build` workflow `Auto release after green CI` tworzy tag/Release i buduje przez `scripts/build_local_update.py` zweryfikowaną paczkę `SBC5_UPDATE_<version>.zip`. Paczka jest tworzona z listy plików `update-manifest.json`, dlatego obejmuje także ukryte ścieżki `.github` i przed publikacją przechodzi kontrolę SHA-256. Ponowne uruchomienie workflow odświeża artefakt przez `gh release upload --clobber`.

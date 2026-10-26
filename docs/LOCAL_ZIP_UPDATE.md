@@ -15,3 +15,12 @@ Canonical ZIP directory: `/config/sbc5_control_center_updates/`.
 The package is verified by `update-manifest.json`, SHA-256, platform requirements and update scope before any change is applied.
 
 For the one-time Local → Apps Store handoff, see `STORE_MIGRATION.md`.
+
+
+## Verified package generation
+
+Release ZIPs are built from the exact `update-manifest.json` allow-list by `scripts/build_local_update.py`. The packer treats hidden paths such as `.github/...` as normal files, verifies every SHA-256 before writing the archive, embeds the exact manifest, and re-verifies the finished ZIP. The main GitHub auto-release workflow attaches `SBC5_UPDATE_<version>.zip` to every successful release.
+
+## Generowanie zweryfikowanej paczki
+
+Paczki wydaniowe ZIP są budowane z dokładnej listy `update-manifest.json` przez `scripts/build_local_update.py`. Generator traktuje ukryte ścieżki, np. `.github/...`, jak zwykłe pliki, sprawdza każdy SHA-256 przed zapisaniem archiwum, osadza dokładny manifest i ponownie weryfikuje gotowy ZIP. Główny workflow Auto Release dołącza `SBC5_UPDATE_<wersja>.zip` do każdego poprawnego wydania.

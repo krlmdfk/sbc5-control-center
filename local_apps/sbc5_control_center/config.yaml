@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 2.8.30
+version: 2.8.31
 slug: sbc5_control_center
-description: "SBC5 Control Center 2.8.30 — Migration/Hybrid release: safe local-to-Apps Store handoff preserves AI, fan calibration, CPU/GPU profiles and user options with SHA-256 validation and rollback; hybrid local ZIP updates delegate full Store runtime updates to Supervisor while retaining direct UI-only ZIP support. No cooling or AI control algorithm changes."
+description: "SBC5 Control Center 2.8.31 — Migration finalization hotfix: imported durable CPU/GPU profile state now wins over stale Store/Supervisor defaults until native App options are synchronized; adds a verified manifest-driven local ZIP packer and automatic release asset publishing. No Adaptive PWM, AI Cooling, fan calibration or boot-control algorithm changes."
 arch:
 - aarch64
 homeassistant: 2026.10.1

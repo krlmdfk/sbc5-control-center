@@ -2,7 +2,7 @@
 
 ## English
 
-SBC5 2.8.30 provides a one-time handoff from the historical local App identity to the App installed from the Home Assistant Apps store.
+SBC5 2.8.31 provides a one-time handoff from the historical local App identity to the App installed from the Home Assistant Apps store.
 
 ### Safety model
 
@@ -10,6 +10,7 @@ SBC5 2.8.30 provides a one-time handoff from the historical local App identity t
 - The local source exports only allow-listed durable SBC5 state to `/config/sbc5_control_center/migration/store_handoff_v1/`.
 - Every exported file is protected by SHA-256 and a bundle fingerprint.
 - The Store identity imports the bundle **before** profile/bootstrap/controller startup.
+- A migration profile guard prevents stale Store/Supervisor `Factory/off` defaults from being treated as an explicit user edit until imported durable CPU/GPU state is written to native App options.
 - Import is blocked while the local source App is still running.
 - Before import, the Store identity creates a rollback backup in `/data/migration_backups/`.
 - After a successful import the local identity enters safe standby if it is started again.
@@ -21,9 +22,9 @@ The handoff includes the local AI model, AI grid profile, fan calibration, CPU/G
 ### Cutover
 
 1. Keep the Store App stopped.
-2. Update the existing local SBC5 App to 2.8.30 with the verified local ZIP package.
+2. Update the existing local SBC5 App to 2.8.31 with the verified local ZIP package.
 3. After the local App starts, confirm the log contains `Store Migration` and `export_ready`.
-4. Update the Store App to 2.8.30 in Home Assistant Apps, but keep it stopped until the local export is ready.
+4. Update the Store App to 2.8.31 in Home Assistant Apps, but keep it stopped until the local export is ready.
 5. Stop the local App.
 6. Start the Store App. It verifies and imports the handoff before starting the controller.
 7. Verify AI observations/model, fan calibration, CPU/GPU requested profiles, temperature, RPM and PWM.
@@ -43,7 +44,7 @@ Rollback command exposed through App stdin: `migration_rollback`. A restart of t
 
 ## Polski
 
-SBC5 2.8.30 udostępnia jednorazowy, kontrolowany handoff ze starej lokalnej tożsamości aplikacji do aplikacji instalowanej ze sklepu Apps Home Assistant.
+SBC5 2.8.31 udostępnia jednorazowy, kontrolowany handoff ze starej lokalnej tożsamości aplikacji do aplikacji instalowanej ze sklepu Apps Home Assistant.
 
 ### Model bezpieczeństwa
 
@@ -51,6 +52,7 @@ SBC5 2.8.30 udostępnia jednorazowy, kontrolowany handoff ze starej lokalnej to�
 - Lokalna instancja eksportuje tylko jawnie dozwolony trwały stan SBC5 do `/config/sbc5_control_center/migration/store_handoff_v1/`.
 - Każdy plik jest zabezpieczony SHA-256 oraz fingerprintem całej paczki.
 - Instancja sklepowa importuje dane **przed** bootstrapem profili i startem regulatora.
+- Guard profili migracyjnych blokuje potraktowanie starych domyślnych wartości Store/Supervisor `Factory/off` jako świadomej zmiany użytkownika, dopóki zaimportowany trwały stan CPU/GPU nie zostanie zapisany do natywnej Konfiguracji aplikacji.
 - Import jest blokowany, dopóki lokalna instancja źródłowa nadal działa.
 - Przed importem wersja sklepowa tworzy backup rollback w `/data/migration_backups/`.
 - Po poprawnym imporcie stara lokalna instancja, jeśli zostanie ponownie uruchomiona, przechodzi w bezpieczny standby zamiast uruchamiać regulator.
@@ -62,9 +64,9 @@ Handoff obejmuje model AI, profil siatki AI, kalibrację wentylatora, stan profi
 ### Przejście na wersję sklepową
 
 1. Pozostaw wersję sklepową zatrzymaną.
-2. Zaktualizuj obecną lokalną aplikację SBC5 do 2.8.30 zweryfikowanym lokalnym ZIP-em.
+2. Zaktualizuj obecną lokalną aplikację SBC5 do 2.8.31 zweryfikowanym lokalnym ZIP-em.
 3. Po starcie lokalnej aplikacji sprawdź w logu `Store Migration` oraz `export_ready`.
-4. Zaktualizuj aplikację sklepową do 2.8.30 w Home Assistant Apps, ale pozostaw ją zatrzymaną do czasu gotowego eksportu.
+4. Zaktualizuj aplikację sklepową do 2.8.31 w Home Assistant Apps, ale pozostaw ją zatrzymaną do czasu gotowego eksportu.
 5. Zatrzymaj lokalną aplikację.
 6. Uruchom aplikację sklepową. Zweryfikuje i zaimportuje handoff przed uruchomieniem regulatora.
 7. Sprawdź model/próbki AI, kalibrację wentylatora, żądane profile CPU/GPU, temperaturę, RPM i PWM.

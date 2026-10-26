@@ -16,25 +16,43 @@ jobs:
           github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out validated commit
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
-      - id: version
+
+      - name: Resolve release version
+        id: version
         run: |
           version=$(python -c 'import json; print(json.load(open("local_apps/sbc5_control_center/release.json"))["version"])')
           echo "version=$version" >> "$GITHUB_OUTPUT"
           test -f "RELEASE_NOTES_${version}.md"
+
+      - name: Build verified local update package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: python scripts/build_local_update.py --output "SBC5_UPDATE_${VERSION}.zip"
+
       - name: Create tag and GitHub Release if missing
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if gh release view "$VERSION" >/dev/null 2>&1; then exit 0; fi
+          ASSET="SBC5_UPDATE_${VERSION}.zip"
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists; refreshing verified local-update asset."
+            gh release upload "$VERSION" "$ASSET" --clobber
+            exit 0
+          fi
           if ! git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -a "$VERSION" -m "SBC5 Control Center $VERSION"
             git push origin "$VERSION"
           fi
-          gh release create "$VERSION" --verify-tag --title "SBC5 Control Center $VERSION" --notes-file "RELEASE_NOTES_${VERSION}.md"
+          gh release create "$VERSION" \
+            --verify-tag \
+            --title "SBC5 Control Center $VERSION" \
+            --notes-file "RELEASE_NOTES_${VERSION}.md" \
+            "$ASSET"

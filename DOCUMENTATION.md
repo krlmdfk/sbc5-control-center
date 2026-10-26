@@ -166,7 +166,7 @@ Overclocking, Device Tree settings, USB limits, and boot configuration can affec
 
 ### 17. Store migration and hybrid updates
 
-SBC5 can migrate from the historical local App identity to the Apps Store identity without directly accessing another App's private `/data`. The local source exports an allow-listed handoff to `/config/sbc5_control_center/migration/store_handoff_v1/`; every file is verified by SHA-256. The Store identity refuses to start the controller while the local source is still running, imports the handoff before profile/bootstrap startup, and creates a rollback backup under its own `/data/migration_backups/`.
+SBC5 can migrate from the historical local App identity to the Apps Store identity without directly accessing another App's private `/data`. The local source exports an allow-listed handoff to `/config/sbc5_control_center/migration/store_handoff_v1/`; every file is verified by SHA-256. The Store identity refuses to start the controller while the local source is still running, imports the handoff before profile/bootstrap startup, and creates a rollback backup under its own `/data/migration_backups/`. A migration-finalization guard then gives the imported durable CPU/GPU profile state priority over stale Store/Supervisor schema defaults until the native App configuration has been synchronized successfully.
 
 For Store-managed installations, full runtime updates are owned by Home Assistant Apps. A verified local ZIP may trigger that native Store update only when the ZIP version exactly matches the Store's `version_latest`. UI-only/dashboard-only ZIP updates remain direct. Historical local installations retain direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md`.
 
@@ -331,7 +331,7 @@ Overclocking, Device Tree, limity USB i ustawienia boot mogą wpływać na stabi
 
 ### 17. Migracja do sklepu i aktualizacje hybrydowe
 
-SBC5 potrafi przejść z historycznej lokalnej tożsamości aplikacji do tożsamości Apps Store bez bezpośredniego dostępu do prywatnego `/data` drugiej aplikacji. Lokalna instancja eksportuje jawnie dozwolony handoff do `/config/sbc5_control_center/migration/store_handoff_v1/`, a każdy plik jest weryfikowany SHA-256. Instancja sklepowa nie uruchamia regulatora, dopóki lokalne źródło nadal działa, importuje handoff przed bootstrapem profili i tworzy backup rollback we własnym `/data/migration_backups/`.
+SBC5 potrafi przejść z historycznej lokalnej tożsamości aplikacji do tożsamości Apps Store bez bezpośredniego dostępu do prywatnego `/data` drugiej aplikacji. Lokalna instancja eksportuje jawnie dozwolony handoff do `/config/sbc5_control_center/migration/store_handoff_v1/`, a każdy plik jest weryfikowany SHA-256. Instancja sklepowa nie uruchamia regulatora, dopóki lokalne źródło nadal działa, importuje handoff przed bootstrapem profili i tworzy backup rollback we własnym `/data/migration_backups/`. Guard finalizacji migracji nadaje następnie pierwszeństwo zaimportowanemu trwałemu stanowi profili CPU/GPU przed starymi domyślnymi wartościami Store/Supervisor do czasu poprawnej synchronizacji natywnej Konfiguracji aplikacji.
 
 W instalacji sklepowej pełny runtime jest aktualizowany przez Home Assistant Apps. Zweryfikowany lokalny ZIP może wyzwolić tę natywną aktualizację tylko wtedy, gdy wersja ZIP dokładnie odpowiada `version_latest` sklepu. Aktualizacje UI-only/dashboard-only pozostają bezpośrednie. Historyczna instalacja lokalna zachowuje bezpośrednie pełne przebudowy z ZIP. Szczegóły: `docs/STORE_MIGRATION.md`.
 

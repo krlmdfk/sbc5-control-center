@@ -2,7 +2,8 @@
 """SBC5 two-phase release helper for Termux/Linux.
 
 prepare: pull both repos, bump main version, render HACS repo, validate, commit both.
-publish: after green CI, push annotated tags and optionally create GitHub Releases via gh.
+publish: manual/idempotent fallback for tags and GitHub Releases.
+After prepare --push, repository workflows publish releases automatically after green CI.
 """
 from __future__ import annotations
 import argparse
@@ -57,6 +58,8 @@ def prepare(args) -> int:
     run(["python", "scripts/render_hacs_release.py", "--repo", str(hacs), "--summary-en", args.summary_en, "--summary-pl", args.summary_pl], ROOT)
     run(["python", "scripts/update_manifest_hashes.py"], ROOT)
     run(["python", "scripts/validate_release.py"], ROOT)
+    run(["python", "scripts/test_migration_profile_guard.py"], ROOT)
+    run(["python", "scripts/build_local_update.py", "--output", f"/tmp/SBC5_UPDATE_{args.version}.zip"], ROOT)
     run(["git", "diff", "--check"], ROOT)
     run(["git", "diff", "--check"], hacs)
 
@@ -68,7 +71,7 @@ def prepare(args) -> int:
     if args.push:
         run(["git", "push", "origin", "main"], ROOT)
         run(["git", "push", "origin", "main"], hacs)
-        print("\nPushed both main branches. Wait for green CI, then run publish.")
+        print("\nPushed both main branches. Green CI will trigger automatic tags and GitHub Releases in both repositories.")
     else:
         print("\nPrepared and committed both repositories.")
         print("Push when ready:")

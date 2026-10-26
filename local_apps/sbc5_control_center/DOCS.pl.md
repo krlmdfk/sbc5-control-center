@@ -320,4 +320,4 @@ Overclocking, Device Tree, limity USB i ustawienia boot mogą wpływać na stabi
 
 ## Store migration / Migracja do sklepu
 
-SBC5 2.8.30 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.
+SBC5 2.8.31 includes a SHA-256-protected Local → Apps Store handoff with rollback and a hybrid update model. Full Store runtime updates remain owned by Home Assistant Apps; UI-only local ZIP updates remain direct, and local installations keep direct full-ZIP rebuilds. See `docs/STORE_MIGRATION.md` in the public repository.

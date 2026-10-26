@@ -92,6 +92,21 @@ def main() -> int:
     expect("COPY migration_manager.py /migration_manager.py" in dockerfile, "Dockerfile does not package migration_manager.py")
     expect("/migration_manager.py" in dockerfile and "chmod" in dockerfile, "Dockerfile does not make migration_manager.py executable")
 
+    # Migration finalization guard: imported durable profiles must win over stale
+    # Store/Supervisor defaults until native options are synchronized.
+    migration_text = migration_script.read_text(encoding="utf-8")
+    run_text = (APP / "run.sh").read_text(encoding="utf-8")
+    expect("store_migration_profile_guard.json" in migration_text, "migration profile guard is missing")
+    expect("PROFILE_SYNC_MARKER.unlink()" in migration_text, "migration does not reset stale Supervisor profile marker")
+    expect("migration_profile_guard_active" in run_text, "run.sh does not enforce migration profile guard")
+    expect("migration_profile_guard_sync" in run_text, "run.sh does not synchronize durable profiles under migration guard")
+
+    packer = ROOT / "scripts" / "build_local_update.py"
+    expect(packer.is_file(), "verified local-update packer missing")
+    auto_release = (ROOT / ".github" / "workflows" / "auto-release.yml").read_text(encoding="utf-8")
+    expect("build_local_update.py" in auto_release, "auto-release does not build verified local-update asset")
+    expect("gh release upload" in auto_release, "auto-release does not refresh local-update asset idempotently")
+
     # App metadata.
     app_cfg = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
     expect(str(app_cfg.get("version")) == expected, f"config.yaml version={app_cfg.get('version')!r}, expected={expected}")

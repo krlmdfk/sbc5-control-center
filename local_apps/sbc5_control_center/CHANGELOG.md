@@ -1,5 +1,17 @@
 # Changelog — SBC5 Control Center
 
+## 2.8.31 — 2026-10-26
+
+### English
+
+- Migration finalization hotfix: imported durable CPU/GPU profile state now wins over stale Store/Supervisor defaults until native App options are synchronized; adds a verified manifest-driven local ZIP packer and automatic release asset publishing. No Adaptive PWM, AI Cooling, fan calibration or boot-control algorithm changes.
+- Restart requirement: `home_assistant`.
+
+### Polski
+
+- Hotfix finalizacji migracji: zaimportowany trwały stan profili CPU/GPU ma teraz pierwszeństwo przed starymi domyślnymi wartościami Store/Supervisor do czasu synchronizacji natywnych opcji aplikacji; dodano zweryfikowany generator lokalnych ZIP-ów oparty na manifeście i automatyczną publikację paczki w Release. Bez zmian Adaptive PWM, AI Cooling, kalibracji wentylatora ani algorytmów sterowania boot.
+- Wymagany restart: `home_assistant`.
+
 ## 2.8.30 — 2026-10-26
 
 ### English

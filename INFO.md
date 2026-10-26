@@ -10,8 +10,8 @@
 
 | Parameter / Parametr | Value / Wartość |
 |---|---|
-| App version / Wersja aplikacji | **2.8.30** |
-| Card UI | **2.8.30** |
+| App version / Wersja aplikacji | **2.8.31** |
+| Card UI | **2.8.31** |
 | Status / Stan | **stable** |
 | Architecture / Architektura | `aarch64` |
 | Home Assistant OS | `>= 18.3` |
@@ -75,7 +75,7 @@ Home Assistant's device registry receives Raspberry Pi model, board revision, ha
 
 Local ZIP packages are verified against a manifest and SHA-256. A full update may require a Home Assistant restart, while a complete Raspberry Pi restart is requested only when the effective boot configuration actually changed.
 
-SBC5 supports a hybrid update model. Store-managed installations use Home Assistant Apps as the canonical full-runtime channel; verified local ZIP packages can still apply UI-only updates directly and can trigger a full Store update when the exact same version is published in Apps. Historical local installations keep direct full-ZIP updates. The Local → Store Migration Manager transfers only allow-listed durable state through a SHA-256-protected handoff and creates rollback data before import.
+SBC5 supports a hybrid update model. Store-managed installations use Home Assistant Apps as the canonical full-runtime channel; verified local ZIP packages can still apply UI-only updates directly and can trigger a full Store update when the exact same version is published in Apps. Historical local installations keep direct full-ZIP updates. The Local → Store Migration Manager transfers only allow-listed durable state through a SHA-256-protected handoff and creates rollback data before import. During first Store startup a finalization guard keeps imported CPU/GPU profile state authoritative until native Supervisor options are synchronized, so stale Factory/off defaults cannot overwrite the migrated request.
 
 ### Companion HACS integration
 
@@ -140,7 +140,7 @@ Rejestr urządzeń Home Assistant otrzymuje model Raspberry Pi, rewizję płyty,
 
 Lokalne paczki ZIP są sprawdzane przez manifest i SHA-256. Aktualizacja pełna może wymagać restartu Home Assistant, natomiast pełny restart Raspberry Pi jest zgłaszany wyłącznie wtedy, gdy wynikowa konfiguracja boot faktycznie się zmieniła.
 
-SBC5 obsługuje hybrydowy model aktualizacji. Instalacja sklepowa traktuje Home Assistant Apps jako kanoniczny kanał pełnego runtime; zweryfikowane lokalne ZIP-y nadal mogą bezpośrednio aktualizować UI-only i mogą wyzwolić pełną aktualizację sklepową, gdy identyczna wersja jest opublikowana w Apps. Historyczna instalacja lokalna zachowuje bezpośrednie pełne aktualizacje ZIP. Migration Manager Local → Store przenosi wyłącznie jawnie dozwolony trwały stan przez handoff zabezpieczony SHA-256 i przed importem tworzy dane rollback.
+SBC5 obsługuje hybrydowy model aktualizacji. Instalacja sklepowa traktuje Home Assistant Apps jako kanoniczny kanał pełnego runtime; zweryfikowane lokalne ZIP-y nadal mogą bezpośrednio aktualizować UI-only i mogą wyzwolić pełną aktualizację sklepową, gdy identyczna wersja jest opublikowana w Apps. Historyczna instalacja lokalna zachowuje bezpośrednie pełne aktualizacje ZIP. Migration Manager Local → Store przenosi wyłącznie jawnie dozwolony trwały stan przez handoff zabezpieczony SHA-256 i przed importem tworzy dane rollback. Przy pierwszym starcie wersji sklepowej guard finalizacji utrzymuje zaimportowany stan profili CPU/GPU jako nadrzędny do czasu synchronizacji natywnych opcji Supervisor, więc stare wartości Factory/off nie mogą nadpisać migracji.
 
 ### Towarzysząca integracja HACS
 

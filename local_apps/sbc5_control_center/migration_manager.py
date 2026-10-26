@@ -30,6 +30,8 @@ COMPLETE = HANDOFF / "COMPLETE.json"
 STATUS = DATA / "store_migration_status.json"
 IMPORT_MARKER = DATA / "store_migration_import.json"
 BACKUP_ROOT = DATA / "migration_backups"
+PROFILE_SYNC_MARKER = DATA / "profile_supervisor_sync_state.json"
+PROFILE_MIGRATION_GUARD = DATA / "store_migration_profile_guard.json"
 
 # Only durable user state. Runtime locks, restart markers, update state and cached
 # telemetry are intentionally excluded.
@@ -280,6 +282,30 @@ def backup_current(names: list[str], fingerprint_value: str) -> Path:
     return backup
 
 
+def write_profile_migration_guard(source_fingerprint: str, source_slug: str, target_slug: str) -> None:
+    """Protect imported durable CPU/GPU state from stale Supervisor defaults.
+
+    The native Supervisor option store belongs to the new Store identity and may still
+    contain schema defaults (Factory/off) during the first start.  Clearing the old
+    reconciliation signature and writing a pending guard makes run.sh push durable
+    state outward before it is allowed to accept a native-configuration delta.
+    """
+    try:
+        PROFILE_SYNC_MARKER.unlink()
+    except FileNotFoundError:
+        pass
+    atomic_json(
+        PROFILE_MIGRATION_GUARD,
+        {
+            "state": "pending",
+            "source_fingerprint": source_fingerprint,
+            "source_slug": source_slug,
+            "target_slug": target_slug,
+            "created_at": now_iso(),
+        },
+    )
+
+
 def import_handoff(version: str) -> int:
     current = self_slug()
     if channel(current) != "store":
@@ -309,7 +335,8 @@ def import_handoff(version: str) -> int:
         return 4
 
     names = sorted(str(x) for x in manifest["files"])
-    backup = backup_current(names, fp)
+    backup_names = sorted(set(names + [PROFILE_SYNC_MARKER.name, PROFILE_MIGRATION_GUARD.name]))
+    backup = backup_current(backup_names, fp)
     imported: list[str] = []
     try:
         for name in names:
@@ -346,6 +373,14 @@ def import_handoff(version: str) -> int:
             write_status("import_failed_rolled_back", current_slug=current, error=str(exc), backup=str(backup))
         return 5
 
+    # The imported profile state must win the very first Store reconciliation.
+    # Supervisor options for a fresh Store identity can still be Factory/off here.
+    write_profile_migration_guard(
+        fp,
+        str(manifest.get("source_slug", "")),
+        current,
+    )
+
     marker = {
         "migration_state": "complete",
         "source_slug": manifest.get("source_slug", ""),
@@ -355,6 +390,7 @@ def import_handoff(version: str) -> int:
         "source_fingerprint": fp,
         "backup": str(backup),
         "imported_files": imported,
+        "profile_sync_guard": "pending",
         "completed_at": now_iso(),
     }
     atomic_json(IMPORT_MARKER, marker)
@@ -376,7 +412,8 @@ def rollback() -> int:
         return 2
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     existed = set(meta.get("existed", []))
-    for name in MIGRATE_FILES:
+    rollback_files = tuple(MIGRATE_FILES) + (PROFILE_SYNC_MARKER.name, PROFILE_MIGRATION_GUARD.name)
+    for name in rollback_files:
         dst = DATA / name
         src = backup / name
         if name in existed and src.is_file():

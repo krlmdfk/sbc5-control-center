@@ -1,8 +1,8 @@
 #!/bin/bash
 set -u
 
-APP_VERSION="2.8.30"
-REQUIRED_PACKAGE_VERSION="2.8.30"
+APP_VERSION="2.8.31"
+REQUIRED_PACKAGE_VERSION="2.8.31"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -191,6 +191,7 @@ LAST_PROFILE_STATE_OPTIONS_SIGNATURE=""
 # v2.8.18: tracks the last profile subset persisted in Supervisor so native Configuration edits
 # can be distinguished from stale/default Supervisor values after an upgrade or reboot.
 SUPERVISOR_PROFILE_SYNC_FILE="/data/profile_supervisor_sync_state.json"
+STORE_MIGRATION_PROFILE_GUARD_FILE="/data/store_migration_profile_guard.json"
 SUPERVISOR_PROFILE_SYNC_SCHEMA=1
 
 OVERLAY_10_NAME="rpi5-stable50-10step"
@@ -1683,14 +1684,50 @@ supervisor_sync_profile_state_to_store() {
   return 1
 }
 
+migration_profile_guard_active() {
+  [ -r "$STORE_MIGRATION_PROFILE_GUARD_FILE" ] || return 1
+  jq -e '.state == "pending"' "$STORE_MIGRATION_PROFILE_GUARD_FILE" >/dev/null 2>&1
+}
+
+migration_profile_guard_finalize() {
+  [ -r "$STORE_MIGRATION_PROFILE_GUARD_FILE" ] || return 0
+  local tmp="${STORE_MIGRATION_PROFILE_GUARD_FILE}.tmp.$$"
+  jq --arg completed "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+    '.state="finalized" | .completed_at=$completed' \
+    "$STORE_MIGRATION_PROFILE_GUARD_FILE" > "$tmp" 2>/dev/null || { rm -f "$tmp"; return 1; }
+  mv -f "$tmp" "$STORE_MIGRATION_PROFILE_GUARD_FILE"
+  log "Store Migration: profile_sync_guard=finalized — trwałe profile CPU/GPU zapisano do natywnej Konfiguracji Supervisor."
+}
+
+migration_profile_guard_sync() {
+  local sup="${1:-}"
+  migration_profile_guard_active || return 1
+  # Imported /data state is authoritative until it is copied to the Store identity's
+  # native options. Never interpret stale Factory/off defaults as an explicit edit.
+  rm -f "$SUPERVISOR_PROFILE_SYNC_FILE" 2>/dev/null || true
+  cpu_profile_restore_options_from_state || true
+  gpu_profile_restore_options_from_state || true
+  [ -n "$sup" ] || sup="$(supervisor_own_options_json 2>/dev/null || true)"
+  [ -n "$sup" ] || return 0
+  if supervisor_sync_profile_state_to_store "$sup"; then
+    migration_profile_guard_finalize || true
+  fi
+  return 0
+}
+
 supervisor_profile_reconcile_startup() {
-  # First 2.8.18 run: no marker means older builds may have left stale defaults in
-  # Supervisor, so durable state wins once and is persisted. Later startups can trust
-  # a Supervisor profile difference from the last marker as an explicit native edit,
-  # including Factory/off.
+  # A Store migration guard has absolute priority on the first post-import start.
+  # It prevents stale Supervisor schema defaults (Factory/off) from overwriting the
+  # durable CPU/GPU state imported from the historical local identity.
   [ -n "${SUPERVISOR_TOKEN:-}" ] || return 0
   local sup sig last
   sup="$(supervisor_own_options_json)" || return 0
+  if migration_profile_guard_active; then
+    migration_profile_guard_sync "$sup" || true
+    return 0
+  fi
+
+  # Normal two-way reconciliation after migration finalization.
   sig="$(printf '%s' "$sup" | supervisor_profile_signature_json)"
   last="$(supervisor_profile_marker_signature)"
   if [ -n "$last" ] && [ "$sig" != "$last" ]; then
@@ -1711,6 +1748,11 @@ profile_state_reconcile_loop() {
     sleep "$PROFILE_STATE_RECONCILE_INTERVAL_SECONDS"
     native_changed=false
     sup="$(supervisor_own_options_json 2>/dev/null || true)"
+    if migration_profile_guard_active; then
+      migration_profile_guard_sync "$sup" || true
+      LAST_PROFILE_STATE_OPTIONS_SIGNATURE="$(profile_state_options_signature)"
+      continue
+    fi
     if [ -n "$sup" ]; then
       sup_sig="$(printf '%s' "$sup" | supervisor_profile_signature_json)"
       marker_sig="$(supervisor_profile_marker_signature)"
@@ -9009,7 +9051,7 @@ migration_handoff_startup() {
   done
 }
 
-# v2.8.30: local -> Store migration is completed before profile bootstrap/load_options,
+# v2.8.31: local -> Store migration is completed before profile bootstrap/load_options,
 # so imported AI/calibration/profile state becomes the source of truth from the first
 # controller cycle. The store identity waits until the local source is stopped.
 migration_handoff_startup
