@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 2.8.27
+version: 2.8.28
 slug: sbc5_control_center
-description: "SBC5 Control Center 2.8.27 — Dependency documentation release: clearly documents the required SBC5 App/runtime and the Mushroom, card-mod and ApexCharts Card frontend dependencies for the complete Lovelace dashboard. No cooling, AI, CPU/GPU or boot-configuration logic changes."
+description: "SBC5 Control Center 2.8.28 — First-installation documentation release: adds a complete beginner-friendly Home Assistant installation guide covering the App/runtime repository, first start checks, HACS integration, required frontend dependencies, device verification and dashboard setup. It also adds self-maintaining CI and release automation. No cooling, AI, CPU/GPU or boot-configuration logic changes."
 arch:
 - aarch64
 homeassistant: 2026.10.1

@@ -21,6 +21,12 @@
     }
   },
   "config": {
+    "step": {
+      "user": {
+        "title": "Dodaj SBC5 Control Center",
+        "description": "Dodaj lokalną integrację SBC5 Control Center do Home Assistant."
+      }
+    },
     "abort": {
       "already_configured": "SBC5 Control Center jest już skonfigurowany."
     }

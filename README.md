@@ -18,12 +18,13 @@
 </p>
 
 <p align="center">
-  <strong>Stable · v2.8.27 · Card UI 2.8.27 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
+  <strong>Stable · v2.8.28 · Card UI 2.8.28 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/krlmdfk/sbc5-control-center"><strong>Main App</strong></a> ·
   <a href="https://github.com/krlmdfk/sbc5-control-center-integration"><strong>HACS Integration</strong></a> ·
+  <a href="docs/FIRST_INSTALL.md"><strong>🚀 First Installation / Pierwsza instalacja</strong></a> ·
   <a href="DOCUMENTATION.md"><strong>Documentation</strong></a> ·
   <a href="docs/QUICK_SETUP.md"><strong>Quick Setup</strong></a> ·
   <a href="https://github.com/krlmdfk/sbc5-control-center/issues"><strong>Issues</strong></a>
@@ -93,6 +94,8 @@ The native SBC5 integration works independently of third-party frontend cards. F
 
 ### Quick start
 
+> **Installing SBC5 for the first time?** Start with the complete beginner guide: **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**.
+
 1. Install and start the SBC5 Control Center App/runtime.
 2. Verify `Platform Guard` and `Host Access`.
 3. Calibrate the Active Cooler before aggressively reducing minimum PWM.
@@ -105,6 +108,7 @@ Full guide: [`docs/QUICK_SETUP.md`](docs/QUICK_SETUP.md).
 
 ### Documentation
 
+- [First Installation / Pierwsza instalacja](docs/FIRST_INSTALL.md)
 - [Current project information](INFO.md)
 - [Full documentation](DOCUMENTATION.md)
 - [Quick Setup](docs/QUICK_SETUP.md)
@@ -179,6 +183,8 @@ Natywna integracja SBC5 działa niezależnie od zewnętrznych kart frontendowych
 - **ApexCharts Card** — wykresy temperatury, PWM, predykcji AI i historii.
 
 ### Szybki start
+
+> **Instalujesz SBC5 po raz pierwszy?** Zacznij od pełnego przewodnika dla początkujących: **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**.
 
 1. Zainstaluj i uruchom SBC5 Control Center App/runtime.
 2. Sprawdź `Platform Guard` i `Host Access`.

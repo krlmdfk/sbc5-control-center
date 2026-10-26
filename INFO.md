@@ -8,21 +8,23 @@
 
 | Parameter / Parametr | Value / Wartość |
 |---|---|
-| App version / Wersja aplikacji | **2.8.27** |
-| Card UI | **2.8.27** |
+| App version / Wersja aplikacji | **2.8.28** |
+| Card UI | **2.8.28** |
 | Status / Stan | **stable** |
 | Architecture / Architektura | `aarch64` |
 | Home Assistant OS | `>= 18.3` |
 | Home Assistant Core | `>= 2026.10.1` |
 | License / Licencja | Apache-2.0 |
 
-**[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**
+**[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)** · **[First Installation / Pierwsza instalacja](docs/FIRST_INSTALL.md)**
 
 ---
 
 ## English
 
 ### Purpose
+
+For a new installation, the canonical step-by-step entry point is **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**.
 
 SBC5 Control Center combines Active Cooler control, Adaptive PWM, local AI Cooling, CPU/OC and GPU/V3D/ISP profiles, managed `config.txt`, hardware telemetry, Restart Manager and local updates in one runtime running locally on Raspberry Pi 5 with Home Assistant OS.
 
@@ -76,6 +78,8 @@ The HACS integration requires this App/runtime to be installed and running.
 ## Polski
 
 ### Przeznaczenie
+
+Dla nowej instalacji kanonicznym przewodnikiem krok po kroku jest **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**.
 
 SBC5 Control Center łączy obsługę Active Coolera, Adaptive PWM, lokalne AI Cooling, profile CPU/OC i GPU/V3D/ISP, zarządzanie `config.txt`, telemetrię sprzętową, Restart Manager oraz lokalne aktualizacje w jednym runtime działającym lokalnie na Raspberry Pi 5 z Home Assistant OS.
 

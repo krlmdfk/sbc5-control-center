@@ -1,5 +1,17 @@
 # Changelog — SBC5 Control Center
 
+## 2.8.28 — 2026-10-26
+
+### English
+
+- First-installation documentation release: adds a complete beginner-friendly Home Assistant installation guide covering the App/runtime repository, first start checks, HACS integration, required frontend dependencies, device verification and dashboard setup. It also adds self-maintaining CI and release automation. No cooling, AI, CPU/GPU or boot-configuration logic changes.
+- Restart requirement: `home_assistant`.
+
+### Polski
+
+- Wydanie dokumentacyjne pierwszej instalacji: dodaje kompletny przewodnik dla początkujących obejmujący repozytorium App/runtime, kontrolę pierwszego uruchomienia, integrację HACS, wymagane zależności frontendowe, weryfikację urządzenia i konfigurację dashboardu. Dodaje także samoutrzymującą walidację CI i automatyzację wydań. Bez zmian logiki chłodzenia, AI, CPU/GPU ani konfiguracji boot.
+- Wymagany restart: `home_assistant`.
+
 ## 2.8.26 — 2026-10-25
 
 ### English

@@ -8,6 +8,8 @@
 
 **[Main App / Główna aplikacja](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS Integration / Integracja HACS](https://github.com/krlmdfk/sbc5-control-center-integration)**
 
+> **First installation / Pierwsza instalacja:** if SBC5 Control Center is not installed yet, start with the complete guide: **[`FIRST_INSTALL.md`](FIRST_INSTALL.md)**. It covers adding the App repository, installing/starting App/runtime, HACS integration, frontend dependencies and final device verification.
+
 ---
 
 ## English

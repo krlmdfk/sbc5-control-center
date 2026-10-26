@@ -1,8 +1,8 @@
 #!/bin/bash
 set -u
 
-APP_VERSION="2.8.27"
-REQUIRED_PACKAGE_VERSION="2.8.27"
+APP_VERSION="2.8.28"
+REQUIRED_PACKAGE_VERSION="2.8.28"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -8064,7 +8064,7 @@ fan_control_prepare_update_handoff() {
     '{schema:1,reason:$reason,boot_id:$boot_id,from_version:$from,to_version:$to,ownership_method:$method,thermal_zone:$zone,created_epoch:$created,preserved_state:$state}' \
     > "$tmp" 2>/dev/null || return 1
   mv -f "$tmp" "$FAN_CONTROL_HANDOFF_FILE" 2>/dev/null || return 1
-  log "Fan Control: przygotowano seamless handoff ${APP_VERSION}->${target_version}; zachowuję Adaptive PWM i cur_state=${state}/100 podczas rebuild." 
+  log "Fan Control: przygotowano seamless handoff ${APP_VERSION}->${target_version}; zachowuję Adaptive PWM i cur_state=${state}/100 podczas rebuild."
   return 0
 }
 

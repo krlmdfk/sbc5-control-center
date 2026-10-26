@@ -49,6 +49,10 @@ Persistent AI model data, calibration data, profiles, and update markers are sto
 
 ### 3. Installation and first start
 
+For a **first installation from zero**, use **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**. It includes the Home Assistant App repository path, App/runtime installation, first-start checks, HACS integration installation, required frontend dependencies and final verification.
+
+For an already prepared SBC5 environment:
+
 1. Install the SBC5 Control Center App.
 2. Start it and verify that `Platform Guard` and `Host Access` report a healthy state.
 3. Restart Home Assistant if the installer requires the package or integration to be reloaded.
@@ -199,6 +203,10 @@ SBC5 składa się z czterech warstw:
 Dane trwałe modelu AI, kalibracji, profili i markerów aktualizacji są przechowywane w `/data` aplikacji.
 
 ### 3. Instalacja i pierwszy start
+
+Przy **pierwszej instalacji od zera** użyj **[`docs/FIRST_INSTALL.md`](docs/FIRST_INSTALL.md)**. Przewodnik obejmuje dodanie repozytorium aplikacji w Home Assistant, instalację App/runtime, kontrolę pierwszego startu, integrację HACS, wymagane zależności frontendowe i końcową weryfikację.
+
+Dla przygotowanego już środowiska SBC5:
 
 1. Zainstaluj aplikację SBC5 Control Center.
 2. Uruchom ją i sprawdź, czy `Platform Guard` oraz `Host Access` zgłaszają stan prawidłowy.
