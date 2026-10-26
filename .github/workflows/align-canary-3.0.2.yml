@@ -1,0 +1,55 @@
+name: Align Rust Canary 3.0.2
+
+on:
+  push:
+    branches:
+      - test/rust-3.0.0-canary
+    paths:
+      - .github/workflows/align-canary-3.0.2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  align:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/rust-3.0.0-canary
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Align all 3.0.2 version surfaces
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.0.2 \
+            --release-date 2026-10-26 \
+            --restart-required none \
+            --summary-en "Rust canary retest with full migrated-option persistence and exact runtime version alignment." \
+            --summary-pl "Test Rust canary z trwałością pełnych opcji migracji i dokładnym ujednoliceniem wersji runtime." \
+            --fixed-en "Persist complete migrated Supervisor options across App restarts." \
+            --fixed-en "Align Rust Core and compatibility runtime versions with the Supervisor App build version." \
+            --fixed-pl "Zachowuj pełne zmigrowane opcje Supervisor po restartach aplikacji." \
+            --fixed-pl "Ujednolicaj wersję Rust Core i warstwy zgodności z wersją buildu aplikacji Supervisor."
+      - name: Verify canary identity and tests
+        run: |
+          grep -q '^slug: rust_canary_sbc5_control_center$' local_apps/sbc5_control_center/config.yaml
+          grep -q '^boot: manual$' local_apps/sbc5_control_center/config.yaml
+          grep -q '^stage: experimental$' local_apps/sbc5_control_center/config.yaml
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          python scripts/test_migration_profile_guard.py
+          python scripts/test_canary_migration.py
+          python scripts/test_runtime_robustness.py
+          python scripts/validate_release.py --strict-manifest-hashes
+      - name: Commit aligned canary
+        run: |
+          rm -f .github/workflows/align-canary-3.0.2.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Align Rust canary 3.0.2 release surfaces"
+          git push origin HEAD:test/rust-3.0.0-canary
