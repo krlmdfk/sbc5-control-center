@@ -18,6 +18,12 @@
 </p>
 
 <p align="center">
+  <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fkrlmdfk%2Fsbc5-control-center">
+    <img src="https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg" alt="Add SBC5 Control Center App repository to Home Assistant">
+  </a>
+</p>
+
+<p align="center">
   <strong>Stable · v2.8.28 · Card UI 2.8.28 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
 </p>
 

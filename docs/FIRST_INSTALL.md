@@ -32,6 +32,9 @@ For the complete Lovelace dashboard you will also need HACS.
 
 ### 3. Add the SBC5 App repository to Home Assistant
 
+[![Add SBC5 Control Center App repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fkrlmdfk%2Fsbc5-control-center)
+
+
 1. Open **Settings → Apps**.
 2. Choose **Install app**.
 3. Open the **⋮** menu in the upper-right corner.

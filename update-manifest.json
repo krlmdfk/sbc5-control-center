@@ -28,7 +28,7 @@
     "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "LICENSE_AUDIT.md": "8a90114e5c5a50e2f677db0582eddda1d72be0a486e025ea953343fbc7134f7c",
     "NOTICE": "ccaa4d2694f8d7868b5d491f2a35e72f22ef9ecb0288a3852ffb2db74123c584",
-    "README.md": "a520b2487c8f4e80e936a35b7f00f05f40b24b4469cc116933af32f44b4a308a",
+    "README.md": "70cd0789825d014ed38dab2cd0e5ff57e20c14784e68c1be6d6b8ef5afb017ae",
     "SECURITY.md": "14f306ffd00d67b2b1436d1f8203ecc1dcf76b1e384c398b097d10556b2946f2",
     "THIRD_PARTY_NOTICES.md": "ca38493427d47e828d590080f1f0a93b0075985713767d6f6cb51bcde8e482d1",
     "TRADEMARKS.md": "a35e59aa26e4e01bd2bdffab1fd4d416a72ea3e664aa8165654b1a718b7baeca",
@@ -136,6 +136,6 @@
     "local_apps/sbc5_control_center/translations/pl.yaml": "fc56536de99f1372d1e9bf93655a836193f53d09bd0ac711aaf47e0767edfb07",
     "local_apps/sbc5_control_center/update_status_card.json": "8fd295da6173d4fcd3d8e8d3bf7edfe8b4d7cb5dda2c0a3e2b799c962b0f0860",
     "packages/sbc5_control_center.yaml": "1672e77dabc6e82d170ec89fb01791b5224ad5473945f6a5b19f46610b05aa62",
-    "docs/FIRST_INSTALL.md": "3505a9551ef59b0c5ce71fbf71fcc12bd31799eb54ee4fc5599ed1e2dbfcb6ee"
+    "docs/FIRST_INSTALL.md": "798973ae6a59a5cb32cd6d5f54818fc8769383ec26bab00e554729fe98a187ef"
   }
 }

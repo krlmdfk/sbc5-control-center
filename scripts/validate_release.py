@@ -58,6 +58,17 @@ def main() -> int:
             if "__pycache__" not in p.parts:
                 yaml.safe_load(p.read_text(encoding="utf-8"))
 
+    # Home Assistant App repository metadata.
+    repo_meta_path = ROOT / "repository.yaml"
+    expect(repo_meta_path.is_file(), "repository.yaml missing at repository root")
+    repo_meta = yaml.safe_load(repo_meta_path.read_text(encoding="utf-8"))
+    expect(isinstance(repo_meta, dict), "repository.yaml must contain a mapping")
+    expect(bool(repo_meta.get("name")), "repository.yaml: name is required")
+    expect(
+        repo_meta.get("url") == "https://github.com/krlmdfk/sbc5-control-center",
+        f"repository.yaml: unexpected url={repo_meta.get('url')!r}",
+    )
+
     release = load_json(APP / "release.json")
     expected = str(release["version"])
     expect(bool(re.fullmatch(r"\d+\.\d+\.\d+", expected)), f"Invalid release version: {expected}")
