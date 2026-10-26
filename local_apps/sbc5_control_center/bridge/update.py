@@ -84,9 +84,15 @@ class SBC5ControlCenterUpdateEntity(SBC5CoordinatorEntity, UpdateEntity):
                 f"Dostępna lokalna paczka ma wersję {update.latest_version}, a żądano {version}."
             )
 
-        allowed_slugs = ("local_sbc5_control_center", "local_rpi5_fan_manager")
-        preferred = update.runtime_app_slug if update.runtime_app_slug in allowed_slugs else "local_sbc5_control_center"
-        candidates = [preferred, *(slug for slug in allowed_slugs if slug != preferred)]
+        local_fallbacks = ("local_sbc5_control_center", "local_rpi5_fan_manager")
+        runtime_slug = update.runtime_app_slug or ""
+        runtime_valid = (
+            runtime_slug in local_fallbacks
+            or runtime_slug.endswith("_sbc5_control_center")
+            or runtime_slug.endswith("_rpi5_fan_manager")
+        )
+        preferred = runtime_slug if runtime_valid else "local_sbc5_control_center"
+        candidates = [preferred, *(slug for slug in local_fallbacks if slug != preferred)]
         last_error: Exception | None = None
         for app_slug in candidates:
             try:

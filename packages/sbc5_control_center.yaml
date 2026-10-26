@@ -1,6 +1,6 @@
 ###############################################################################
 # RASPBERRY PI 5 ACTIVE COOLER
-# SBC5 Control Center Package Version: 2.8.28
+# SBC5 Control Center Package Version: 2.8.29
 # 2.6.24: APP_VERSION import + package-version sensor + non-destructive namespace recovery.
 # 2.6.23: native integration bootstrap recovery; runtime cooling/AI logic unchanged.
 # 2.6.7: Workload Buckets v2 — 30 s moving average, progi 10/30/60%, histereza ±5 pp i diagnostyka kwalifikacji
@@ -400,7 +400,7 @@ template:
       - name: SBC5 Package Version
         unique_id: sbc5_package_version
         icon: mdi:package-variant-closed-check
-        state: "2.8.28"
+        state: "2.8.29"
 
       - name: SBC5 CPU OC Profile
         unique_id: sbc5_cpu_oc_profile
@@ -925,8 +925,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: curve_editor_refresh
       - delay: "00:00:01"
@@ -1040,8 +1040,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: set_custom_curve_template
             curve_index: "{{ curve_idx }}"
@@ -1076,8 +1076,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: set_custom_curve_point
             curve_index: "{{ curve_idx }}"
@@ -1101,8 +1101,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: reset_custom_curve_parameter
             curve_index: "{{ curve_idx }}"
@@ -1184,8 +1184,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: apply_ai_grid_suggestion
             confirm: true
@@ -1201,8 +1201,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: clear_ai_grid_override
       - delay: "00:00:02"
@@ -1217,8 +1217,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: ux_self_test
 
@@ -1232,8 +1232,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: calibrate_fan
 
@@ -1247,8 +1247,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: fan_calibration_refresh
 
@@ -1283,8 +1283,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: restore_active_cooler_factory
             confirm: true
@@ -1326,8 +1326,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: restore_rpi5_app_defaults
             confirm: true
@@ -1344,8 +1344,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: resume_managed_rpi5_config
             confirm: true
@@ -1363,8 +1363,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: reset_custom_curve_factory
             curve_index: "{{ curve_idx }}"
@@ -1381,8 +1381,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: reset_all_custom_curves_factory
       - delay: "00:00:02"
@@ -1401,8 +1401,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             profile: "custom{{ curve_idx }}"
 
@@ -1451,8 +1451,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             profile: "{{ profile_code }}"
 
@@ -1475,8 +1475,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: status
 
@@ -1490,8 +1490,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: reload_config
 
@@ -1505,8 +1505,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: restart_status
 
@@ -1526,8 +1526,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: restart_ha_confirmed
 
@@ -1551,8 +1551,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: check_app_update
 
@@ -1570,8 +1570,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: install_local_update
 
@@ -1595,8 +1595,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: set_cpu_profile
             cpu_profile: "{{ profile_code }}"
@@ -1636,8 +1636,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: set_gpu_profile
             gpu_profile: "{{ profile_code }}"
@@ -1720,8 +1720,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: apply_system_config
             cpu_mode: "{{ cpu_mode }}"
@@ -1740,8 +1740,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: restore_system_config_backup
             confirm: true
@@ -1757,8 +1757,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: apply_config_txt_parameter
             section: "{{ states('input_text.sbc5_config_section') | trim }}"
@@ -1777,8 +1777,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: remove_config_txt_parameter
             section: "{{ states('input_text.sbc5_config_section') | trim }}"
@@ -1796,8 +1796,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: restore_config_manager_backup
             confirm: true
@@ -1813,8 +1813,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: diagnose
 
@@ -1828,8 +1828,8 @@ script:
           app: >-
             {% set canonical = state_attr('sensor.sbc5_control_center_update','runtime_app_slug') | default('', true) %}
             {% set legacy = state_attr('sensor.rpi5_fan_manager_update','runtime_app_slug') | default('', true) %}
-            {% set slug = canonical if canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] else legacy %}
-            {{ slug if slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] else 'local_rpi5_fan_manager' }}
+            {% set slug = canonical if (canonical in ['local_sbc5_control_center','local_rpi5_fan_manager'] or canonical.endswith('_sbc5_control_center') or canonical.endswith('_rpi5_fan_manager')) else legacy %}
+            {{ slug if (slug in ['local_sbc5_control_center','local_rpi5_fan_manager'] or slug.endswith('_sbc5_control_center') or slug.endswith('_rpi5_fan_manager')) else 'local_rpi5_fan_manager' }}
           input:
             command: restore_backup
 

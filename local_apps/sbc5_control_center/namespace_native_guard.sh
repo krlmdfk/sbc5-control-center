@@ -1,6 +1,6 @@
 #!/bin/bash
 set -u
-VERSION="2.8.28"
+VERSION="2.8.29"
 MIG="/homeassistant/sbc5_control_center/migration"
 TARGET="local_sbc5_control_center"
 LEGACY="local_rpi5_fan_manager"
@@ -13,6 +13,31 @@ fi
 spost(){ local ep="$1" body="${2:-{}}"; curl -fsS --max-time 180 -X POST -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" -H 'Content-Type: application/json' -d "$body" "http://supervisor${ep}" >/tmp/sbc5_guard_post.json 2>&1; }
 sget(){ local ep="$1" out="$2"; curl -fsS --max-time 30 -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" "http://supervisor${ep}" >"$out" 2>/dev/null; }
 ha_get(){ curl -fsS --max-time 20 -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" "http://supervisor/core/api$1" 2>/dev/null; }
+
+detect_target_slug(){
+  local addons candidate
+  addons="$(curl -fsS --max-time 10 -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" "http://supervisor/addons" 2>/dev/null || true)"
+  candidate="$(printf '%s' "$addons" | jq -r '
+    (.data.addons // .addons // [])[]? |
+    select((.name // "") == "SBC5 Control Center" or (.slug // "") == "local_sbc5_control_center" or ((.slug // "") | endswith("_sbc5_control_center"))) |
+    select((.installed // true) == true) |
+    select((.state // "") == "started" or (.state // "") == "running") |
+    .slug' 2>/dev/null | head -n1)"
+  [ -n "$candidate" ] && [ "$candidate" != null ] && printf '%s\n' "$candidate" || printf '%s\n' 'local_sbc5_control_center'
+}
+TARGET="$(detect_target_slug)"
+
+# Fresh installations from the Apps store have no legacy namespace to migrate.
+if [ ! -f "$MIG/control_owner.json" ] && [ ! -f "$MIG/final_cleanup_required.json" ] && \
+   [ ! -d /homeassistant/rpi5_control_center ] && [ ! -d /homeassistant/rpi5_fan_manager ] && \
+   ! sget "/addons/${LEGACY}/info" /tmp/sbc5_guard_legacy_probe.json; then
+  jq -cn --arg at "$(date -Iseconds)" --arg version "$VERSION" --arg target "$TARGET" \
+    '{schema:2,version:$version,phase:"COMPLETE",owner:"sbc5",fresh_install:true,target:$target,at:$at}' \
+    > "$MIG/state.json"
+  log "Fresh Apps-store installation detected (${TARGET}) — legacy namespace migration not required."
+  exit 0
+fi
+
 
 import_legacy_state(){
   # Refresh target /data while legacy owns control; after commit this becomes immutable migration input.
@@ -114,7 +139,7 @@ final_cleanup(){
   if [ "$legacy_gone" = true ] && [ "$target_ok" = true ]; then
     jq -cn --arg at "$(date -Iseconds)" --arg version "$VERSION" '{schema:2,version:$version,phase:"COMPLETE",owner:"sbc5",legacy_app_removed:true,legacy_config_purged:true,legacy_integrations_removed:true,target_verified:true,at:$at}' > "$MIG/state.json.tmp" && mv -f "$MIG/state.json.tmp" "$MIG/state.json"
     rm -f "$marker" 2>/dev/null || true
-    log "FINAL PURGE COMPLETE: aktywny jest wyłącznie local_sbc5_control_center; rpi5_* przeniesione do backupu migracji."
+    log "FINAL PURGE COMPLETE: aktywny jest wyłącznie kanoniczny runtime SBC5 (${TARGET}); rpi5_* przeniesione do backupu migracji."
     spost /core/check '{}' || { log "Core check po purge nie przeszedł; backup zachowany."; return 0; }
     ( sleep 5; spost /core/restart '{}' || true ) &
     return 0

@@ -1,8 +1,8 @@
 #!/bin/bash
 set -u
 
-APP_VERSION="2.8.28"
-REQUIRED_PACKAGE_VERSION="2.8.28"
+APP_VERSION="2.8.29"
+REQUIRED_PACKAGE_VERSION="2.8.29"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -251,7 +251,8 @@ MOBILE_NOTIFY_SERVICE="auto"
 UPDATE_CHECK_ENABLED="true"
 UPDATE_CHECK_INTERVAL_HOURS="6"
 UPDATE_NOTIFY="true"
-APP_UPDATE_MANIFEST_URL=""
+DEFAULT_APP_UPDATE_MANIFEST_URL="https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/local_apps/sbc5_control_center/release.json"
+APP_UPDATE_MANIFEST_URL="$DEFAULT_APP_UPDATE_MANIFEST_URL"
 LOCAL_PACKAGE_UPDATES_ENABLED="true"
 LOCAL_PACKAGE_SCAN_INTERVAL_MINUTES="2"
 LOCAL_PACKAGE_KEEP_PROCESSED="true"
@@ -735,7 +736,7 @@ load_options() {
     ] | @tsv' "$OPTIONS_FILE" 2>/dev/null || true)"
     if [ -n "$row" ]; then
       IFS=$'\t' read -r CURVE1_TARGET_C CURVE1_HYST_DENSE_C CURVE1_HYST_OUTER_C CURVE1_MIN_PWM_PCT CURVE1_TARGET_PWM_PCT CURVE1_MAX_PWM_PCT APPLY_CUSTOM_ON_START RESTART_POLICY PRE_RESTART_CONFIG_CHECK RESTART_NOTICE_ON_START POST_UPDATE_RESTART_PROMPT ACTIONABLE_MOBILE_NOTIFICATIONS MOBILE_NOTIFY_SERVICE UPDATE_CHECK_ENABLED UPDATE_CHECK_INTERVAL_HOURS UPDATE_NOTIFY APP_UPDATE_MANIFEST_URL LOCAL_PACKAGE_UPDATES_ENABLED LOCAL_PACKAGE_SCAN_INTERVAL_MINUTES LOCAL_PACKAGE_KEEP_PROCESSED LOCAL_PACKAGE_CLEANUP_ENABLED LOCAL_PACKAGE_PROCESSED_RETENTION LOCAL_PACKAGE_FAILED_RETENTION NATIVE_RESTART_REPAIR MULTICORE_TELEMETRY_ENABLED MULTICORE_WORKERS_CONFIG CONFIG_TXT_OPTIONS_ENABLED CONFIG_TXT_OPTIONS_SYNC_INTERVAL CONFIG_TXT_OPTIONS_ADVANCED <<< "$row"
-      [ "$APP_UPDATE_MANIFEST_URL" = "__EMPTY__" ] && APP_UPDATE_MANIFEST_URL=""
+      [ "$APP_UPDATE_MANIFEST_URL" = "__EMPTY__" ] && APP_UPDATE_MANIFEST_URL="$DEFAULT_APP_UPDATE_MANIFEST_URL"
     fi
     CURVE1_NAME="$(jq -r '(.custom_curve_1_name // "Zbalansowana") | tostring' "$OPTIONS_FILE" 2>/dev/null || echo 'Zbalansowana')"
     COOLING_CONTROL_MODE="$(jq -r '.cooling_control_mode // "automatic"' "$OPTIONS_FILE" 2>/dev/null || echo automatic)"
@@ -798,7 +799,7 @@ load_options() {
   case "$UPDATE_NOTIFY" in true|false) ;; *) UPDATE_NOTIFY="true" ;; esac
   num_in_range "$UPDATE_CHECK_INTERVAL_HOURS" 1 24 || UPDATE_CHECK_INTERVAL_HOURS="6"
   [ -n "$MOBILE_NOTIFY_SERVICE" ] || MOBILE_NOTIFY_SERVICE="auto"
-  case "$APP_UPDATE_MANIFEST_URL" in ""|http://*|https://*) ;; *) APP_UPDATE_MANIFEST_URL="" ;; esac
+  case "$APP_UPDATE_MANIFEST_URL" in http://*|https://*) ;; *) APP_UPDATE_MANIFEST_URL="$DEFAULT_APP_UPDATE_MANIFEST_URL" ;; esac
   case "$LOCAL_PACKAGE_UPDATES_ENABLED" in true|false) ;; *) LOCAL_PACKAGE_UPDATES_ENABLED="true" ;; esac
   num_in_range "$LOCAL_PACKAGE_SCAN_INTERVAL_MINUTES" 1 60 || LOCAL_PACKAGE_SCAN_INTERVAL_MINUTES="2"
   case "$LOCAL_PACKAGE_KEEP_PROCESSED" in true|false) ;; *) LOCAL_PACKAGE_KEEP_PROCESSED="true" ;; esac
@@ -2761,6 +2762,12 @@ install_dashboard_only_update() {
 install_local_update() (
   load_options
   [ "$LOCAL_PACKAGE_UPDATES_ENABLED" = "true" ] || { log "Lokalne aktualizacje ZIP są wyłączone."; return 1; }
+  local active_runtime_slug
+  active_runtime_slug="$(resolve_runtime_app_slug)"
+  case "$active_runtime_slug" in
+    local_sbc5_control_center|local_rpi5_fan_manager) ;;
+    *) log "Instalacja ze sklepu Apps (${active_runtime_slug}): aktualizuj przez natywny mechanizm Apps, nie przez lokalny ZIP."; return 1 ;;
+  esac
 
   local now last=0
   now="$(date +%s)"
@@ -2884,7 +2891,7 @@ install_local_update() (
   fan_control_prepare_update_handoff "$version" || true
   (
     sleep 2
-    target_slug="local_sbc5_control_center"
+    target_slug="$(resolve_runtime_app_slug)"
     if curl -fsS --connect-timeout 2 --max-time 5 \
       -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
       "http://supervisor/addons/${target_slug}/info" >/tmp/sbc5_target_app_info.json 2>&1; then
@@ -3140,11 +3147,38 @@ verify_release_platform_requirements() {
 }
 
 resolve_runtime_app_slug() {
-  # Namespace migration may temporarily leave both Supervisor slugs present.
-  # Prefer the app that is actually running; otherwise keep the legacy slug as
-  # the safe routing target until the native SBC5 app is installed.
-  local slug info state
-  [ -n "${SUPERVISOR_TOKEN:-}" ] || { printf '%s\n' 'local_rpi5_fan_manager'; return 0; }
+  # Custom App repositories prefix the configured slug with a repository hash.
+  # Detect the installed/running SBC5 identity dynamically and retain local/legacy fallbacks.
+  local slug info state addons candidate
+  [ -n "${SUPERVISOR_TOKEN:-}" ] || { printf '%s\n' 'local_sbc5_control_center'; return 0; }
+
+  addons="$(curl -fsS --connect-timeout 3 --max-time 8 \
+    -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
+    "http://supervisor/addons" 2>/dev/null || true)"
+  if [ -n "$addons" ]; then
+    candidate="$(printf '%s' "$addons" | jq -r '
+      (.data.addons // .addons // [])[]? |
+      select((.name // "") == "SBC5 Control Center" or
+             (.slug // "") == "local_sbc5_control_center" or
+             ((.slug // "") | endswith("_sbc5_control_center"))) |
+      select((.installed // true) == true) |
+      select((.state // "") == "started" or (.state // "") == "running") |
+      .slug' 2>/dev/null | head -n1)"
+    if [ -z "$candidate" ]; then
+      candidate="$(printf '%s' "$addons" | jq -r '
+        (.data.addons // .addons // [])[]? |
+        select((.name // "") == "SBC5 Control Center" or
+               (.slug // "") == "local_sbc5_control_center" or
+               ((.slug // "") | endswith("_sbc5_control_center"))) |
+        select((.installed // true) == true) |
+        .slug' 2>/dev/null | head -n1)"
+    fi
+    if [ -n "$candidate" ] && [ "$candidate" != "null" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  fi
+
   for slug in local_sbc5_control_center local_rpi5_fan_manager; do
     info="$(curl -fsS -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" "http://supervisor/addons/${slug}/info" 2>/dev/null || true)"
     [ -n "$info" ] || continue
@@ -3154,13 +3188,7 @@ resolve_runtime_app_slug() {
       return 0
     fi
   done
-  for slug in local_sbc5_control_center local_rpi5_fan_manager; do
-    if curl -fsS -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" "http://supervisor/addons/${slug}/info" >/dev/null 2>&1; then
-      printf '%s\n' "$slug"
-      return 0
-    fi
-  done
-  printf '%s\n' 'local_rpi5_fan_manager'
+  printf '%s\n' 'local_sbc5_control_center'
 }
 
 publish_app_update_state() {
@@ -3181,7 +3209,7 @@ publish_app_update_state() {
   fi
   runtime_slug="$(resolve_runtime_app_slug)"
   runtime_namespace="legacy"
-  [ "$runtime_slug" = "local_sbc5_control_center" ] && runtime_namespace="native"
+  case "$runtime_slug" in local_sbc5_control_center|*_sbc5_control_center) runtime_namespace="native" ;; esac
   payload="$(jq -n \
     --arg state "$state" \
     --arg installed "$APP_VERSION" \
@@ -3378,7 +3406,7 @@ check_app_update() {
     local candidates line v repo slug url installed name
     candidates="$(jq -r '
       (.data.addons // .addons // [])[]? |
-      select((.name // "") == "SBC5 Control Center" or (.slug // "") == "sbc5_fan_manager" or ((.slug // "") | endswith("_rpi5_fan_manager"))) |
+      select((.name // "") == "SBC5 Control Center" or (.slug // "") == "sbc5_control_center" or ((.slug // "") | endswith("_sbc5_control_center")) or (.slug // "") == "sbc5_fan_manager" or ((.slug // "") | endswith("_rpi5_fan_manager"))) |
       [(.version_latest // .version // ""),(.repository // ""),(.slug // ""),(.url // ""),(.installed // false),(.name // "")] | @tsv
     ' /tmp/sbc5_addons.json 2>/dev/null || true)"
 

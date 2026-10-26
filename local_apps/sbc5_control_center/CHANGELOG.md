@@ -1,5 +1,17 @@
 # Changelog — SBC5 Control Center
 
+## 2.8.29 — 2026-10-26
+
+### English
+
+- App Store and automatic update delivery release. Adds the required Home Assistant Apps repository metadata, supports runtime slugs used by custom App repositories, publishes GitHub Releases automatically after green CI for both the main App and HACS integration, and documents automatic update detection. No cooling, AI, CPU/GPU or boot-control algorithm changes.
+- Restart requirement: `home_assistant`.
+
+### Polski
+
+- Wydanie obsługi sklepu Apps i automatycznej dystrybucji aktualizacji. Dodaje wymagane metadane repozytorium Home Assistant Apps, obsługę slugów runtime używanych przez niestandardowe repozytoria Apps, automatyczne publikowanie GitHub Releases po zielonym CI dla głównej aplikacji i integracji HACS oraz opis automatycznego wykrywania aktualizacji. Bez zmian algorytmów chłodzenia, AI, CPU/GPU ani sterowania boot.
+- Wymagany restart: `home_assistant`.
+
 ## 2.8.28 — 2026-10-26
 
 ### English

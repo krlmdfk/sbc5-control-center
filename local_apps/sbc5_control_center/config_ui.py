@@ -23,7 +23,7 @@ def _release_version():
             return version
     except Exception:
         pass
-    return '2.8.28'
+    return '2.8.29'
 
 APP_VERSION = _release_version()
 
@@ -71,7 +71,7 @@ DEFAULTS = {
   'post_update_restart_prompt':True,'native_restart_repair':True,
   'actionable_mobile_notifications':True,'mobile_notify_service':'auto',
   'update_check_enabled':True,'update_check_interval_hours':6,'update_notify':True,
-  'app_update_manifest_url':'','local_package_updates_enabled':True,
+  'app_update_manifest_url':'https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/local_apps/sbc5_control_center/release.json','local_package_updates_enabled':True,
   'local_package_scan_interval_minutes':2,'local_package_keep_processed':True,'local_package_cleanup_enabled':True,'local_package_processed_retention':2,'local_package_failed_retention':2,
   'multicore_telemetry_enabled':True,'multicore_workers':'auto',
   'config_txt_manager':{'enabled':False,'sync_interval_seconds':5,'advanced_mode':False},

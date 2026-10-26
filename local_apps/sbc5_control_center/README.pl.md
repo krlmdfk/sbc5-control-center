@@ -2,7 +2,7 @@
 
 > **Lokalne centrum sterowania, diagnostyki i optymalizacji Raspberry Pi 5 dla Home Assistant OS.**
 
-**Stable · v2.8.28 · Card UI 2.8.28 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0**
+**Stable · v2.8.29 · Card UI 2.8.29 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0**
 
 SBC5 Control Center łączy Active Cooler, Adaptive PWM, lokalne AI Cooling, telemetrię Raspberry Pi 5, profile CPU/OC i GPU/V3D/ISP, zarządzanie `config.txt`, Restart Manager oraz bezpieczne lokalne aktualizacje.
 
