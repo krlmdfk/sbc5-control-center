@@ -145,7 +145,9 @@
     "local_apps/sbc5_control_center/run_legacy.sh": "541f5b5e42e6706c8658f21204183cad767cb34a7d0dd452243dc0716cbf1d7e",
     "local_apps/sbc5_control_center/rust-core/Cargo.toml": "6bdcba6f5a0af4588e3231c3fdf6df8259006376d58c52ed317e2dbf4e2b745b",
     "local_apps/sbc5_control_center/rust-core/src/main.rs": "f8a23e6beb07e651e377b13bc4ddf2ea45b866d1e50a7b5b4cc643353fd690fd",
-    "local_apps/sbc5_control_center/RUST_MIGRATION.md": "bde9575e8d99a2413bd0df2af01debf6efe875a7551e599462c10d1d79422492"
+    "local_apps/sbc5_control_center/RUST_MIGRATION.md": "bde9575e8d99a2413bd0df2af01debf6efe875a7551e599462c10d1d79422492",
+    "local_apps/sbc5_control_center/migration_manager_v2.py": "06d550d5a5a5558e0c2960428f76d4ac7bbb2f53f5612f8136519890a9b3f786",
+    "scripts/test_canary_migration.py": "18d58b755c5a117cb7433746c7243064ecfc3624120a3383fd6d367a4744bf55"
   },
   "installation_channels": [
     "local",
