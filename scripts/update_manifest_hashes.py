@@ -1,30 +1,41 @@
 #!/usr/bin/env python3
 """Rebuild SHA-256 values for files already tracked by update-manifest.json."""
 from __future__ import annotations
-import argparse
 import hashlib
 import json
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "update-manifest.json"
+
+
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--root", default=".")
-    args = ap.parse_args()
-    root = Path(args.root).resolve()
-    manifest_path = root / "update-manifest.json"
-    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    files = data.get("files")
+    if not isinstance(files, dict) or not files:
+        raise SystemExit("update-manifest.json: missing non-empty 'files' mapping")
+
     missing: list[str] = []
-    for rel in list(data.get("files", {})):
-        path = root / rel
-        if not path.is_file():
+    for rel in list(files):
+        p = ROOT / rel
+        if not p.is_file():
             missing.append(rel)
             continue
-        data["files"][rel] = hashlib.sha256(path.read_bytes()).hexdigest()
+        files[rel] = sha256(p)
+
     if missing:
-        raise SystemExit("Missing manifest files:\n" + "\n".join(missing))
-    manifest_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"update-manifest: rebuilt {len(data['files'])} SHA-256 values")
+        raise SystemExit("Missing manifest files:\n" + "\n".join(f"- {x}" for x in missing))
+
+    MANIFEST.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"update-manifest hashes rebuilt: {len(files)}/{len(files)}")
     return 0
 
 

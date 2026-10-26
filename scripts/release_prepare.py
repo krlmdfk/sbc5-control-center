@@ -59,7 +59,15 @@ def replace_current_version(path: Path, old: str, new: str) -> None:
         return
     text = path.read_text(encoding="utf-8")
     if old in text:
-        path.write_text(text.replace(old, new), encoding="utf-8")
+        updated = text.replace(old, new)
+        # Keep release-generated diffs compatible with `git diff --check`.
+        # Historical files are not touched because this function only runs on
+        # VERSIONED_TEXT_FILES.
+        had_final_newline = updated.endswith("\n")
+        updated = "\n".join(line.rstrip() for line in updated.splitlines())
+        if had_final_newline:
+            updated += "\n"
+        path.write_text(updated, encoding="utf-8")
 
 
 def update_json_version(path: Path, version: str) -> None:
