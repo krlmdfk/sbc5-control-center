@@ -1,5 +1,37 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.2 — 2026-10-26
+
+### English
+
+#### Changed
+
+- Rust canary retest with full migrated-option persistence and exact runtime version alignment.
+
+#### Fixed
+
+- Persist complete migrated Supervisor options across App restarts.
+- Align Rust Core and compatibility runtime versions with the Supervisor App build version.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Test Rust canary z trwałością pełnych opcji migracji i dokładnym ujednoliceniem wersji runtime.
+
+#### Naprawiono
+
+- Zachowuj pełne zmigrowane opcje Supervisor po restartach aplikacji.
+- Ujednolicaj wersję Rust Core i warstwy zgodności z wersją buildu aplikacji Supervisor.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.0.1 — 2026-10-26
 
 ### English

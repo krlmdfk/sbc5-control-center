@@ -1,14 +1,14 @@
 {
-  "version": "3.0.1",
+  "version": "3.0.2",
   "release_date": "2026-10-26",
   "restart_required": "none",
-  "summary": "Rust canary validation build fixing persistence of the complete migrated Supervisor option set across App restarts.",
-  "package_version": "3.0.1",
-  "card_ui_version": "3.0.1",
+  "summary": "Rust canary retest with full migrated-option persistence and exact runtime version alignment.",
+  "package_version": "3.0.2",
+  "card_ui_version": "3.0.2",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Testowy build Rust canary naprawiający trwałość pełnego zestawu opcji zmigrowanych do Supervisor po restartach aplikacji."
+  "summary_pl": "Test Rust canary z trwałością pełnych opcji migracji i dokładnym ujednoliceniem wersji runtime."
 }
