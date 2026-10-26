@@ -7,7 +7,7 @@ use std::process;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-const VERSION: &str = "3.0.0";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 const SCHEMA: u32 = 1;
 
 #[derive(Clone, Debug)]
@@ -125,188 +125,84 @@ fn daemon(args: &[String]) -> Result<(), Box<dyn Error>> {
                     }
                 }
             }
-            Err(err) => eprintln!("SBC5 Rust Core: telemetry collection failed: {err}"),
+            Err(err) => eprintln!("SBC5 Rust Core: telemetry probe failed: {err}"),
         }
     }
+}
+
+fn parent_pid() -> Option<u32> {
+    let raw = fs::read_to_string("/proc/self/stat").ok()?;
+    raw.split_whitespace().nth(3)?.parse().ok()
 }
 
 fn collect_status(cpu_usage: Option<&[f64]>) -> Result<String, Box<dyn Error>> {
-    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-    let temperature = cpu_temperature_c();
-    let frequencies = cpu_frequencies_mhz();
-    let average_frequency = if frequencies.is_empty() {
-        None
-    } else {
-        Some(frequencies.iter().sum::<f64>() / frequencies.len() as f64)
-    };
-    let load = load_1m();
-    let uptime = uptime_seconds();
-    let (mem_total, mem_available) = memory_kib();
-    let fan = fan_rpm();
-    let parent = parent_pid().unwrap_or(0);
-    let usage = cpu_usage.unwrap_or(&[]);
+    let pid = process::id();
+    let epoch = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+    let temp_c = read_cpu_temp().unwrap_or(0.0);
+    let load = read_loadavg().unwrap_or([0.0, 0.0, 0.0]);
+    let freqs = read_cpu_freqs();
+    let usages = cpu_usage.unwrap_or(&[]);
+    let mem = read_meminfo();
+    let uptime = read_uptime().unwrap_or(0.0);
+    let rpm = read_fan_rpm().unwrap_or(0);
+
+    let mut cores = String::new();
+    let count = freqs.len().max(usages.len());
+    for idx in 0..count {
+        if idx > 0 {
+            cores.push(',');
+        }
+        let freq = freqs.get(idx).copied().unwrap_or(0);
+        let usage = usages.get(idx).copied().unwrap_or(0.0);
+        cores.push_str(&format!("{{\"cpu\":{},\"freq_mhz\":{},\"usage_percent\":{:.1}}}", idx, freq, usage));
+    }
 
     Ok(format!(
-        concat!(
-            "{{",
-            "\"schema\":{},",
-            "\"engine\":\"rust\",",
-            "\"version\":\"{}\",",
-            "\"pid\":{},",
-            "\"parent_pid\":{},",
-            "\"updated_epoch\":{},",
-            "\"cpu_temperature_c\":{},",
-            "\"load_1m\":{},",
-            "\"cpu_frequency_mhz\":{},",
-            "\"cpu_core_frequency_mhz\":{},",
-            "\"cpu_core_usage_percent\":{},",
-            "\"memory_total_kib\":{},",
-            "\"memory_available_kib\":{},",
-            "\"uptime_seconds\":{},",
-            "\"fan_rpm\":{}",
-            "}}"
-        ),
+        "{{\"schema\":{},\"engine\":\"rust\",\"version\":\"{}\",\"pid\":{},\"epoch\":{},\"temperature_c\":{:.2},\"load1\":{:.2},\"load5\":{:.2},\"load15\":{:.2},\"cores\":[{}],\"memory_total_kb\":{},\"memory_available_kb\":{},\"uptime_seconds\":{:.1},\"fan_rpm\":{}}}",
         SCHEMA,
         VERSION,
-        process::id(),
-        parent,
-        now,
-        json_opt_f64(temperature, 2),
-        json_opt_f64(load, 2),
-        json_opt_f64(average_frequency, 1),
-        json_array_f64(&frequencies, 1),
-        json_array_f64(usage, 1),
-        json_opt_u64(mem_total),
-        json_opt_u64(mem_available),
-        json_opt_f64(uptime, 1),
-        json_opt_u64(fan),
+        pid,
+        epoch,
+        temp_c,
+        load[0],
+        load[1],
+        load[2],
+        cores,
+        mem.0,
+        mem.1,
+        uptime,
+        rpm
     ))
 }
 
-fn atomic_write(path: &Path, payload: &str) -> Result<(), Box<dyn Error>> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let file_name = path
-        .file_name()
-        .and_then(|v| v.to_str())
-        .unwrap_or("sbc5-core.json");
-    let temp = path.with_file_name(format!(".{file_name}.tmp.{}", process::id()));
-    {
-        let mut file = File::create(&temp)?;
-        file.write_all(payload.as_bytes())?;
-        file.write_all(b"\n")?;
-        file.sync_data()?;
-    }
-    fs::rename(&temp, path)?;
-    Ok(())
+fn read_cpu_temp() -> Option<f64> {
+    let raw = fs::read_to_string("/sys/class/thermal/thermal_zone0/temp").ok()?;
+    raw.trim().parse::<f64>().ok().map(|v| v / 1000.0)
 }
 
-fn read_text(path: &str) -> Option<String> {
-    let mut content = String::new();
-    File::open(path).ok()?.read_to_string(&mut content).ok()?;
-    Some(content)
+fn read_loadavg() -> Option<[f64; 3]> {
+    let raw = fs::read_to_string("/proc/loadavg").ok()?;
+    let mut it = raw.split_whitespace().filter_map(|v| v.parse::<f64>().ok());
+    Some([it.next()?, it.next()?, it.next()?])
 }
 
-fn read_number(path: &str) -> Option<f64> {
-    read_text(path)?.trim().parse::<f64>().ok()
-}
-
-fn cpu_temperature_c() -> Option<f64> {
-    let candidates = [
-        "/sys/class/thermal/thermal_zone0/temp",
-        "/sys/devices/virtual/thermal/thermal_zone0/temp",
-    ];
-    for path in candidates {
-        if let Some(raw) = read_number(path) {
-            let value = if raw > 500.0 { raw / 1000.0 } else { raw };
-            if (-40.0..=150.0).contains(&value) {
-                return Some(value);
-            }
+fn read_cpu_freqs() -> Vec<u64> {
+    let mut out = Vec::new();
+    for cpu in 0..64 {
+        let path = format!("/sys/devices/system/cpu/cpu{cpu}/cpufreq/scaling_cur_freq");
+        match fs::read_to_string(path) {
+            Ok(raw) => out.push(raw.trim().parse::<u64>().unwrap_or(0) / 1000),
+            Err(_) if cpu == 0 => continue,
+            Err(_) => break,
         }
     }
-    None
+    out
 }
 
-fn cpu_frequencies_mhz() -> Vec<f64> {
-    let mut result = Vec::new();
-    for cpu in 0..32 {
-        let base = format!("/sys/devices/system/cpu/cpu{cpu}/cpufreq");
-        let scaling = format!("{base}/scaling_cur_freq");
-        let cpuinfo = format!("{base}/cpuinfo_cur_freq");
-        let raw = read_number(&scaling).or_else(|| read_number(&cpuinfo));
-        match raw {
-            Some(value) => result.push(if value > 10_000.0 { value / 1000.0 } else { value }),
-            None if cpu < 4 => result.push(0.0),
-            None => break,
-        }
-    }
-    while result.last().is_some_and(|v| *v <= 0.0) {
-        result.pop();
-    }
-    result
-}
-
-fn load_1m() -> Option<f64> {
-    read_text("/proc/loadavg")?
-        .split_whitespace()
-        .next()?
-        .parse::<f64>()
-        .ok()
-}
-
-fn uptime_seconds() -> Option<f64> {
-    read_text("/proc/uptime")?
-        .split_whitespace()
-        .next()?
-        .parse::<f64>()
-        .ok()
-}
-
-fn memory_kib() -> (Option<u64>, Option<u64>) {
-    let Some(text) = read_text("/proc/meminfo") else {
-        return (None, None);
-    };
-    let mut total = None;
-    let mut available = None;
-    for line in text.lines() {
-        let mut parts = line.split_whitespace();
-        match parts.next() {
-            Some("MemTotal:") => total = parts.next().and_then(|v| v.parse::<u64>().ok()),
-            Some("MemAvailable:") => available = parts.next().and_then(|v| v.parse::<u64>().ok()),
-            _ => {}
-        }
-    }
-    (total, available)
-}
-
-fn fan_rpm() -> Option<u64> {
-    let root = Path::new("/sys/class/hwmon");
-    let entries = fs::read_dir(root).ok()?;
-    for entry in entries.flatten() {
-        let path = entry.path();
-        let Ok(files) = fs::read_dir(path) else { continue };
-        for file in files.flatten() {
-            let name = file.file_name();
-            let name = name.to_string_lossy();
-            if name.starts_with("fan") && name.ends_with("_input") {
-                if let Ok(value) = fs::read_to_string(file.path()) {
-                    if let Ok(rpm) = value.trim().parse::<u64>() {
-                        if rpm > 0 {
-                            return Some(rpm);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    None
-}
-
-fn read_cpu_times() -> Option<Vec<CpuTimes>> {
-    let text = read_text("/proc/stat")?;
-    let mut result = Vec::new();
-    for line in text.lines() {
+fn read_cpu_times() -> Result<Vec<CpuTimes>, Box<dyn Error>> {
+    let raw = fs::read_to_string("/proc/stat")?;
+    let mut out = Vec::new();
+    for line in raw.lines() {
         let mut parts = line.split_whitespace();
         let Some(name) = parts.next() else { continue };
         if !name.starts_with("cpu") || name == "cpu" {
@@ -316,67 +212,86 @@ fn read_cpu_times() -> Option<Vec<CpuTimes>> {
         if values.len() < 4 {
             continue;
         }
-        let total = values.iter().sum::<u64>();
-        let idle = values.get(3).copied().unwrap_or(0) + values.get(4).copied().unwrap_or(0);
-        result.push(CpuTimes {
+        let total: u64 = values.iter().sum();
+        let idle = values[3] + values.get(4).copied().unwrap_or(0);
+        out.push(CpuTimes {
             name: name.to_string(),
             total,
             idle,
         });
     }
-    Some(result)
+    Ok(out)
 }
 
 fn cpu_usage(previous: &[CpuTimes], current: &[CpuTimes]) -> Vec<f64> {
-    let mut result = Vec::new();
-    for now in current {
-        let Some(before) = previous.iter().find(|item| item.name == now.name) else {
-            result.push(0.0);
-            continue;
-        };
-        let total = now.total.saturating_sub(before.total);
-        let idle = now.idle.saturating_sub(before.idle);
-        if total == 0 {
-            result.push(0.0);
-        } else {
-            let busy = total.saturating_sub(idle);
-            result.push((busy as f64 / total as f64 * 100.0).clamp(0.0, 100.0));
-        }
-    }
-    result
-}
-
-fn parent_pid() -> Option<u32> {
-    let stat = read_text("/proc/self/stat")?;
-    let end = stat.rfind(')')?;
-    let tail = stat.get(end + 1..)?.trim();
-    let mut fields = tail.split_whitespace();
-    fields.next()?; // process state
-    fields.next()?.parse::<u32>().ok()
-}
-
-fn json_opt_f64(value: Option<f64>, decimals: usize) -> String {
-    match value {
-        Some(v) if v.is_finite() => format!("{v:.decimals$}"),
-        _ => "null".to_string(),
-    }
-}
-
-fn json_opt_u64(value: Option<u64>) -> String {
-    value.map(|v| v.to_string()).unwrap_or_else(|| "null".to_string())
-}
-
-fn json_array_f64(values: &[f64], decimals: usize) -> String {
-    let body = values
+    current
         .iter()
-        .map(|v| {
-            if v.is_finite() {
-                format!("{v:.decimals$}")
+        .map(|cur| {
+            let Some(prev) = previous.iter().find(|p| p.name == cur.name) else {
+                return 0.0;
+            };
+            let total = cur.total.saturating_sub(prev.total);
+            let idle = cur.idle.saturating_sub(prev.idle);
+            if total == 0 {
+                0.0
             } else {
-                "null".to_string()
+                ((total.saturating_sub(idle)) as f64 * 100.0 / total as f64).clamp(0.0, 100.0)
             }
         })
-        .collect::<Vec<_>>()
-        .join(",");
-    format!("[{body}]")
+        .collect()
+}
+
+fn read_meminfo() -> (u64, u64) {
+    let raw = fs::read_to_string("/proc/meminfo").unwrap_or_default();
+    let mut total = 0;
+    let mut avail = 0;
+    for line in raw.lines() {
+        if let Some(v) = line.strip_prefix("MemTotal:") {
+            total = v.split_whitespace().next().and_then(|x| x.parse().ok()).unwrap_or(0);
+        } else if let Some(v) = line.strip_prefix("MemAvailable:") {
+            avail = v.split_whitespace().next().and_then(|x| x.parse().ok()).unwrap_or(0);
+        }
+    }
+    (total, avail)
+}
+
+fn read_uptime() -> Option<f64> {
+    fs::read_to_string("/proc/uptime")
+        .ok()?
+        .split_whitespace()
+        .next()?
+        .parse()
+        .ok()
+}
+
+fn read_fan_rpm() -> Option<u64> {
+    let candidates = [
+        "/sys/class/hwmon/hwmon0/fan1_input",
+        "/sys/class/hwmon/hwmon1/fan1_input",
+        "/sys/class/hwmon/hwmon2/fan1_input",
+        "/sys/class/hwmon/hwmon3/fan1_input",
+    ];
+    for path in candidates {
+        if let Ok(raw) = fs::read_to_string(path) {
+            if let Ok(value) = raw.trim().parse::<u64>() {
+                return Some(value);
+            }
+        }
+    }
+    None
+}
+
+fn atomic_write(path: &Path, payload: &str) -> Result<(), Box<dyn Error>> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let tmp = path.with_extension(format!("tmp.{}", process::id()));
+    {
+        let mut file = File::create(&tmp)?;
+        file.write_all(payload.as_bytes())?;
+        file.write_all(b"\n")?;
+        file.sync_all()?;
+    }
+    fs::rename(tmp, path)?;
+    Ok(())
 }
