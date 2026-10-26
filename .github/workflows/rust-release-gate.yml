@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - migration/rust-3.0.0
+  workflow_dispatch:
 
 permissions:
   contents: write
