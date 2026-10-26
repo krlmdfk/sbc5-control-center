@@ -28,4 +28,6 @@ fi
 
 # Stable migration rule: fan safety/control remains authoritative in the proven
 # compatibility control plane until native controller parity tests are complete.
+# The Local -> Store profile safety functions migration_profile_guard_active and
+# migration_profile_guard_sync remain implemented and executed by run_legacy.sh.
 exec /run_legacy.sh "$@"
