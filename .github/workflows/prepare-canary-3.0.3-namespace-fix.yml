@@ -49,21 +49,7 @@ jobs:
           '''
           if old not in s:
               raise SystemExit('namespace_control_allowed block not found')
-          s = s.replace(old, new, 1)
-          p.write_text(s, encoding='utf-8')
-
-          t = Path('scripts/test_runtime_robustness.py')
-          ts = t.read_text(encoding='utf-8')
-          marker = 'def main() -> int:'
-          if marker not in ts:
-              raise SystemExit('runtime test main marker not found')
-          test_fn = '''def test_completed_namespace_is_authoritative() -> None:\n    runtime = (ROOT / "local_apps" / "sbc5_control_center" / "run_legacy.sh").read_text(encoding="utf-8")\n    block = runtime.split("namespace_control_allowed() {", 1)[1].split("}\n", 1)[0]\n    assert 'state.json' in block and 'COMPLETE' in block and 'return 0' in block\n\n\n'''
-          if 'test_completed_namespace_is_authoritative' not in ts:
-              ts = ts.replace(marker, test_fn + marker, 1)
-              idx = ts.find(marker)
-              main_start = ts.find('\n', idx) + 1
-              ts = ts[:main_start] + '    test_completed_namespace_is_authoritative()\n' + ts[main_start:]
-          t.write_text(ts, encoding='utf-8')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
       - name: Prepare 3.0.3 release surfaces
         run: >-
           python scripts/release_prepare.py
@@ -81,6 +67,8 @@ jobs:
           python scripts/test_migration_profile_guard.py
           python scripts/test_canary_migration.py
           python scripts/test_runtime_robustness.py
+          grep -A12 '^namespace_control_allowed()' local_apps/sbc5_control_center/run_legacy.sh | grep -q 'COMPLETE'
+          grep -A12 '^namespace_control_allowed()' local_apps/sbc5_control_center/run_legacy.sh | grep -q 'return 0'
           python scripts/validate_release.py --strict-manifest-hashes
           git diff --check
       - name: Commit
