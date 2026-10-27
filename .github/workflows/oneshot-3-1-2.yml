@@ -1,0 +1,34 @@
+name: One-shot 3.1.2 patch
+
+on:
+  push:
+    branches:
+      - fix/3.1.2-predictor-card-mac-restart
+    paths:
+      - .github/workflows/oneshot-3-1-2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/3.1.2-predictor-card-mac-restart
+          fetch-depth: 0
+      - name: Apply patch
+        run: python scripts/_oneshot_patch_3_1_2.py
+      - name: Validate changed Python and JSON
+        run: |
+          python -m py_compile local_apps/sbc5_control_center/config_ui.py local_apps/sbc5_control_center/dashboard_sync.py
+          python -m json.tool local_apps/sbc5_control_center/dashboard_card.json >/dev/null
+          python -m json.tool local_apps/sbc5_control_center/update_status_card.json >/dev/null
+      - name: Commit source fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add local_apps/sbc5_control_center/config_ui.py local_apps/sbc5_control_center/dashboard_sync.py local_apps/sbc5_control_center/run_legacy.sh local_apps/sbc5_control_center/config_ui/index.html local_apps/sbc5_control_center/update_status_card.json dashboard/update_status_card.yaml dashboard/sbc5_control_center_diagnostics_card.yaml packages/sbc5_control_center.yaml local_apps/sbc5_control_center/migration_assets/sbc5_control_center.yaml local_apps/sbc5_control_center/migration_assets/rpi5_control_center.yaml
+          git commit -m "fix: repair predictor card sync and host MAC identity"
+          git push origin HEAD:fix/3.1.2-predictor-card-mac-restart
