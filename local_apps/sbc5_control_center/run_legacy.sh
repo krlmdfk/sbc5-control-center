@@ -8761,7 +8761,7 @@ adaptive_pwm_controller_loop() {
   # controller_state wind-up (e.g. 80-87% near the setpoint) and makes recovery
   # after calibration/rebuild gradual instead of a one-cycle jump to curve PWM.
   local resume_after_calibration=false reentry_cycle=false reentry_state=-1 curve_state=0 target_state=0 adaptive_trim=0
-  local adaptive_trim_limit=12 slew_up_step=3 slew_down_step=4 slew_fast_up_step=5 slew_fast_down_step=5 trim_decay_interval_cycles=1
+  local adaptive_trim_limit=12 slew_up_step=3 slew_down_step=4 slew_fast_down_step=5 thermal_fast_delta=5000 thermal_critical_delta=7000 thermal_fast_up_step=8 thermal_critical_up_step=12 trim_decay_interval_cycles=1
   local trim_sign_decay_step=2 trim_sign_threshold=250 sign_guard=""
   local down_direct_delta=1000 down_fast_delta=2000 up_direct_delta=2000
   local up_confirm_cycles=2 up_hold_cycles=3
@@ -9078,7 +9078,11 @@ adaptive_pwm_controller_loop() {
       [ "$desired" -gt "$final_high" ] && desired="$final_high"
       before_slew="$desired"
       step_up="$slew_up_step"; step_down="$slew_down_step"
-      [ "$error" -ge "$fast_delta" ] 2>/dev/null && step_up="$slew_fast_up_step"
+      if [ "$error" -ge "$thermal_critical_delta" ] 2>/dev/null; then
+        step_up="$thermal_critical_up_step"; action="${action}_thermal_critical"
+      elif [ "$error" -ge "$thermal_fast_delta" ] 2>/dev/null; then
+        step_up="$thermal_fast_up_step"; action="${action}_thermal_fast"
+      fi
       [ "$error" -le $((-down_fast_delta)) ] 2>/dev/null && step_down="$slew_fast_down_step"
       if [ "$desired" -gt $((controller_state + step_up)) ] 2>/dev/null; then
         desired=$((controller_state + step_up)); action="${action}_slew_up"

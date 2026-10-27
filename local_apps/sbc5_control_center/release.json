@@ -1,14 +1,14 @@
 {
-  "version": "3.1.6",
+  "version": "3.1.7",
   "release_date": "2026-10-27",
   "restart_required": "none",
-  "summary": "Improve AI Thermal Predictor accuracy with closed-loop target anchoring and online per-horizon bias calibration while keeping Shadow Assist observe-only.",
-  "package_version": "3.1.6",
-  "card_ui_version": "3.1.6",
+  "summary": "Improve AI Cooling learning for medium/high workloads and accelerate safe fan response during large thermal excursions.",
+  "package_version": "3.1.7",
+  "card_ui_version": "3.1.7",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Poprawa dokładności AI Thermal Predictor przez uwzględnienie zamkniętej pętli, dociąganie do celu termicznego i korektę błędu online dla każdego horyzontu przy zachowaniu Shadow Assist bez wpływu na PWM."
+  "summary_pl": "Poprawa uczenia AI Cooling dla obciążeń medium/high oraz szybsza, bezpieczna reakcja wentylatora przy dużym odchyleniu temperatury."
 }

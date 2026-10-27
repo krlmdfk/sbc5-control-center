@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <strong>Stable · v3.1.6 · Card UI 3.1.6 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
+  <strong>Stable · v3.1.7 · Card UI 3.1.7 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
 </p>
 
 <p align="center">

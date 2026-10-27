@@ -1,5 +1,49 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.7 — 2026-10-27
+
+### English
+
+#### Changed
+
+- AI Cooling qualification is bucket-aware: bucket transitions reset only short stability windows while learned bins, counters and confidence remain preserved.
+- Medium/high use workload-specific temperature, slope and PWM quality limits while idle/low retain the stricter steady-state gates.
+- Adaptive PWM adds an upward-only thermal fast path: up to +8 pp per cycle from target+5C and +12 pp per cycle from target+7C; downward slew is unchanged.
+
+#### Fixed
+
+- Prevent low-load qualification history from contaminating medium/high windows, which could leave higher workload buckets with observations but zero qualified samples.
+- Restart Manager cards now identify whether a pending restart comes from CPU/OC, GPU, cooling/Device Tree, boot configuration, the current update, or an earlier independent request.
+
+#### Performance
+
+- No new polling loop is added; bucket-aware qualification reuses the existing 10-second AI evaluator and preserves the current durable checkpoint cadence.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Kwalifikacja AI Cooling jest zależna od bucketa: przejście między bucketami zeruje wyłącznie krótkie okna stabilności, a wyuczone biny, liczniki i confidence pozostają zachowane.
+- Medium/high używają limitów jakości temperatury, trendu i PWM dopasowanych do obciążenia, a idle/low zachowują bardziej rygorystyczne kryteria stanu ustalonego.
+- Adaptive PWM otrzymuje thermal fast path wyłącznie w górę: do +8 pp/cykl od target+5C i +12 pp/cykl od target+7C; tempo zmniejszania PWM pozostaje bez zmian.
+
+#### Naprawiono
+
+- Usunięto wpływ historii kwalifikacji z niskiego obciążenia na okna medium/high, który mógł pozostawiać wyższe buckety z obserwacjami, ale bez próbek jakościowych.
+- Karty Restart Managera wskazują, czy oczekujący restart pochodzi z CPU/OC, GPU, chłodzenia/Device Tree, konfiguracji boot, bieżącej aktualizacji czy wcześniejszego niezależnego żądania.
+
+#### Wydajność
+
+- Nie dodano nowej pętli pollingowej; kwalifikacja zależna od bucketa wykorzystuje istniejący evaluator AI co 10 s i zachowuje dotychczasową częstotliwość trwałych checkpointów.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.6 — 2026-10-27
 
 ### English
