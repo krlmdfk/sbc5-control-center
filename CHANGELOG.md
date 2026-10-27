@@ -1,5 +1,51 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.1 — 2026-10-27
+
+### English
+
+#### Added
+
+- Main YAML dashboard card now shows AI Thermal Predictor forecasts for +30 s, +60 s and +120 s plus predictor confidence.
+
+#### Changed
+
+- Thermal Predictor tiles use native More Info history and remain observe-only; Adaptive PWM and AI Cooling control behavior is unchanged.
+
+#### Fixed
+
+- Card UI version markers are synchronized with the unified 3.1.1 release instead of the stale 2.8.34 marker.
+
+#### Performance
+
+- No additional polling loop, frontend background renderer or host restart is introduced.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Główna karta YAML pokazuje prognozy AI Thermal Predictor +30 s, +60 s i +120 s oraz pewność predyktora.
+
+#### Zmieniono
+
+- Kafelki Thermal Predictor korzystają z natywnej historii More Info i pozostają obserwacyjne; sterowanie Adaptive PWM i AI Cooling nie zostało zmienione.
+
+#### Naprawiono
+
+- Znaczniki wersji Card UI są synchronizowane z wydaniem 3.1.1 zamiast starego oznaczenia 2.8.34.
+
+#### Wydajność
+
+- Nie dodano dodatkowej pętli pollingu, procesu renderującego w tle ani wymogu restartu hosta.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.0 — 2026-10-27
 
 ### English

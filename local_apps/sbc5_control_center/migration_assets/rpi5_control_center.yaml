@@ -329,7 +329,7 @@ template:
   - sensor:
 
 
-      # 3.1.0 — Recorder-friendly AI Thermal Predictor sensors (observe-only).
+      # 3.1.1 — Recorder-friendly AI Thermal Predictor sensors (observe-only).
       - name: SBC5 AI Thermal Forecast 30s
         unique_id: sbc5_ai_thermal_forecast_30s
         icon: mdi:thermometer-chevron-up
