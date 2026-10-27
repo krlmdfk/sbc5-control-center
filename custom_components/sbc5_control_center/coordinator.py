@@ -51,6 +51,7 @@ class AppUpdateInfo:
 class SBC5CoordinatorData:
     telemetry: TelemetrySnapshot
     app_update: AppUpdateInfo
+    thermal_predictor: dict[str, Any]
 
 
 def _telemetry_from_host_relay(hass: HomeAssistant) -> TelemetrySnapshot | None:
@@ -196,6 +197,12 @@ class SBC5Coordinator(DataUpdateCoordinator[SBC5CoordinatorData]):
         installed = str(attrs.get("installed_version") or APP_VERSION)
         latest = str(attrs.get("latest_version") or installed)
 
+        ai_state = self.hass.states.get("sensor.sbc5_control_center_ai_runtime")
+        ai_attrs: dict[str, Any] = dict(ai_state.attributes) if ai_state else {}
+        ai_cooling = ai_attrs.get("ai_cooling")
+        predictor = ai_cooling.get("thermal_predictor", {}) if isinstance(ai_cooling, dict) else {}
+        thermal_predictor = dict(predictor) if isinstance(predictor, dict) else {}
+
         app_update = AppUpdateInfo(
             state=state,
             installed_version=installed,
@@ -215,7 +222,9 @@ class SBC5Coordinator(DataUpdateCoordinator[SBC5CoordinatorData]):
             card_ui_installed_version=str(attrs.get("card_ui_installed_version") or ""),
             card_ui_latest_version=str(attrs.get("card_ui_latest_version") or ""),
         )
-        return SBC5CoordinatorData(telemetry=telemetry, app_update=app_update)
+        return SBC5CoordinatorData(
+            telemetry=telemetry, app_update=app_update, thermal_predictor=thermal_predictor
+        )
 
 class SBC5RealtimeCoordinator(DataUpdateCoordinator[RealtimeCoolingSnapshot]):
     """Balanced 5-second coordinator for CPU temperature and fan telemetry."""

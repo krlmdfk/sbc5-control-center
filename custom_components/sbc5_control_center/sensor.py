@@ -32,6 +32,14 @@ class SensorSpec:
     state_class: SensorStateClass | None = None
 
 
+def _predictor_number(data: SBC5CoordinatorData, key: str) -> float | None:
+    value = data.thermal_predictor.get(key)
+    try:
+        return round(float(value), 2) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _cpu_usage_percent(data: SBC5CoordinatorData) -> float | None:
     """Return normalized whole-host CPU usage from the four per-core samples."""
     values = [value for value in data.telemetry.cpu_core_usage_percent if value is not None]
@@ -41,6 +49,10 @@ def _cpu_usage_percent(data: SBC5CoordinatorData) -> float | None:
 
 
 SENSOR_SPECS: tuple[SensorSpec, ...] = (
+    SensorSpec(unique_id="sbc5_ai_thermal_forecast_30s", name="SBC5 AI Thermal Forecast 30s", value_fn=lambda d: _predictor_number(d, "forecast_30s_c"), icon="mdi:thermometer-chevron-up", unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_forecast_60s", name="SBC5 AI Thermal Forecast 60s", value_fn=lambda d: _predictor_number(d, "forecast_60s_c"), icon="mdi:thermometer-chevron-up", unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_forecast_120s", name="SBC5 AI Thermal Forecast 120s", value_fn=lambda d: _predictor_number(d, "forecast_120s_c"), icon="mdi:thermometer-chevron-up", unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_confidence", name="SBC5 AI Thermal Predictor Confidence", value_fn=lambda d: _predictor_number(d, "confidence_percent"), icon="mdi:brain", unit=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),
     SensorSpec(unique_id="sbc5_cpu_temperature", name="SBC5 CPU Temperature",
                value_fn=lambda d: d.telemetry.cpu_temperature, icon="mdi:thermometer",
                unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE,
