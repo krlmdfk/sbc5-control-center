@@ -44,6 +44,20 @@ def current_card_version():
 def current_card_path():
     return CARD_JSON_OVERRIDE if CARD_JSON_OVERRIDE.is_file() else CARD_JSON
 
+def _runtime_versioned_card(card):
+    version = current_card_version()
+    def walk(value):
+        if isinstance(value, str):
+            value = re.sub(r'Card UI v\d+\.\d+\.\d+', f'Card UI v{version}', value)
+            value = re.sub(r'SBC5CC \d+\.\d+\.\d+', f'SBC5CC {version}', value)
+            return value
+        if isinstance(value, list):
+            return [walk(v) for v in value]
+        if isinstance(value, dict):
+            return {k: walk(v) for k, v in value.items()}
+        return value
+    return walk(card)
+
 class DashboardSyncError(RuntimeError):
     pass
 
@@ -180,7 +194,7 @@ async def _sync_async(confirm=False):
     if not confirm: raise DashboardSyncError('Wymagane potwierdzenie')
     card_path=current_card_path()
     if not card_path.exists(): raise DashboardSyncError('Brak wzorcowej karty w obrazie aplikacji ani w trwałym UI override')
-    card=json.loads(card_path.read_text(encoding='utf-8'))
+    card=_runtime_versioned_card(json.loads(card_path.read_text(encoding='utf-8')))
     ws=await _connect(); c=HAWS(ws)
     try:
         candidates,_=await _scan(c)

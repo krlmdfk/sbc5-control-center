@@ -1,5 +1,37 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.5 — 2026-10-27
+
+### English
+
+#### Changed
+
+- Rust canary runtime fix: recover orphaned Adaptive PWM thermal ownership and render Card UI with the current release version before Lovelace synchronization.
+
+#### Fixed
+
+- Adopt a safe orphaned mode=disabled thermal zone when custom1 is active, max_state is 100+, cur_state is writable and namespace migration is COMPLETE.
+- Render packaged dashboard card version dynamically so automatic Lovelace verification no longer rolls back to the old Card UI literal.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Poprawka runtime Rust canary: odzyskiwanie osieroconego przejęcia termicznego Adaptive PWM oraz dynamiczna wersja Card UI przed synchronizacją Lovelace.
+
+#### Naprawiono
+
+- Bezpiecznie adoptuj osierocony thermal zone mode=disabled, gdy custom1 jest aktywny, max_state wynosi co najmniej 100, cur_state jest zapisywalny i migracja namespace ma stan COMPLETE.
+- Dynamicznie podstawiaj wersję wzorca dashboardu, aby weryfikacja Lovelace nie cofała synchronizacji przez stary literal Card UI.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.0.4 — 2026-10-26
 
 ### English

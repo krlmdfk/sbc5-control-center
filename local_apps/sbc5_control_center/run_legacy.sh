@@ -8135,7 +8135,7 @@ fan_control_owner_write() {
 
 fan_control_take_thermal_ownership() {
   local owner="$1" dev="$2" zone old_policy old_mode available current_policy current_mode
-  local existing_owner existing_zone existing_method method=""
+  local existing_owner existing_zone existing_method method="" requested max_state
   FAN_CONTROL_ZONE=""; FAN_CONTROL_ORIGINAL_POLICY=""; FAN_CONTROL_ORIGINAL_MODE=""; FAN_CONTROL_OWNERSHIP_METHOD=""; FAN_CONTROL_OWNER="kernel"
   zone="$(fan_calibration_find_bound_zone "$dev" 2>/dev/null || true)"
   [ -n "$zone" ] || return 1
@@ -8167,6 +8167,24 @@ fan_control_take_thermal_ownership() {
     FAN_CONTROL_OWNERSHIP_METHOD="$existing_method"
     FAN_CONTROL_OWNER="$owner"
     return 0
+  fi
+
+  # Rust canary recovery: after an app rebuild/rollback the host thermal zone may
+  # remain in mode=disabled while the transient /data owner marker is missing.
+  # When the canonical SBC5 namespace is COMPLETE and custom1 is already active,
+  # adopt that orphaned userspace state instead of reporting ownership_failed_2.
+  if [ "$old_mode" = "disabled" ] && [ -w "$zone/mode" ] && namespace_control_allowed; then
+    requested="$(ha_requested_profile_code 2>/dev/null || echo factory)"
+    max_state="$(cat "$dev/max_state" 2>/dev/null || echo 0)"
+    case "$max_state" in ''|*[!0-9]*) max_state=0 ;; esac
+    if [ "$requested" = "custom1" ] && [ "$max_state" -ge 100 ] 2>/dev/null && [ -w "$dev/cur_state" ]; then
+      method="mode_disabled"
+      fan_control_owner_write "$owner" "$zone" "$old_policy" "enabled" "$method" "$dev" || return 1
+      FAN_CONTROL_ZONE="$zone"; FAN_CONTROL_ORIGINAL_POLICY="$old_policy"; FAN_CONTROL_ORIGINAL_MODE="enabled"
+      FAN_CONTROL_OWNERSHIP_METHOD="$method"; FAN_CONTROL_OWNER="$owner"
+      log "Fan Control: odzyskano osierocone przejęcie; owner=${owner}; thermal_zone=${zone}; takeover=mode_disabled; mode already disabled; marker odtworzony."
+      return 0
+    fi
   fi
 
   # Preferred path: a true userspace thermal governor, when compiled in.
