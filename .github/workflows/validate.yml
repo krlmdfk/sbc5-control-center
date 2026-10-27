@@ -48,5 +48,8 @@ jobs:
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
 
+      - name: Test Thermal Predictor Shadow Assist
+        run: python scripts/test_thermal_predictor_shadow.py
+
       - name: Check whitespace errors
         run: git diff --check HEAD^ HEAD || git diff --check
