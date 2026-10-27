@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.2 — 2026-10-27
+
+### English
+
+#### Changed
+
+- Runtime efficiency hotfix: event-style local ZIP detection and correct Supervisor profile signature comparison eliminate redundant steady-state work.
+
+#### Fixed
+
+- Canonicalized Supervisor profile signatures so unchanged native profile options no longer trigger false imports every reconciliation cycle.
+
+#### Performance
+
+- Replaced full local ZIP parsing every two minutes with a lightweight filename/size/mtime signature; full ZIP validation now runs only when the local update directory actually changes.
+- Adaptive PWM, AI Cooling, fan calibration and the verified 49°C boot curve are unchanged.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Hotfix wydajności runtime: zdarzeniowe wykrywanie lokalnych ZIP i poprawne porównanie podpisu profili Supervisor eliminują zbędną pracę w stanie ustalonym.
+
+#### Naprawiono
+
+- Ujednolicono podpisy profili Supervisor, dzięki czemu niezmienione opcje natywne nie wywołują już pozornego importu w każdym cyklu uzgadniania.
+
+#### Wydajność
+
+- Zastąpiono pełne parsowanie lokalnych ZIP co dwie minuty lekkim podpisem nazwa/rozmiar/mtime; pełna walidacja ZIP uruchamia się tylko po rzeczywistej zmianie katalogu aktualizacji.
+- Adaptive PWM, AI Cooling, kalibracja wentylatora i zweryfikowana krzywa boot 49°C pozostają bez zmian.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.0.1 — 2026-10-27
 
 ### Optimized / Zoptymalizowano

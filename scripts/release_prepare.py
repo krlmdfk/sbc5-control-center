@@ -346,7 +346,12 @@ def main() -> int:
     text = config_path.read_text(encoding="utf-8")
     text = re.sub(r"(?m)^version:\s*[^\n]+$", f"version: {new}", text, count=1)
     desc = f"SBC5 Control Center {new} — {args.summary_en.strip()}"
-    text = re.sub(r"(?m)^description:\s*.*$", f"description: {json.dumps(desc, ensure_ascii=False)}", text, count=1)
+    text = re.sub(
+        r"(?ms)^description:\s*.*?(?=^[A-Za-z_][A-Za-z0-9_-]*:\s|\Z)",
+        f"description: {json.dumps(desc, ensure_ascii=False)}\n",
+        text,
+        count=1,
+    )
     config_path.write_text(text, encoding="utf-8")
 
     um_path = ROOT / "update-manifest.json"
