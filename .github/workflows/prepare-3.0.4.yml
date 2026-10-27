@@ -1,0 +1,63 @@
+name: Prepare SBC5 3.0.4 polling optimization
+
+on:
+  push:
+    branches:
+      - maintenance/3.0.4-audit
+    paths:
+      - scripts/prepare_3_0_4_polling_optimization.py
+      - .github/workflows/prepare-3.0.4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: maintenance/3.0.4-audit
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Apply audited runtime changes
+        run: python scripts/prepare_3_0_4_polling_optimization.py
+      - name: Prepare release metadata
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.0.4 \
+            --release-date 2026-10-27 \
+            --restart-required none \
+            --summary-en "Reduce non-critical polling and helper-process overhead without changing cooling control cadence." \
+            --summary-pl "Ograniczenie niekrytycznego pollingu i narzutu procesów pomocniczych bez zmiany częstotliwości sterowania chłodzeniem." \
+            --performance-en "Raise the effective Config.txt watchdog minimum from 5 to 30 seconds while preserving immediate event-driven UI reloads." \
+            --performance-pl "Podniesiono efektywne minimum watchdoga Config.txt z 5 do 30 sekund przy zachowaniu natychmiastowego event-driven reload po zapisie z UI." \
+            --performance-en "Reduce compact AI relay signature checks from every 15 seconds to every 30 seconds; AI evaluation remains every 10 seconds." \
+            --performance-pl "Ograniczono sprawdzanie podpisu kompaktowego AI relay z 15 do 30 sekund; evaluator AI nadal pracuje co 10 sekund." \
+            --changed-en "Keep Adaptive PWM at 10 seconds, realtime cooling at 5 seconds, full telemetry at 15 seconds, PMIC at 30 seconds, system telemetry at 60 seconds and power/USB/config diagnostics at 120 seconds." \
+            --changed-pl "Pozostawiono Adaptive PWM 10 s, realtime chłodzenia 5 s, pełną telemetrię 15 s, PMIC 30 s, telemetrię systemową 60 s i diagnostykę power/USB/config 120 s."
+      - name: Validate runtime and release
+        run: |
+          bash -n local_apps/sbc5_control_center/run.sh
+          python -m compileall -q custom_components/sbc5_control_center local_apps/sbc5_control_center scripts
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -type f -name '*.pyc' -delete
+          python scripts/validate_release.py --strict-manifest-hashes
+          python scripts/test_migration_profile_guard.py
+          python scripts/test_canary_migration.py
+          python scripts/test_runtime_robustness.py
+          cargo check --release --manifest-path local_apps/sbc5_control_center/rust-core/Cargo.toml
+      - name: Commit final clean candidate
+        run: |
+          set -euo pipefail
+          git rm scripts/prepare_3_0_4_polling_optimization.py .github/workflows/prepare-3.0.4.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "SBC5 Control Center 3.0.4 — polling I/O optimization"
+          git push origin HEAD:maintenance/3.0.4-audit
