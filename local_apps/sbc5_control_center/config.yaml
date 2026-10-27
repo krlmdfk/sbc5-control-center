@@ -1,9 +1,7 @@
 name: SBC5 Control Center
-version: 3.0.1
+version: 3.0.2
 slug: sbc5_control_center
-description: 'SBC5 Control Center 3.0.1 — maintenance optimization: lower steady-state
-  Supervisor/profile reconciliation churn and deduplicated startup update checks;
-  Adaptive PWM, AI Cooling and fan safety logic unchanged.'
+description: "SBC5 Control Center 3.0.2 — Runtime efficiency hotfix: event-style local ZIP detection and correct Supervisor profile signature comparison eliminate redundant steady-state work."
 arch:
 - aarch64
 homeassistant: 2026.10.1

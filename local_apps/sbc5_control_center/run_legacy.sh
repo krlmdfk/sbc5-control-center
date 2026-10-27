@@ -10,8 +10,8 @@ fi
 chmod 1777 /tmp 2>/dev/null || true
 export TMPDIR="${TMPDIR:-/tmp}"
 
-APP_VERSION="3.0.1"
-REQUIRED_PACKAGE_VERSION="3.0.1"
+APP_VERSION="3.0.2"
+REQUIRED_PACKAGE_VERSION="3.0.2"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -1633,7 +1633,9 @@ supervisor_self_security_json() {
 }
 
 supervisor_profile_signature_json() {
-  profile_options_subset_from_json | sha256sum | awk '{print $1}'
+  local subset
+  subset="$(profile_options_subset_from_json)" || return 1
+  printf '%s' "$subset" | sha256sum | awk '{print $1}'
 }
 
 supervisor_profile_marker_signature() {
@@ -3225,12 +3227,33 @@ local_update_native_health_loop() {
   done
 }
 
+local_update_directory_signature() {
+  local dir f
+  {
+    for dir in "$LOCAL_UPDATE_DIR" "$LEGACY_LOCAL_UPDATE_DIR" "$LEGACY_OLD_LOCAL_UPDATE_DIR"; do
+      [ -d "$dir" ] || continue
+      for f in "$dir"/*.zip; do
+        [ -f "$f" ] || continue
+        stat -c '%n|%s|%Y' "$f" 2>/dev/null || printf '%s|unknown\n' "$f"
+      done
+    done
+  } | sort | sha256sum | awk '{print $1}'
+}
+
 local_update_watch_loop() {
+  local last_sig current_sig
+  last_sig="$(local_update_directory_signature)"
   sleep 45
   while true; do
     load_options
+    current_sig="$(local_update_directory_signature)"
     if [ "$LOCAL_PACKAGE_UPDATES_ENABLED" = "true" ]; then
-      check_app_update local_only || true
+      if [ "$current_sig" != "$last_sig" ]; then
+        last_sig="$current_sig"
+        check_app_update local_only || true
+      fi
+    else
+      last_sig="$current_sig"
     fi
     sleep "$((LOCAL_PACKAGE_SCAN_INTERVAL_MINUTES * 60))"
   done

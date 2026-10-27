@@ -1,14 +1,14 @@
 {
-  "version": "3.0.1",
+  "version": "3.0.2",
   "release_date": "2026-10-27",
   "restart_required": "none",
-  "summary": "Maintenance optimization: reduce steady-state Supervisor/profile reconciliation churn, deduplicate startup update checks and align all Rust/App/integration version surfaces.",
-  "package_version": "3.0.1",
-  "card_ui_version": "3.0.1",
+  "summary": "Runtime efficiency hotfix: event-style local ZIP detection and correct Supervisor profile signature comparison eliminate redundant steady-state work.",
+  "package_version": "3.0.2",
+  "card_ui_version": "3.0.2",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Optymalizacja utrzymaniowa: ograniczenie cyklicznych odczytów Supervisor/profili, deduplikacja sprawdzania aktualizacji przy starcie oraz wyrównanie wersji Rust/App/integracji."
+  "summary_pl": "Hotfix wydajności runtime: zdarzeniowe wykrywanie lokalnych ZIP i poprawne porównanie podpisu profili Supervisor eliminują zbędną pracę w stanie ustalonym."
 }
