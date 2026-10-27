@@ -1,0 +1,42 @@
+name: one-shot release 3.1.3
+on:
+  push:
+    branches:
+      - fix/3.1.3-restart-predictor-diagnostics
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/3.1.3-restart-predictor-diagnostics
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare release
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.1.3 \
+            --release-date 2026-10-27 \
+            --restart-required none \
+            --summary-en "Reconcile stale CPU restart markers and add AI Thermal Predictor quality diagnostics." \
+            --summary-pl "Uzgodnienie osieroconych markerów restartu CPU i rozszerzona diagnostyka jakości AI Thermal Predictor." \
+            --added-en "Expose Predictor MAE, per-horizon last error, temperature slope, validated-sample count and data age through native Home Assistant sensors and the expanded AI card." \
+            --added-pl "Udostępniono MAE Predictora, ostatni błąd dla każdego horyzontu, trend temperatury, liczbę zweryfikowanych prognoz i wiek danych jako natywne sensory Home Assistant oraz na rozwijanej karcie AI." \
+            --added-en "Expose verified Raspberry Pi host network MAC and interface diagnostics for Device Registry verification." \
+            --added-pl "Udostępniono diagnostykę zweryfikowanego fizycznego MAC i interfejsu sieciowego hosta Raspberry Pi do kontroli Device Registry." \
+            --fixed-en "Clear stale same-boot CPU-profile restart=host markers only when Boot Verification proves the requested preset is already saved and active; generic boot/config markers remain protected until a real host reboot." \
+            --fixed-pl "Osierocony marker restart=host profilu CPU jest czyszczony na bieżącym boot tylko wtedy, gdy Boot Verification potwierdzi zapisany i aktywny profil; ogólne markery boot/config nadal wymagają rzeczywistego restartu hosta." \
+            --performance-en "No new polling loops; diagnostics reuse the existing AI runtime relay and 15-second native coordinator." \
+            --performance-pl "Bez nowych pętli odpytywania; diagnostyka wykorzystuje istniejący relay AI runtime i 15-sekundowy natywny koordynator."
+      - name: Commit release candidate
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'release: prepare SBC5 Control Center 3.1.3'
+          git push origin HEAD:fix/3.1.3-restart-predictor-diagnostics
