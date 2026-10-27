@@ -1,0 +1,99 @@
+name: Prepare Rust Canary 3.0.5 Runtime Fix
+
+on:
+  push:
+    branches:
+      - test/rust-3.0.0-canary
+    paths:
+      - .github/workflows/prepare-canary-3.0.5-runtime-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/rust-3.0.0-canary
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Recover orphaned Adaptive PWM ownership
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('local_apps/sbc5_control_center/run_legacy.sh')
+          s = p.read_text(encoding='utf-8')
+          old_decl = '  local owner="$1" dev="$2" zone old_policy old_mode available current_policy current_mode\n  local existing_owner existing_zone existing_method method=""\n'
+          new_decl = '  local owner="$1" dev="$2" zone old_policy old_mode available current_policy current_mode\n  local existing_owner existing_zone existing_method method="" requested max_state\n'
+          if old_decl not in s:
+              raise SystemExit('ownership local declaration not found')
+          s = s.replace(old_decl, new_decl, 1)
+
+          marker = '''  # Preferred path: a true userspace thermal governor, when compiled in.\n'''
+          recovery = '''  # Rust canary recovery: after an app rebuild/rollback the host thermal zone may\n  # remain in mode=disabled while the transient /data owner marker is missing.\n  # When the canonical SBC5 namespace is COMPLETE and custom1 is already active,\n  # adopt that orphaned userspace state instead of reporting ownership_failed_2.\n  if [ "$old_mode" = "disabled" ] && [ -w "$zone/mode" ] && namespace_control_allowed; then\n    requested="$(ha_requested_profile_code 2>/dev/null || echo factory)"\n    max_state="$(cat "$dev/max_state" 2>/dev/null || echo 0)"\n    case "$max_state" in ''|*[!0-9]*) max_state=0 ;; esac\n    if [ "$requested" = "custom1" ] && [ "$max_state" -ge 100 ] 2>/dev/null && [ -w "$dev/cur_state" ]; then\n      method="mode_disabled"\n      fan_control_owner_write "$owner" "$zone" "$old_policy" "enabled" "$method" "$dev" || return 1\n      FAN_CONTROL_ZONE="$zone"; FAN_CONTROL_ORIGINAL_POLICY="$old_policy"; FAN_CONTROL_ORIGINAL_MODE="enabled"\n      FAN_CONTROL_OWNERSHIP_METHOD="$method"; FAN_CONTROL_OWNER="$owner"\n      log "Fan Control: odzyskano osierocone przejęcie; owner=${owner}; thermal_zone=${zone}; takeover=mode_disabled; mode already disabled; marker odtworzony."\n      return 0\n    fi\n  fi\n\n'''
+          if recovery not in s:
+              if marker not in s:
+                  raise SystemExit('ownership insertion marker not found')
+              s = s.replace(marker, recovery + marker, 1)
+          p.write_text(s, encoding='utf-8')
+
+      - name: Make Card UI template version dynamic
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('local_apps/sbc5_control_center/dashboard_sync.py')
+          s = p.read_text(encoding='utf-8')
+          marker = '''def current_card_path():\n    return CARD_JSON_OVERRIDE if CARD_JSON_OVERRIDE.is_file() else CARD_JSON\n\n'''
+          helper = '''def _runtime_versioned_card(card):\n    version = current_card_version()\n    def walk(value):\n        if isinstance(value, str):\n            value = re.sub(r'Card UI v\\d+\\.\\d+\\.\\d+', f'Card UI v{version}', value)\n            value = re.sub(r'SBC5CC \\d+\\.\\d+\\.\\d+', f'SBC5CC {version}', value)\n            return value\n        if isinstance(value, list):\n            return [walk(v) for v in value]\n        if isinstance(value, dict):\n            return {k: walk(v) for k, v in value.items()}\n        return value\n    return walk(card)\n\n'''
+          if '_runtime_versioned_card' not in s:
+              if marker not in s:
+                  raise SystemExit('dashboard helper insertion marker not found')
+              s = s.replace(marker, marker + helper, 1)
+          old = '''    card=json.loads(card_path.read_text(encoding='utf-8'))\n'''
+          new = '''    card=_runtime_versioned_card(json.loads(card_path.read_text(encoding='utf-8')))\n'''
+          if old not in s:
+              raise SystemExit('dashboard card load line not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+      - name: Prepare 3.0.5 release surfaces
+        run: >-
+          python scripts/release_prepare.py
+          --version 3.0.5
+          --release-date 2026-10-27
+          --restart-required none
+          --summary-en "Rust canary runtime fix: recover orphaned Adaptive PWM thermal ownership and render Card UI with the current release version before Lovelace synchronization."
+          --summary-pl "Poprawka runtime Rust canary: odzyskiwanie osieroconego przejęcia termicznego Adaptive PWM oraz dynamiczna wersja Card UI przed synchronizacją Lovelace."
+          --fixed-en "Adopt a safe orphaned mode=disabled thermal zone when custom1 is active, max_state is 100+, cur_state is writable and namespace migration is COMPLETE."
+          --fixed-en "Render packaged dashboard card version dynamically so automatic Lovelace verification no longer rolls back to the old Card UI literal."
+          --fixed-pl "Bezpiecznie adoptuj osierocony thermal zone mode=disabled, gdy custom1 jest aktywny, max_state wynosi co najmniej 100, cur_state jest zapisywalny i migracja namespace ma stan COMPLETE."
+          --fixed-pl "Dynamicznie podstawiaj wersję wzorca dashboardu, aby weryfikacja Lovelace nie cofała synchronizacji przez stary literal Card UI."
+
+      - name: Validate
+        run: |
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          bash -n local_apps/sbc5_control_center/canary_runtime_diag.sh
+          python -m py_compile local_apps/sbc5_control_center/dashboard_sync.py
+          python scripts/test_migration_profile_guard.py
+          python scripts/test_canary_migration.py
+          python scripts/test_runtime_robustness.py
+          grep -q 'odzyskano osierocone przejęcie' local_apps/sbc5_control_center/run_legacy.sh
+          grep -q '_runtime_versioned_card' local_apps/sbc5_control_center/dashboard_sync.py
+          python scripts/validate_release.py --strict-manifest-hashes
+          git diff --check
+
+      - name: Commit
+        run: |
+          rm -f .github/workflows/prepare-canary-3.0.5-runtime-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Fix Adaptive PWM ownership and Card UI sync in Rust canary 3.0.5"
+          git push origin HEAD:test/rust-3.0.0-canary
