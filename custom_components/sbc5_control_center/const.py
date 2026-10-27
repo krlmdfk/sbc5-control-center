@@ -5,7 +5,7 @@ from homeassistant.const import Platform
 DOMAIN = "sbc5_control_center"
 LEGACY_DOMAIN = "rpi5_control_center_bridge"
 OLDER_LEGACY_DOMAIN = "rpi5_fan_manager_bridge"
-APP_VERSION = "3.1.2"
+APP_VERSION = "3.1.3"
 CONFIG_ENTRY_UNIQUE_ID = "sbc5_control_center"
 DEVICE_IDENTIFIER = "sbc5_control_center"
 DEVICE_NAME = "SBC5 Control Center"
