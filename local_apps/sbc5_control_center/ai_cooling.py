@@ -47,6 +47,13 @@ QUALIFY_PWM_RANGE_MAX = 8      # pp; physical slew is allowed while settling
 QUALIFY_GOLD_PWM_RANGE_MAX = 5
 QUALIFY_STREAK_REQUIRED = 3    # compatibility/diagnostic counter; time gate is authoritative
 
+# 3.1.0 AI Thermal Predictor — observe-only forecast layer.
+THERMAL_PREDICTOR_HORIZONS_SECONDS = (30, 60, 120)
+THERMAL_PREDICTOR_MAX_SLOPE_C_PER_MIN = 3.0
+THERMAL_PREDICTOR_QUEUE_MAX = 48
+THERMAL_PREDICTOR_ERROR_ALPHA = 0.18
+THERMAL_PREDICTOR_DAMPING = {30: 0.90, 60: 0.72, 120: 0.52}
+
 
 def _read_json(path: Path, default: Any) -> Any:
     try:
@@ -213,6 +220,89 @@ def _update_temp_stability(model: dict[str, Any], temp: float, now: float) -> tu
     slope = _clamp(slope, -15.0, 15.0)
     model["qualification_temp_history"] = clean
     return slope, temp_range, span, mean_temp, len(clean)
+
+
+def _thermal_predictor(model: dict[str, Any], temp: float, slope_c_per_min: float, now: float, window_span: float, window_points: int) -> dict[str, Any]:
+    """Observe-only short-horizon thermal forecast with online error scoring.
+
+    The predictor never changes PWM. It reuses the existing temperature window and
+    stores only a small bounded forecast queue inside the AI model. Mature forecasts
+    are compared with the measured temperature and update an EMA MAE per horizon.
+    """
+    state = model.get("thermal_predictor")
+    if not isinstance(state, dict):
+        state = {}
+    queue = state.get("queue")
+    if not isinstance(queue, list):
+        queue = []
+
+    mae = state.get("mae_ema_c")
+    if not isinstance(mae, dict):
+        mae = {}
+    samples = state.get("validated_samples")
+    if not isinstance(samples, dict):
+        samples = {}
+
+    pending: list[dict[str, Any]] = []
+    for item in queue:
+        if not isinstance(item, dict):
+            continue
+        due = _num(item.get("due_epoch"), 0.0)
+        horizon = str(int(_num(item.get("horizon_seconds"), 0)))
+        predicted = _num(item.get("predicted_c"), temp)
+        if due > 0 and due <= now:
+            err = abs(temp - predicted)
+            old = _num(mae.get(horizon), err)
+            mae[horizon] = round(old + THERMAL_PREDICTOR_ERROR_ALPHA * (err - old), 3)
+            samples[horizon] = int(_num(samples.get(horizon), 0)) + 1
+        elif due > now - 10.0:
+            pending.append(item)
+
+    slope = _clamp(slope_c_per_min, -THERMAL_PREDICTOR_MAX_SLOPE_C_PER_MIN, THERMAL_PREDICTOR_MAX_SLOPE_C_PER_MIN)
+    forecasts: dict[str, float] = {}
+    for horizon in THERMAL_PREDICTOR_HORIZONS_SECONDS:
+        damping = THERMAL_PREDICTOR_DAMPING[horizon]
+        predicted = temp + slope * (horizon / 60.0) * damping
+        predicted = round(_clamp(predicted, -20.0, 100.0), 2)
+        forecasts[str(horizon)] = predicted
+        pending.append({
+            "created_epoch": int(now),
+            "due_epoch": int(now + horizon),
+            "horizon_seconds": horizon,
+            "predicted_c": predicted,
+        })
+
+    pending = pending[-THERMAL_PREDICTOR_QUEUE_MAX:]
+    span_factor = _clamp(window_span / QUALIFY_TEMP_WINDOW_MIN_SPAN_SECONDS, 0.0, 1.0)
+    point_factor = _clamp(window_points / float(QUALIFY_TEMP_WINDOW_MIN_POINTS), 0.0, 1.0)
+    maturity = min(1.0, sum(int(_num(samples.get(str(h)), 0)) for h in THERMAL_PREDICTOR_HORIZONS_SECONDS) / 24.0)
+    known_errors = [_num(mae.get(str(h)), 0.0) for h in THERMAL_PREDICTOR_HORIZONS_SECONDS if int(_num(samples.get(str(h)), 0)) > 0]
+    avg_mae = sum(known_errors) / len(known_errors) if known_errors else None
+    accuracy_factor = 0.55 if avg_mae is None else _clamp(1.0 - avg_mae / 4.0, 0.20, 1.0)
+    confidence = int(round(_clamp(20.0 + 30.0 * span_factor + 20.0 * point_factor + 20.0 * maturity + 10.0 * accuracy_factor, 0.0, 97.0)))
+
+    state = {
+        "schema": 1,
+        "mode": "observe_only",
+        "forecast_30s_c": forecasts["30"],
+        "forecast_60s_c": forecasts["60"],
+        "forecast_120s_c": forecasts["120"],
+        "temperature_c": round(temp, 2),
+        "slope_c_per_min": round(slope, 3),
+        "confidence_percent": confidence,
+        "mae_ema_c": {k: round(_num(v), 3) for k, v in mae.items()},
+        "validated_samples": {k: int(_num(v)) for k, v in samples.items()},
+        "average_mae_c": round(avg_mae, 3) if avg_mae is not None else None,
+        "window_span_seconds": int(round(window_span)),
+        "window_points": int(window_points),
+        "control_output_enabled": False,
+        "updated_epoch": int(now),
+        "queue": pending,
+    }
+    model["thermal_predictor"] = state
+    public = dict(state)
+    public.pop("queue", None)
+    return public
 
 
 def _controller_hold(action: str) -> bool:
@@ -837,8 +927,10 @@ def step(args: argparse.Namespace) -> int:
     grid_suggestion = _grid_suggestion(model, target_key, min_samples, curve_points, progress, workload)
     if grid_application.get("active"):
         grid_suggestion = {**grid_suggestion, "available": False, "apply_supported": False, "reason": "grid_applied"}
+    thermal_predictor = _thermal_predictor(model, temp, slope, now, temp_window_span, temp_window_points)
     status = {
         "schema": SCHEMA,
+        "thermal_predictor": thermal_predictor,
         "state": ai_state,
         "mode": mode,
         "reason": reason,
