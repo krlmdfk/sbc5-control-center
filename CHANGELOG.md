@@ -1,5 +1,16 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.1 — 2026-10-27
+
+### Optimized / Zoptymalizowano
+- Increased steady-state CPU/GPU profile reconciliation from 30 s to 300 s, reducing Supervisor API reads and repeated profile synchronization work when configuration is unchanged.
+- Removed the redundant update check from Home Assistant availability restoration and staggered the local-package watcher startup, preventing back-to-back update discovery during startup.
+- Aligned Rust Core, App/runtime, integration, package and Card UI version surfaces to 3.0.1.
+
+### Safety / Bezpieczeństwo
+- Adaptive PWM control logic, AI Cooling model/qualification, fan calibration and the verified 15-point 49°C boot curve are unchanged.
+- No host restart is required by this App-only maintenance update.
+
 ## 3.0.0 — 2026-10-27
 
 ### English
