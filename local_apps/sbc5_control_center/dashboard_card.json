@@ -1089,6 +1089,47 @@
             }
           },
           {
+            "type": "markdown",
+            "content": "#### Thermal Predictor · Shadow Assist\nSymulacja wpływu na PWM · brak fizycznego sterowania\n",
+            "card_mod": {
+              "style": "ha-card { background: transparent; box-shadow: none; padding: 2px 6px 0 6px; margin: 0; }\nha-markdown { padding: 0 !important; }\nh4 { margin: 0 !important; font-size: 14px !important; line-height: 1.1 !important; }\n"
+            }
+          },
+          {
+            "type": "grid",
+            "columns": 2,
+            "square": false,
+            "cards": [
+              {
+                "type": "custom:mushroom-template-card",
+                "entity": "sensor.sbc5_ai_thermal_shadow_delta",
+                "primary": "Sugerowana korekta PWM",
+                "secondary": "{{ states('sensor.sbc5_ai_thermal_shadow_delta') }} pp · hipotetycznie {{ states('sensor.sbc5_ai_thermal_shadow_pwm') }}% · fizyczny PWM pozostaje bez zmian",
+                "icon": "mdi:plus-minus-variant",
+                "icon_color": "{% set d = states('sensor.sbc5_ai_thermal_shadow_delta') | float(0) %} {% if d > 0 %}orange{% elif d < 0 %}blue{% else %}green{% endif %}",
+                "multiline_secondary": true,
+                "tap_action": {
+                  "action": "more-info"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "entity": "sensor.sbc5_ai_thermal_shadow_state",
+                "primary": "Bramka aktywacji",
+                "secondary": "{{ states('sensor.sbc5_ai_thermal_shadow_state') }} · decyzja {{ states('sensor.sbc5_ai_thermal_shadow_decision') }} · prognoza ważona {{ states('sensor.sbc5_ai_thermal_shadow_weighted_forecast') }} °C",
+                "icon": "mdi:shield-search",
+                "icon_color": "{% if is_state('sensor.sbc5_ai_thermal_shadow_state','eligible') %}green{% else %}orange{% endif %}",
+                "multiline_secondary": true,
+                "tap_action": {
+                  "action": "more-info"
+                }
+              }
+            ],
+            "card_mod": {
+              "style": "#root { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; gap: clamp(6px, 1.8vw, 10px) !important; align-items: stretch !important; }\n#root > * { min-width: 0 !important; height: 100% !important; }\n@media (max-width: 339px) { #root { grid-template-columns: 1fr !important; } }\n"
+            }
+          },
+          {
             "type": "custom:mushroom-template-card",
             "entity": "sensor.sbc5_network_mac",
             "primary": "Tożsamość sieciowa SBC5",
