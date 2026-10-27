@@ -1,14 +1,14 @@
 {
-  "version": "3.0.3",
+  "version": "3.0.4",
   "release_date": "2026-10-26",
   "restart_required": "none",
-  "summary": "Rust canary runtime fix: completed namespace migration now authoritatively enables canonical Adaptive PWM control.",
-  "package_version": "3.0.3",
-  "card_ui_version": "3.0.3",
+  "summary": "Rust canary diagnostic build for Adaptive PWM blocker and Card UI synchronization analysis.",
+  "package_version": "3.0.4",
+  "card_ui_version": "3.0.4",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Poprawka runtime Rust canary: zakończona migracja namespace nadrzędnie zezwala kanonicznemu Adaptive PWM na przejęcie sterowania."
+  "summary_pl": "Diagnostyczny build Rust canary do ustalenia blokady Adaptive PWM i problemu synchronizacji Card UI."
 }

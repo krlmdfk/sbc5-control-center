@@ -1,7 +1,7 @@
 name: SBC5 Control Center — Rust Canary
-version: 3.0.3
+version: 3.0.4
 slug: rust_canary_sbc5_control_center
-description: "SBC5 Control Center 3.0.3 — Rust canary runtime fix: completed namespace migration now authoritatively enables canonical Adaptive PWM control."
+description: "SBC5 Control Center 3.0.4 — Rust canary diagnostic build for Adaptive PWM blocker and Card UI synchronization analysis."
 arch:
 - aarch64
 homeassistant: 2026.10.1

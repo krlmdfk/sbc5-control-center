@@ -1,5 +1,35 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.4 — 2026-10-26
+
+### English
+
+#### Changed
+
+- Rust canary diagnostic build for Adaptive PWM blocker and Card UI synchronization analysis.
+
+#### Fixed
+
+- Add read-only one-shot runtime diagnostics for cooling device writability, factory restore marker, Adaptive PWM state and Lovelace card scan.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Diagnostyczny build Rust canary do ustalenia blokady Adaptive PWM i problemu synchronizacji Card UI.
+
+#### Naprawiono
+
+- Dodano jednorazową diagnostykę tylko do odczytu: zapisywalność cooling device, marker factory restore, stan Adaptive PWM i skan karty Lovelace.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.0.3 — 2026-10-26
 
 ### English
