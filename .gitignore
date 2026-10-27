@@ -24,6 +24,9 @@ dist/
 .coverage
 htmlcov/
 
+# Rust build artifacts
+local_apps/sbc5_control_center/rust-core/target/
+
 # Local environment
 .env
 .venv/

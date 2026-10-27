@@ -3,19 +3,34 @@ from pathlib import Path
 import json
 
 ROOT = Path(__file__).resolve().parents[1]
-run = (ROOT / 'local_apps/sbc5_control_center/run.sh').read_text(encoding='utf-8')
-docker = (ROOT / 'local_apps/sbc5_control_center/Dockerfile').read_text(encoding='utf-8')
+APP = ROOT / 'local_apps/sbc5_control_center'
+bootstrap = (APP / 'run.sh').read_text(encoding='utf-8')
+legacy = (APP / 'run_legacy.sh').read_text(encoding='utf-8')
+docker = (APP / 'Dockerfile').read_text(encoding='utf-8')
 yaml_card = (ROOT / 'dashboard/sbc5_control_center_diagnostics_card.yaml').read_text(encoding='utf-8')
-card = json.loads((ROOT / 'local_apps/sbc5_control_center/dashboard_card.json').read_text(encoding='utf-8'))
+card = json.loads((APP / 'dashboard_card.json').read_text(encoding='utf-8'))
 builder = (ROOT / 'scripts/build_local_update.py').read_text(encoding='utf-8')
 release = (ROOT / 'scripts/release_easy.py').read_text(encoding='utf-8')
 workflow = (ROOT / '.github/workflows/validate.yml').read_text(encoding='utf-8')
 auto_release = (ROOT / '.github/workflows/auto-release.yml').read_text(encoding='utf-8')
 
-assert 'mkdir -p /tmp' in run and 'chmod 1777 /tmp' in run
+# 3.0.0 splits startup into a minimal Rust bootstrap and the proven compatibility
+# control plane. Runtime safety assertions must follow the code that owns them.
+assert 'mkdir -p /tmp' in bootstrap
 assert 'install -d -m 1777 /tmp' in docker
-assert 'boot_access_warn_throttled' in run
-assert 'Host Access Guard: Supervisor protected=' in run
+assert 'sbc5-core' in bootstrap
+assert 'self-test' in bootstrap
+assert 'SBC5_RUST_CORE_ENABLED=true' in bootstrap
+assert 'SBC5_RUST_CORE_ENABLED=false' in bootstrap
+assert 'exec /run_legacy.sh' in bootstrap
+assert 'COPY run_legacy.sh ' in docker
+assert 'chmod a+x /run.sh /run_legacy.sh' in docker
+
+# Host-access warning throttling and Supervisor diagnostics remain authoritative
+# in the compatibility control plane during the stable 3.0.0 migration.
+assert 'boot_access_warn_throttled' in legacy
+assert 'Host Access Guard: Supervisor protected=' in legacy
+
 assert 'ai.qualification_limits.temperature_window_min_points' not in yaml_card
 card_raw = json.dumps(card, ensure_ascii=False)
 assert 'ai.qualification_limits.temperature_window_min_points' not in card_raw

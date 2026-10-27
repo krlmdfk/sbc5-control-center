@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 
@@ -18,6 +19,8 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "local_apps" / "sbc5_control_center"
 DOMAIN = "sbc5_control_center"
+CANARY_BRANCH = "test/rust-3.0.0-canary"
+CANARY_SLUG = "rust_canary_sbc5_control_center"
 
 
 def load_json(path: Path):
@@ -113,9 +116,6 @@ def main() -> int:
     legacy = load_json(APP / "legacy_bridge" / "manifest.json")
     expect(str(legacy.get("version")) == expected, f"legacy bridge version={legacy.get('version')!r}, expected={expected}")
 
-    # Migration/Hybrid runtime must be packaged into the App image.  The public
-    # entrypoint may delegate to a separate implementation module, but validators
-    # inspect both files so splitting architecture cannot weaken migration guards.
     migration_script = APP / "migration_manager.py"
     migration_impl = APP / "migration_manager_v2.py"
     expect(migration_script.is_file(), "migration_manager.py missing")
@@ -143,7 +143,13 @@ def main() -> int:
 
     app_cfg = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
     expect(str(app_cfg.get("version")) == expected, f"config.yaml version={app_cfg.get('version')!r}, expected={expected}")
-    expect(app_cfg.get("slug") == DOMAIN, f"config.yaml slug={app_cfg.get('slug')!r}")
+    ref_name = os.environ.get("GITHUB_REF_NAME", "")
+    expected_slug = CANARY_SLUG if ref_name == CANARY_BRANCH else DOMAIN
+    expect(app_cfg.get("slug") == expected_slug, f"config.yaml slug={app_cfg.get('slug')!r}, expected={expected_slug!r} for ref={ref_name!r}")
+    if ref_name == CANARY_BRANCH:
+        expect(app_cfg.get("boot") == "manual", "canary must use boot: manual")
+        expect(app_cfg.get("stage") == "experimental", "canary must use stage: experimental")
+        expect("Canary" in str(app_cfg.get("name", "")), "canary app name must be visibly distinct")
 
     for path in [ROOT / "custom_components" / DOMAIN / "const.py", APP / "bridge" / "const.py"]:
         expect(parse_app_version(path) == expected, f"{path}: APP_VERSION mismatch")

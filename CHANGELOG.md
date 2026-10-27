@@ -1,90 +1,62 @@
 # Changelog — SBC5 Control Center
 
-## 2.8.34 — 2026-10-26
-
-### English
-
-#### Changed
-
-- Migration-routing hotfix: a completed legacy handoff no longer blocks exporting preserved stable state to a newer stopped Rust canary.
-
-#### Fixed
-
-- Treat an already imported legacy handoff addressed to the current Store identity as historical when a newer stopped canary is available.
-- Preserve the legacy backup and audit trail while allowing a fresh schema 2 canary handoff to be created.
-
-#### Security
-
-- No fan-control, Adaptive PWM, AI Cooling, CPU/GPU profile or boot-control algorithm changes.
-
-#### Upgrade notes
-
-- No restart is required.
-
-### Polski
-
-#### Zmieniono
-
-- Hotfix routingu migracji: zakończony starszy handoff nie blokuje już eksportu zachowanego stanu stabilnej aplikacji do nowszej zatrzymanej canary Rust.
-
-#### Naprawiono
-
-- Traktuj już zaimportowany starszy handoff skierowany do bieżącej instancji Store jako historyczny, gdy dostępna jest nowsza zatrzymana canary.
-- Zachowaj starszy backup i ślad audytowy, jednocześnie umożliwiając utworzenie świeżego handoffu schema 2 do canary.
-
-#### Bezpieczeństwo
-
-- Brak zmian algorytmów sterowania wentylatorem, Adaptive PWM, AI Cooling, profili CPU/GPU i konfiguracji boot.
-
-#### Informacje o aktualizacji
-
-- Restart nie jest wymagany.
-
-## 2.8.33 — 2026-10-26
+## 3.0.0 — 2026-10-27
 
 ### English
 
 #### Added
 
-- Added schema-2 durable-state handoff for stable Store to newer stopped canary instances with exact target, target-version and SHA-256 fingerprint validation.
+- Hybrid Rust Core for low-overhead Raspberry Pi 5 host telemetry and runtime-health reporting, with automatic fallback to the proven compatibility/control plane.
+- Verified Store migration handoff with SHA-256 validation, target backup and rollback for AI Cooling data, fan calibration, CPU/GPU profiles, custom-curve state and user options.
 
 #### Changed
 
-- Stable 2.8.x Store instances can act as read-only migration sources for an installed newer canary without deprecating or modifying their private /data state.
+- The proven shell/Python control plane remains authoritative for fan safety, Adaptive PWM, AI Cooling, CPU/GPU profiles and update/recovery workflows while the Rust core owns lightweight native telemetry/runtime health.
+- Card UI release version is rendered dynamically before Lovelace synchronization so the stored dashboard and App release remain aligned.
 
 #### Fixed
 
-- Foreign or stale migration handoffs are ignored instead of being treated as destructive import failures; a targeted canary waits fail-closed while the stable source is running or verification is incomplete.
+- Persist the complete imported App option set into the Supervisor option store before migration finalization, preventing stale target defaults from replacing migrated 49°C / AI Assist settings after an App restart.
+- Treat completed namespace migration as authoritative for canonical SBC5 control ownership while retaining the explicit owner interlock during incomplete migration.
+- Recover a safe orphaned `mode=disabled` thermal-zone takeover after App rebuild/update when `custom1` is active, `max_state >= 100`, `cur_state` is writable and namespace migration is complete.
+- Align Rust, bootstrap and image version surfaces at build time so package/runtime version checks use the same public release version.
 
-#### Security
+#### Performance
 
-- Canary import is restricted to an allow-list of durable state files and requires exact per-file SHA-256 hashes plus a complete aggregate fingerprint before data is accepted.
+- Native Rust telemetry/runtime-health path uses a small dependency-free release binary while preserving the existing optimized Home Assistant relay intervals and control-loop cadence.
 
 #### Upgrade notes
 
-- Restart Home Assistant after installation/update.
+- The App-only 3.0.0 update does not require a Home Assistant or Raspberry Pi host restart. A separately managed HACS integration follows its own release/restart requirements.
+- Real-device Gate 2 passed on Raspberry Pi 5 with Home Assistant Core 2026.10.4 / HA OS 18.4.rc2: preserved 49°C custom1, AI Assist/model data, CPU Mild 2500 MHz, GPU Balanced, Adaptive PWM ownership/control, Card UI synchronization and stable fallback were verified.
 
 ### Polski
 
 #### Dodano
 
-- Dodano handoff trwałego stanu schema 2 ze stabilnej instancji Store do nowszej zatrzymanej instancji canary, z dokładną walidacją celu, wersji docelowej i fingerprintu SHA-256.
+- Hybrydowy Rust Core do lekkiej telemetrii hosta Raspberry Pi 5 i kontroli zdrowia runtime, z automatycznym fallbackiem do sprawdzonej warstwy zgodności/sterowania.
+- Zweryfikowany handoff migracji Store z walidacją SHA-256, backupem celu i rollbackiem dla danych AI Cooling, kalibracji wentylatora, profili CPU/GPU, stanu krzywej custom1 i opcji użytkownika.
 
 #### Zmieniono
 
-- Stabilna instancja Store 2.8.x może działać jako źródło migracji tylko do odczytu dla zainstalowanej nowszej wersji canary, bez deprecjonowania ani modyfikowania własnego prywatnego /data.
+- Sprawdzona warstwa shell/Python pozostaje nadrzędna dla bezpieczeństwa wentylatora, Adaptive PWM, AI Cooling, profili CPU/GPU oraz aktualizacji/recovery, natomiast Rust obsługuje lekką natywną telemetrię i runtime health.
+- Wersja Card UI jest podstawiana dynamicznie przed synchronizacją Lovelace, dzięki czemu zapisany dashboard pozostaje zgodny z wersją aplikacji.
 
 #### Naprawiono
 
-- Obce lub nieaktualne handoffy migracyjne są ignorowane zamiast powodować destrukcyjne błędy importu; docelowa instancja canary oczekuje w trybie fail-closed, gdy stabilne źródło działa lub weryfikacja nie jest kompletna.
+- Pełny zestaw zaimportowanych opcji aplikacji jest utrwalany w natywnym magazynie opcji Supervisor przed zakończeniem migracji, dzięki czemu stare wartości domyślne celu nie zastępują po restarcie ustawień 49°C / AI Assist.
+- Zakończona migracja namespace jest nadrzędnym potwierdzeniem prawa sterowania dla kanonicznego SBC5, przy zachowaniu jawnego interlocka właściciela podczas niedokończonej migracji.
+- Bezpiecznie odzyskiwane jest osierocone przejęcie thermal zone `mode=disabled` po przebudowie/aktualizacji aplikacji, gdy aktywny jest `custom1`, `max_state >= 100`, `cur_state` jest zapisywalny i migracja namespace ma stan COMPLETE.
+- Ujednolicono wersję Rust, bootstrapu i obrazu podczas budowania, aby kontrole wersji pakietu/runtime korzystały z jednej publicznej wersji wydania.
 
-#### Bezpieczeństwo
+#### Wydajność
 
-- Import canary jest ograniczony do listy dozwolonych plików trwałego stanu i wymaga dokładnych hashy SHA-256 każdego pliku oraz pełnego fingerprintu zbiorczego przed zaakceptowaniem danych.
+- Natywna ścieżka Rust telemetrii/runtime health korzysta z małego binarium release bez zewnętrznych zależności, zachowując zoptymalizowane interwały relay Home Assistant i częstotliwość pętli sterowania.
 
 #### Informacje o aktualizacji
 
-- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+- Aktualizacja samej aplikacji do 3.0.0 nie wymaga restartu Home Assistant ani hosta Raspberry Pi. Osobno zarządzana integracja HACS ma własne wymagania wersji/restartu.
+- Gate 2 na realnym Raspberry Pi 5 z Home Assistant Core 2026.10.4 / HA OS 18.4.rc2 przeszedł poprawnie: zweryfikowano zachowanie custom1 49°C, AI Assist/modelu, CPU Mild 2500 MHz, GPU Balanced, przejęcie i pracę Adaptive PWM, synchronizację Card UI oraz bezpieczny powrót do stabilnej wersji.
 
 ## 2.8.32 — 2026-10-26
 

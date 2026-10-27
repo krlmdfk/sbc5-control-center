@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 2.8.34
+version: 3.0.0
 slug: sbc5_control_center
-description: "SBC5 Control Center 2.8.34 — Migration-routing hotfix: a completed legacy handoff no longer blocks exporting preserved stable state to a newer stopped Rust canary."
+description: "SBC5 Control Center 3.0.0 — Rust Core migration: native low-overhead host telemetry and runtime health with automatic compatibility fallback. Existing Adaptive PWM safety, AI Cooling learning data, fan calibration, CPU/GPU profiles and persistent state remain compatible."
 arch:
 - aarch64
 homeassistant: 2026.10.1

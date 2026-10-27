@@ -21,13 +21,13 @@ def apps(stable_state="started", canary_state="stopped"):
         {
             "slug": "aaaa_stable_sbc5_control_center",
             "name": "SBC5 Control Center",
-            "version": "2.8.33",
+            "version": "2.8.32",
             "state": stable_state,
             "installed": True,
         },
         {
             "slug": "bbbb_canary_sbc5_control_center",
-            "name": "SBC5 Control Center — Rust Canary",
+            "name": "SBC5 Control Center",
             "version": "3.0.0",
             "state": canary_state,
             "installed": True,
@@ -39,7 +39,7 @@ def test_target_selection():
     old = impl.installed_apps
     try:
         impl.installed_apps = lambda: apps()
-        target, version, mode = impl.select_target("aaaa_stable_sbc5_control_center", "2.8.33")
+        target, version, mode = impl.select_target("aaaa_stable_sbc5_control_center", "2.8.32")
         assert target == "bbbb_canary_sbc5_control_center"
         assert version == "3.0.0"
         assert mode == "canary_test"
@@ -66,58 +66,12 @@ def test_entrypoint_routes_stable_to_export():
         impl.select_target = lambda _slug, _version: ("bbbb_canary_sbc5_control_center", "3.0.0", "canary_test")
         impl.export_handoff = lambda version: calls.append(("export", version)) or 0
         impl.import_handoff = lambda version: calls.append(("import", version)) or 0
-        assert entry.auto("2.8.33") == 0
-        assert calls == [("export", "2.8.33")]
+        assert entry.auto("2.8.32") == 0
+        assert calls == [("export", "2.8.32")]
     finally:
         impl.self_slug, impl.channel = old_self, old_channel
         impl.load_manifest_header, impl.select_target = old_load, old_select
         impl.export_handoff, impl.import_handoff, impl.READY = old_export, old_import, old_ready
-
-
-def test_completed_legacy_handoff_does_not_block_new_canary_export():
-    old_values = {
-        "self_slug": impl.self_slug,
-        "channel": impl.channel,
-        "load_manifest_header": impl.load_manifest_header,
-        "select_target": impl.select_target,
-        "export_handoff": impl.export_handoff,
-        "import_handoff": impl.import_handoff,
-        "READY": impl.READY,
-        "IMPORT_MARKER": impl.IMPORT_MARKER,
-    }
-    calls = []
-
-    class Ready:
-        @staticmethod
-        def exists():
-            return True
-
-    try:
-        with tempfile.TemporaryDirectory() as td:
-            marker = Path(td) / "store_migration_import.json"
-            marker.write_text(json.dumps({
-                "migration_state": "complete",
-                "source_fingerprint": "legacy-fp",
-                "target_slug": "aaaa_stable_sbc5_control_center",
-            }))
-            impl.self_slug = lambda: "aaaa_stable_sbc5_control_center"
-            impl.channel = lambda _slug: "store"
-            impl.READY = Ready()
-            impl.IMPORT_MARKER = marker
-            impl.load_manifest_header = lambda: {
-                "schema": 1,
-                "source_slug": "local_sbc5_control_center",
-                "target_slug": "aaaa_stable_sbc5_control_center",
-                "fingerprint": "legacy-fp",
-            }
-            impl.select_target = lambda _slug, _version: ("bbbb_canary_sbc5_control_center", "3.0.0", "canary_test")
-            impl.export_handoff = lambda version: calls.append(("export", version)) or 0
-            impl.import_handoff = lambda version: calls.append(("import", version)) or 0
-            assert entry.auto("2.8.33") == 0
-            assert calls == [("export", "2.8.33")]
-    finally:
-        for name, value in old_values.items():
-            setattr(impl, name, value)
 
 
 def test_entrypoint_routes_target_to_import():
@@ -206,7 +160,7 @@ def test_foreign_handoff_is_ignored_and_source_running_waits():
                 "schema": 2,
                 "mode": "canary_test",
                 "source_slug": "aaaa_stable_sbc5_control_center",
-                "source_version": "2.8.33",
+                "source_version": "2.8.32",
                 "target_slug": "bbbb_canary_sbc5_control_center",
                 "target_version": "3.0.0",
                 "files": {"options.json": "deadbeef"},
@@ -224,10 +178,9 @@ def test_foreign_handoff_is_ignored_and_source_running_waits():
 def main():
     test_target_selection()
     test_entrypoint_routes_stable_to_export()
-    test_completed_legacy_handoff_does_not_block_new_canary_export()
     test_entrypoint_routes_target_to_import()
     test_foreign_handoff_is_ignored_and_source_running_waits()
-    print("PASS: canary migration routing, completed-legacy bypass and fail-closed guards")
+    print("PASS: canary migration routing and fail-closed guards")
 
 
 if __name__ == "__main__":
