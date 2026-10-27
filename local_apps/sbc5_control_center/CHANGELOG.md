@@ -1,5 +1,47 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.0 — 2026-10-27
+
+### English
+
+#### Added
+
+- AI Thermal Predictor forecasts CPU temperature 30, 60 and 120 seconds ahead without controlling PWM.
+- Online forecast validation measures prediction MAE and derives predictor confidence from real runtime outcomes.
+- Recorder-friendly Home Assistant sensors expose 30/60/120-second forecasts and predictor confidence.
+
+#### Changed
+
+- Adaptive PWM and AI Cooling remain authoritative; Thermal Predictor is observe-only in 3.1.0.
+
+#### Performance
+
+- Thermal Predictor reuses the existing 10-second AI evaluation cycle and temperature window; no extra polling loop or background process is introduced.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- AI Thermal Predictor prognozuje temperaturę CPU z wyprzedzeniem 30, 60 i 120 sekund bez sterowania PWM.
+- Walidacja online mierzy błąd MAE prognoz i wylicza confidence predyktora na podstawie rzeczywistych wyników runtime.
+- Dodano sensory Home Assistant przyjazne Recorderowi dla prognoz 30/60/120 s oraz confidence predyktora.
+
+#### Zmieniono
+
+- Adaptive PWM i AI Cooling pozostają nadrzędne; Thermal Predictor w 3.1.0 działa wyłącznie obserwacyjnie.
+
+#### Wydajność
+
+- Thermal Predictor wykorzystuje istniejący 10-sekundowy cykl AI i okno temperatury; nie dodaje nowej pętli pollingu ani osobnego procesu.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.0.4 — 2026-10-27
 
 ### English

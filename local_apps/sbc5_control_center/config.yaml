@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.0.4
+version: 3.1.0
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.0.4 — Lower steady-state polling overhead without changing cooling control cadence."
+description: "SBC5 Control Center 3.1.0 — Introduce AI Thermal Predictor as an observe-only short-horizon temperature forecasting module."
 arch:
 - aarch64
 homeassistant: 2026.10.1
