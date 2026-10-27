@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import time
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
@@ -40,6 +41,50 @@ def _predictor_number(data: SBC5CoordinatorData, key: str) -> float | None:
         return None
 
 
+def _predictor_nested_number(data: SBC5CoordinatorData, group: str, key: str) -> float | None:
+    values = data.thermal_predictor.get(group)
+    if not isinstance(values, dict):
+        return None
+    try:
+        value = values.get(key)
+        return round(float(value), 3) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _predictor_validated_total(data: SBC5CoordinatorData) -> int | None:
+    direct = data.thermal_predictor.get("validated_samples_total")
+    try:
+        if direct is not None:
+            return int(direct)
+    except (TypeError, ValueError):
+        pass
+    values = data.thermal_predictor.get("validated_samples")
+    if not isinstance(values, dict):
+        return None
+    total = 0
+    found = False
+    for horizon in ("30", "60", "120"):
+        try:
+            value = values.get(horizon)
+            if value is not None:
+                total += int(value)
+                found = True
+        except (TypeError, ValueError):
+            continue
+    return total if found else None
+
+
+def _predictor_age_seconds(data: SBC5CoordinatorData) -> float | None:
+    try:
+        updated = float(data.thermal_predictor.get("updated_epoch"))
+    except (TypeError, ValueError):
+        return None
+    if updated <= 0:
+        return None
+    return round(max(0.0, time.time() - updated), 1)
+
+
 def _cpu_usage_percent(data: SBC5CoordinatorData) -> float | None:
     """Return normalized whole-host CPU usage from the four per-core samples."""
     values = [value for value in data.telemetry.cpu_core_usage_percent if value is not None]
@@ -53,6 +98,18 @@ SENSOR_SPECS: tuple[SensorSpec, ...] = (
     SensorSpec(unique_id="sbc5_ai_thermal_forecast_60s", name="SBC5 AI Thermal Forecast 60s", value_fn=lambda d: _predictor_number(d, "forecast_60s_c"), icon="mdi:thermometer-chevron-up", unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
     SensorSpec(unique_id="sbc5_ai_thermal_forecast_120s", name="SBC5 AI Thermal Forecast 120s", value_fn=lambda d: _predictor_number(d, "forecast_120s_c"), icon="mdi:thermometer-chevron-up", unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
     SensorSpec(unique_id="sbc5_ai_thermal_predictor_confidence", name="SBC5 AI Thermal Predictor Confidence", value_fn=lambda d: _predictor_number(d, "confidence_percent"), icon="mdi:brain", unit=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_mae", name="SBC5 AI Thermal Predictor Average MAE", value_fn=lambda d: _predictor_number(d, "average_mae_c"), icon="mdi:chart-bell-curve", unit=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_mae_30s", name="SBC5 AI Thermal Predictor MAE 30s", value_fn=lambda d: _predictor_nested_number(d, "mae_ema_c", "30"), icon="mdi:chart-timeline-variant", unit=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_mae_60s", name="SBC5 AI Thermal Predictor MAE 60s", value_fn=lambda d: _predictor_nested_number(d, "mae_ema_c", "60"), icon="mdi:chart-timeline-variant", unit=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_mae_120s", name="SBC5 AI Thermal Predictor MAE 120s", value_fn=lambda d: _predictor_nested_number(d, "mae_ema_c", "120"), icon="mdi:chart-timeline-variant", unit=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_last_error_30s", name="SBC5 AI Thermal Predictor Last Error 30s", value_fn=lambda d: _predictor_nested_number(d, "last_error_c", "30"), icon="mdi:delta", unit=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_last_error_60s", name="SBC5 AI Thermal Predictor Last Error 60s", value_fn=lambda d: _predictor_nested_number(d, "last_error_c", "60"), icon="mdi:delta", unit=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_last_error_120s", name="SBC5 AI Thermal Predictor Last Error 120s", value_fn=lambda d: _predictor_nested_number(d, "last_error_c", "120"), icon="mdi:delta", unit=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_slope", name="SBC5 AI Thermal Predictor Slope", value_fn=lambda d: _predictor_number(d, "slope_c_per_min"), icon="mdi:trending-up", unit="°C/min", state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_samples", name="SBC5 AI Thermal Predictor Validated Samples", value_fn=_predictor_validated_total, icon="mdi:counter", state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_ai_thermal_predictor_age", name="SBC5 AI Thermal Predictor Data Age", value_fn=_predictor_age_seconds, icon="mdi:timer-sand", unit="s", state_class=SensorStateClass.MEASUREMENT),
+    SensorSpec(unique_id="sbc5_network_mac", name="SBC5 Network MAC", value_fn=lambda d: d.telemetry.network_mac or None, icon="mdi:lan-connect"),
+    SensorSpec(unique_id="sbc5_network_interface", name="SBC5 Network Interface", value_fn=lambda d: d.telemetry.network_interface or None, icon="mdi:ethernet"),
     SensorSpec(unique_id="sbc5_cpu_temperature", name="SBC5 CPU Temperature",
                value_fn=lambda d: d.telemetry.cpu_temperature, icon="mdi:thermometer",
                unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE,

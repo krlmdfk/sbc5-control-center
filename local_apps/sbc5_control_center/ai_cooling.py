@@ -242,6 +242,9 @@ def _thermal_predictor(model: dict[str, Any], temp: float, slope_c_per_min: floa
     samples = state.get("validated_samples")
     if not isinstance(samples, dict):
         samples = {}
+    last_error = state.get("last_error_c")
+    if not isinstance(last_error, dict):
+        last_error = {}
 
     pending: list[dict[str, Any]] = []
     for item in queue:
@@ -254,6 +257,7 @@ def _thermal_predictor(model: dict[str, Any], temp: float, slope_c_per_min: floa
             err = abs(temp - predicted)
             old = _num(mae.get(horizon), err)
             mae[horizon] = round(old + THERMAL_PREDICTOR_ERROR_ALPHA * (err - old), 3)
+            last_error[horizon] = round(err, 3)
             samples[horizon] = int(_num(samples.get(horizon), 0)) + 1
         elif due > now - 10.0:
             pending.append(item)
@@ -291,7 +295,9 @@ def _thermal_predictor(model: dict[str, Any], temp: float, slope_c_per_min: floa
         "slope_c_per_min": round(slope, 3),
         "confidence_percent": confidence,
         "mae_ema_c": {k: round(_num(v), 3) for k, v in mae.items()},
+        "last_error_c": {k: round(_num(v), 3) for k, v in last_error.items()},
         "validated_samples": {k: int(_num(v)) for k, v in samples.items()},
+        "validated_samples_total": sum(int(_num(samples.get(str(h)), 0)) for h in THERMAL_PREDICTOR_HORIZONS_SECONDS),
         "average_mae_c": round(avg_mae, 3) if avg_mae is not None else None,
         "window_span_seconds": int(round(window_span)),
         "window_points": int(window_points),

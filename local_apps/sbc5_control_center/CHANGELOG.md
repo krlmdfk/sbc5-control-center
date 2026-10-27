@@ -1,5 +1,53 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.3 — 2026-10-27
+
+### English
+
+#### Added
+
+- Expose Predictor MAE, per-horizon last error, temperature slope, validated-sample count and data age through native Home Assistant sensors and the expanded AI card.
+- Expose verified Raspberry Pi host network MAC and interface diagnostics for Device Registry verification.
+
+#### Changed
+
+- Reconcile stale CPU restart markers and add AI Thermal Predictor quality diagnostics.
+
+#### Fixed
+
+- Clear stale same-boot CPU-profile restart=host markers only when Boot Verification proves the requested preset is already saved and active; generic boot/config markers remain protected until a real host reboot.
+
+#### Performance
+
+- No new polling loops; diagnostics reuse the existing AI runtime relay and 15-second native coordinator.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Udostępniono MAE Predictora, ostatni błąd dla każdego horyzontu, trend temperatury, liczbę zweryfikowanych prognoz i wiek danych jako natywne sensory Home Assistant oraz na rozwijanej karcie AI.
+- Udostępniono diagnostykę zweryfikowanego fizycznego MAC i interfejsu sieciowego hosta Raspberry Pi do kontroli Device Registry.
+
+#### Zmieniono
+
+- Uzgodnienie osieroconych markerów restartu CPU i rozszerzona diagnostyka jakości AI Thermal Predictor.
+
+#### Naprawiono
+
+- Osierocony marker restart=host profilu CPU jest czyszczony na bieżącym boot tylko wtedy, gdy Boot Verification potwierdzi zapisany i aktywny profil; ogólne markery boot/config nadal wymagają rzeczywistego restartu hosta.
+
+#### Wydajność
+
+- Bez nowych pętli odpytywania; diagnostyka wykorzystuje istniejący relay AI runtime i 15-sekundowy natywny koordynator.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.2 — 2026-10-27
 
 ### English
