@@ -67,9 +67,6 @@ jobs:
           python scripts/validate_release.py --strict-manifest-hashes
           git diff --check
 
-      - name: Remove temporary preparation helpers
-        run: rm -f scripts/prepare_3_1_7.py .github/workflows/prepare-3-1-7.yml
-
       - name: Commit prepared release branch
         run: |
           git config user.name "SBC5 Release Bot"
