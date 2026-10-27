@@ -1,0 +1,50 @@
+name: Prepare Rust Canary 3.0.4
+
+on:
+  push:
+    branches: [test/rust-3.0.0-canary]
+    paths: [.github/workflows/prepare-canary-3.0.4.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/rust-3.0.0-canary
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Align release surfaces
+        run: >-
+          python scripts/release_prepare.py
+          --version 3.0.4
+          --release-date 2026-10-26
+          --restart-required none
+          --summary-en "Rust canary diagnostic build for Adaptive PWM blocker and Card UI synchronization analysis."
+          --summary-pl "Diagnostyczny build Rust canary do ustalenia blokady Adaptive PWM i problemu synchronizacji Card UI."
+          --fixed-en "Add read-only one-shot runtime diagnostics for cooling device writability, factory restore marker, Adaptive PWM state and Lovelace card scan."
+          --fixed-pl "Dodano jednorazową diagnostykę tylko do odczytu: zapisywalność cooling device, marker factory restore, stan Adaptive PWM i skan karty Lovelace."
+      - name: Validate
+        run: |
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          bash -n local_apps/sbc5_control_center/canary_runtime_diag.sh
+          python scripts/test_migration_profile_guard.py
+          python scripts/test_canary_migration.py
+          python scripts/test_runtime_robustness.py
+          python scripts/validate_release.py --strict-manifest-hashes
+          git diff --check
+      - name: Commit
+        run: |
+          rm -f .github/workflows/prepare-canary-3.0.4.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Prepare Rust canary 3.0.4 diagnostics"
+          git push origin HEAD:test/rust-3.0.0-canary
