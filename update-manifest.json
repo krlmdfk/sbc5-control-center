@@ -9,11 +9,11 @@
   "layout": "native-sbc5",
   "update_scope": "full",
   "restart_required": "none",
-  "release_date": "2026-10-27",
+  "release_date": "2026-10-26",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "versioning_policy": "unified",
-  "summary": "Hybrid Rust Core release: native low-overhead host telemetry and runtime health with the proven compatibility control plane, verified preserved-state migration, Adaptive PWM/AI Cooling recovery and rollback safety.",
+  "summary": "Rust Core migration: native low-overhead telemetry and runtime health with automatic compatibility fallback while preserving Adaptive PWM, AI Cooling, CPU/GPU profiles and persistent /data state.",
   "files": {
     ".editorconfig": "31c251b169e75fa1048948dbb446c11ada7d9b28906c97a5590f27d7d4f19b81",
     ".github/ISSUE_TEMPLATE/bug_report.yml": "95278f7c9b1df0e2769ecf4b94b735c8b5c04a817e644ad3dcfefe728a2398bd",
