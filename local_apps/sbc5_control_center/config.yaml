@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.3
+version: 3.1.4
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.3 — Reconcile stale CPU restart markers and add AI Thermal Predictor quality diagnostics."
+description: "SBC5 Control Center 3.1.4 — Fix runtime version/status consistency, reconcile legacy CPU restart markers, and calibrate AI Thermal Predictor confidence to measured error."
 arch:
 - aarch64
 homeassistant: 2026.10.1

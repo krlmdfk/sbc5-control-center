@@ -68,6 +68,49 @@ def replace_current_version(path: Path, old: str, new: str) -> None:
     path.write_text(updated, encoding="utf-8")
 
 
+def normalize_current_version_surfaces(version: str) -> None:
+    """Normalize current runtime/package version markers independent of release history.
+
+    A stale literal can survive generic old->new replacement indefinitely once it
+    misses one release. Keep these authoritative current-state surfaces structural.
+    """
+    package_files = [
+        ROOT / "packages" / "sbc5_control_center.yaml",
+        APP / "migration_assets" / "sbc5_control_center.yaml",
+        APP / "migration_assets" / "rpi5_control_center.yaml",
+    ]
+    for path in package_files:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        text = re.sub(
+            r"(?m)^(# SBC5 Control Center Package Version:)\s*\d+\.\d+\.\d+\s*$",
+            rf"\1 {version}",
+            text,
+            count=1,
+        )
+        text = re.sub(
+            r'(?ms)(- name: SBC5 Package Version\n\s+unique_id: sbc5_package_version\n\s+icon: mdi:package-variant-closed-check\n\s+state:)\s*"\d+\.\d+\.\d+"',
+            rf'\1 "{version}"',
+            text,
+            count=1,
+        )
+        path.write_text(text, encoding="utf-8")
+
+    current_literals = [
+        (APP / "namespace_native_guard.sh", r'(?m)^VERSION="\d+\.\d+\.\d+"$', f'VERSION="{version}"'),
+        (APP / "config_ui.py", r"return ['\"]\d+\.\d+\.\d+['\"]", f"return '{version}'"),
+    ]
+    for path, pattern, replacement in current_literals:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        text, count = re.subn(pattern, replacement, text, count=1)
+        if count != 1:
+            raise SystemExit(f"Could not normalize current version surface: {path}")
+        path.write_text(text, encoding="utf-8")
+
+
 def normalize_manifest(path: Path, version: str) -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     data["version"] = version
@@ -307,6 +350,7 @@ def main() -> int:
 
     for path in VERSIONED_TEXT_FILES:
         replace_current_version(path, old, new)
+    normalize_current_version_surfaces(new)
 
     canonical = ROOT / "custom_components" / DOMAIN
     bridge = APP / "bridge"
