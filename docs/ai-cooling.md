@@ -18,3 +18,10 @@ The local AI layer can learn from qualified thermal observations and workload bu
 This makes SBC5 relevant to searches for **Raspberry Pi 5 AI cooling**, **adaptive fan control**, **predictive cooling**, **AI temperature prediction**, **workload-aware cooling** and **smart PWM fan control**.
 
 [Back to SBC5 Control Center](index.md)
+
+
+## AI Thermal Predictor v2
+
+SBC5 includes a closed-loop-aware Thermal Predictor for +30/+60/+120 second CPU temperature forecasts. Predictor v2 combines trend extrapolation with target anchoring and bounded online bias correction. Its quality gate uses MAE, confidence and validated samples. Shadow Assist is telemetry-only and evaluates a bounded ±2 pp PWM recommendation without changing physical fan output.
+
+The Predictor uses the existing AI runtime cadence; no additional fast polling loop is created.

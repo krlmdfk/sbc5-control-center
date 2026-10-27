@@ -1,4 +1,4 @@
-# SBC5 Control Center — Diagnostics Dashboard · Card UI v3.1.5
+# SBC5 Control Center — Diagnostics Dashboard · Card UI v3.1.6
 # Duży wykres 230 px: temperatura CPU + PWM oraz pełne informacje diagnostyczne na dole.
 # Bez zbędnego dublowania danych.
 # Wymagane: Mushroom, card-mod, ApexCharts Card, Browser Mod.
@@ -38,7 +38,7 @@ cards:
       {% if cm %}· {{ cm }}{% endif %}
       · v{{ state_attr('sensor.sbc5_control_center_update','installed_version')
             | default(states('sensor.sbc5_package_version'), true) }}
-      · Card UI v3.1.5
+      · Card UI v3.1.6
     icon: mdi:raspberry-pi
     icon_color: >-
       {% if is_state('binary_sensor.sbc5_cooling_problem','on')
@@ -74,7 +74,7 @@ cards:
           font-size: 11.5px !important;
           line-height: 1.18 !important;
         }
-        /* SBC5CC 3.1.5 screen-fit guard */
+        /* SBC5CC 3.1.6 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -171,7 +171,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.5 screen-fit guard */
+            /* SBC5CC 3.1.6 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -190,7 +190,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.5 equal-height responsive tile */
+            /* SBC5CC 3.1.6 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -252,7 +252,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.5 screen-fit guard */
+            /* SBC5CC 3.1.6 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -271,7 +271,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.5 equal-height responsive tile */
+            /* SBC5CC 3.1.6 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -334,7 +334,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.5 screen-fit guard */
+            /* SBC5CC 3.1.6 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -353,7 +353,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.5 equal-height responsive tile */
+            /* SBC5CC 3.1.6 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -414,7 +414,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.5 screen-fit guard */
+            /* SBC5CC 3.1.6 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -433,7 +433,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.5 equal-height responsive tile */
+            /* SBC5CC 3.1.6 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -499,7 +499,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.5 screen-fit guard */
+            /* SBC5CC 3.1.6 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -518,7 +518,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.5 equal-height responsive tile */
+            /* SBC5CC 3.1.6 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -582,7 +582,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.5 screen-fit guard */
+            /* SBC5CC 3.1.6 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -601,7 +601,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.5 equal-height responsive tile */
+            /* SBC5CC 3.1.6 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -617,7 +617,7 @@ cards:
 
     card_mod:
       style: |
-        /* SBC5CC 3.1.5 responsive grid */
+        /* SBC5CC 3.1.6 responsive grid */
         #root {
           grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
           gap: clamp(6px, 1.8vw, 10px) !important;
@@ -753,7 +753,7 @@ cards:
           box-shadow: none;
           overflow: hidden;
         }
-        /* SBC5CC 3.1.5 chart screen-fit */
+        /* SBC5CC 3.1.6 chart screen-fit */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1334,7 +1334,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.5 screen-fit guard */
+        /* SBC5CC 3.1.6 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1426,7 +1426,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.5 screen-fit guard */
+        /* SBC5CC 3.1.6 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1525,7 +1525,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.5 screen-fit guard */
+        /* SBC5CC 3.1.6 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1547,12 +1547,12 @@ cards:
 
 
   # ============================================================
-  # AI ADAPTIVE COOLING — zweryfikowany panel głównej karty · Card UI v3.1.5
+  # AI ADAPTIVE COOLING — zweryfikowany panel głównej karty · Card UI v3.1.6
   # ============================================================
   - type: markdown
     content: |
       ## 🧠 AI Adaptive Cooling
-      Uczenie Active Coolera · Card UI v3.1.5
+      Uczenie Active Coolera · Card UI v3.1.6
     card_mod:
       style: |
         ha-card {
@@ -1624,7 +1624,7 @@ cards:
             padding-bottom: 8px !important;
           }
         }
-        /* SBC5CC 3.1.5 screen-fit guard */
+        /* SBC5CC 3.1.6 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1694,7 +1694,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 3.1.5 screen-fit guard */
+                  /* SBC5CC 3.1.6 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -1713,7 +1713,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.5 equal-height responsive tile */
+                  /* SBC5CC 3.1.6 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -1764,7 +1764,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 3.1.5 screen-fit guard */
+                  /* SBC5CC 3.1.6 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -1783,7 +1783,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.5 equal-height responsive tile */
+                  /* SBC5CC 3.1.6 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -1834,7 +1834,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 3.1.5 screen-fit guard */
+                  /* SBC5CC 3.1.6 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -1853,7 +1853,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.5 equal-height responsive tile */
+                  /* SBC5CC 3.1.6 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -1918,7 +1918,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 3.1.5 screen-fit guard */
+                  /* SBC5CC 3.1.6 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -1937,7 +1937,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.5 equal-height responsive tile */
+                  /* SBC5CC 3.1.6 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -1953,7 +1953,7 @@ cards:
 
           card_mod:
             style: |
-              /* SBC5CC 3.1.5 responsive grid */
+              /* SBC5CC 3.1.6 responsive grid */
               #root {
                 grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
                 gap: clamp(6px, 1.8vw, 10px) !important;
@@ -2012,7 +2012,7 @@ cards:
                 }
 
 
-        # AI Thermal Predictor 3.1.5 — observe-only telemetry on the YAML card.
+        # AI Thermal Predictor 3.1.6 — observe-only telemetry on the YAML card.
         # Each parameter tile opens native Home Assistant history (More Info).
         - type: markdown
           content: |
@@ -2267,7 +2267,7 @@ cards:
                   padding-bottom: 7px !important;
                 }
               }
-              /* SBC5CC 3.1.5 screen-fit guard */
+              /* SBC5CC 3.1.6 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -2341,7 +2341,7 @@ cards:
                   padding-bottom: 7px !important;
                 }
               }
-              /* SBC5CC 3.1.5 screen-fit guard */
+              /* SBC5CC 3.1.6 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -2421,7 +2421,7 @@ cards:
                   padding-bottom: 7px !important;
                 }
               }
-              /* SBC5CC 3.1.5 screen-fit guard */
+              /* SBC5CC 3.1.6 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -2523,7 +2523,7 @@ cards:
                   padding-bottom: 7px !important;
                 }
               }
-              /* SBC5CC 3.1.5 screen-fit guard */
+              /* SBC5CC 3.1.6 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -2608,7 +2608,7 @@ cards:
                       padding-bottom: 8px !important;
                     }
                   }
-                  /* SBC5CC 3.1.5 screen-fit guard */
+                  /* SBC5CC 3.1.6 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -2627,7 +2627,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.5 equal-height responsive tile */
+                  /* SBC5CC 3.1.6 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -2700,7 +2700,7 @@ cards:
                       padding-bottom: 8px !important;
                     }
                   }
-                  /* SBC5CC 3.1.5 screen-fit guard */
+                  /* SBC5CC 3.1.6 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -2719,7 +2719,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.5 equal-height responsive tile */
+                  /* SBC5CC 3.1.6 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -2735,7 +2735,7 @@ cards:
 
           card_mod:
             style: |
-              /* SBC5CC 3.1.5 responsive grid */
+              /* SBC5CC 3.1.6 responsive grid */
               #root {
                 grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
                 gap: clamp(6px, 1.8vw, 10px) !important;
@@ -2822,7 +2822,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.5 screen-fit guard */
+        /* SBC5CC 3.1.6 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -2910,7 +2910,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.5 screen-fit guard */
+        /* SBC5CC 3.1.6 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -3005,7 +3005,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.5 screen-fit guard */
+        /* SBC5CC 3.1.6 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -3061,7 +3061,7 @@ cards:
           .secondary {
             font-size: 10px !important;
           }
-          /* SBC5CC 3.1.5 screen-fit guard */
+          /* SBC5CC 3.1.6 screen-fit guard */
           ha-card {
             width: 100% !important;
             max-width: 100% !important;

@@ -10,8 +10,8 @@
 
 | Parameter / Parametr | Value / Wartość |
 |---|---|
-| App version / Wersja aplikacji | **2.8.34** |
-| Card UI | **2.8.34** |
+| App version / Wersja aplikacji | **3.1.6** |
+| Card UI | **3.1.6** |
 | Status / Stan | **stable** |
 | Architecture / Architektura | `aarch64` |
 | Home Assistant OS | `>= 18.3` |
@@ -56,6 +56,8 @@ Fast cooling-control paths remain independent from heavier diagnostics. Host/AI 
 Active Cooler supports the factory profile and configurable `custom1`. Adaptive PWM uses `custom1(T)` as the absolute base and applies bounded trim, deadband, anti-windup, Sign Guard and rate limiting. Emergency 100% output remains immediate.
 
 AI Cooling runs locally and is secondary to the classical controller. The model distinguishes `idle`, `low`, `medium` and `high` workload buckets, qualifies samples and can operate in a limited Assist mode.
+
+AI Thermal Predictor v2 forecasts CPU temperature 30/60/120 seconds ahead and scores itself using per-horizon MAE, signed online bias, confidence and validated-sample maturity. Shadow Assist converts that forecast into a bounded hypothetical PWM delta while remaining telemetry-only (`control_output_enabled=false`); Adaptive PWM and AI Cooling remain authoritative. Predictor v1 quality statistics are archived when v2 starts so old errors do not contaminate the new model, while the AI Cooling model and counters are preserved.
 
 ### CPU, GPU and `config.txt`
 
@@ -123,6 +125,8 @@ Szybkie ścieżki sterowania chłodzeniem pozostają niezależne od cięższej d
 Active Cooler obsługuje profil fabryczny oraz konfigurowalny `custom1`. Adaptive PWM używa krzywej `custom1(T)` jako bezwzględnej bazy i stosuje ograniczony trim, deadband, anti-windup, Sign Guard oraz limiter szybkości zmian. Awaryjne sterowanie 100% pozostaje natychmiastowe.
 
 AI Cooling działa lokalnie i wtórnie wobec klasycznego regulatora. Model rozróżnia buckety `idle`, `low`, `medium` i `high`, kwalifikuje próbki jakościowe oraz może pracować w ograniczonym trybie Assist.
+
+AI Thermal Predictor v2 prognozuje temperaturę CPU z wyprzedzeniem 30/60/120 sekund i ocenia się przez MAE dla horyzontów, znakowaną korektę błędu online, confidence oraz dojrzałość zweryfikowanych próbek. Shadow Assist zamienia prognozę na ograniczoną hipotetyczną korektę PWM, ale pozostaje wyłącznie telemetryczny (`control_output_enabled=false`); Adaptive PWM i AI Cooling pozostają nadrzędne. Przy starcie v2 statystyki jakości Predictora v1 są archiwizowane, aby stare błędy nie zafałszowały nowego modelu, natomiast model i liczniki AI Cooling są zachowane.
 
 ### CPU, GPU i `config.txt`
 

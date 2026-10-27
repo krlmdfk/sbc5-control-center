@@ -192,3 +192,10 @@ Zobacz [Release Standard](RELEASE_STANDARD.md).
 ---
 
 SBC5 Control Center is an independent open-source project. Raspberry Pi and Home Assistant are names/trademarks of their respective owners. The project is not sponsored, endorsed or maintained by Raspberry Pi Ltd., Home Assistant or the Open Home Foundation.
+
+
+## AI Thermal Predictor v2
+
+SBC5 includes a closed-loop-aware Thermal Predictor for +30/+60/+120 second CPU temperature forecasts. Predictor v2 combines trend extrapolation with target anchoring and bounded online bias correction. Its quality gate uses MAE, confidence and validated samples. Shadow Assist is telemetry-only and evaluates a bounded ±2 pp PWM recommendation without changing physical fan output.
+
+The Predictor uses the existing AI runtime cadence; no additional fast polling loop is created.

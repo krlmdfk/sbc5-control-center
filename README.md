@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <strong>Stable · v2.8.34 · Card UI 2.8.34 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
+  <strong>Stable · v3.1.6 · Card UI 3.1.6 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@ It can be used as a **Raspberry Pi 5 monitoring dashboard for Home Assistant**, 
 |---|---|
 | **Cooling** | Active Cooler, `custom1`, Automatic / Hybrid / Manual, PWM→RPM calibration |
 | **Adaptive PWM** | `custom1(T)` base, bounded trim, deadband, anti-windup, Sign Guard, slew limiter |
-| **AI Cooling** | local Learning/Assist, workload buckets, sample qualification, prediction history |
+| **AI Cooling + Thermal Predictor** | local Learning/Assist, workload buckets, qualified samples, +30/+60/+120 s forecasts, Predictor quality/MAE, Shadow Assist |
 | **CPU / OC** | Factory → Experimental + Advanced profiles, Boot Verification, CPU0–CPU3 telemetry |
 | **GPU / V3D / ISP** | Factory / Eco / Balanced / Performance / Experimental / Advanced profiles |
 | **System** | power, PMIC, memory, storage, throttling, network, firmware and bootloader diagnostics |
@@ -167,7 +167,7 @@ SBC5 Control Center łączy sterowanie wentylatorem i Active Coolerem Raspberry 
 |---|---|
 | **Cooling** | Active Cooler, `custom1`, Automatic / Hybrid / Manual, kalibracja PWM→RPM |
 | **Adaptive PWM** | baza `custom1(T)`, bounded trim, deadband, anti-windup, Sign Guard, slew limiter |
-| **AI Cooling** | lokalny Learning/Assist, buckety obciążenia, kwalifikacja próbek, historia predykcji |
+| **AI Cooling + Thermal Predictor** | lokalny Learning/Assist, buckety obciążenia, próbki jakościowe, prognozy +30/+60/+120 s, jakość/MAE Predictora, Shadow Assist |
 | **CPU / OC** | profile Factory → Experimental + Advanced, Boot Verification, taktowanie CPU0–CPU3 |
 | **GPU / V3D / ISP** | profile Factory / Eco / Balanced / Performance / Experimental / Advanced |
 | **System** | zasilanie, PMIC, pamięć, storage, throttling, sieć, firmware i bootloader |

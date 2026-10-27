@@ -347,3 +347,16 @@ W instalacji sklepowej pełny runtime jest aktualizowany przez Home Assistant Ap
 - `docs/STORE_MIGRATION.md` — migracja Local → Apps Store i aktualizacje hybrydowe;
 - `docs/GPU_V3D_ISP_PROFILES.md` — profile GPU;
 - `CHANGELOG.md` — historia zmian.
+
+
+---
+
+## AI Thermal Predictor v2 / Predyktor termiczny AI v2
+
+**EN.** Thermal Predictor is an observe-only forecasting layer fed by the existing AI runtime window; it adds no separate fast polling loop. Forecasts are published for +30, +60 and +120 seconds. Version 2 uses the measured temperature slope, horizon-specific target anchoring and a bounded signed bias correction learned online per horizon. Use `Average MAE`, `MAE 30s/60s/120s`, `Last Error`, `Confidence`, `Quality`, `Validated Samples` and `Data Age` to judge readiness.
+
+Shadow Assist exposes the recommendation that a future predictive controller would make. The recommendation is limited to ±2 percentage points and is gated by Predictor quality. In the current operating mode it never writes physical PWM: `control_output_enabled=false`. The existing Adaptive PWM slew limiter, Sign Guard, AI Cooling and emergency safety behavior remain unchanged.
+
+**PL.** Thermal Predictor jest warstwą prognozującą pracującą w trybie obserwacyjnym i korzysta z istniejącego okna AI runtime; nie dodaje osobnej szybkiej pętli odpytywania. Publikuje prognozy +30, +60 i +120 sekund. Wersja 2 wykorzystuje zmierzony trend temperatury, zależne od horyzontu dociąganie prognozy do celu termicznego oraz ograniczoną znakowaną korektę błędu uczoną online osobno dla każdego horyzontu. Gotowość ocenia się przez `Average MAE`, `MAE 30s/60s/120s`, `Last Error`, `Confidence`, `Quality`, `Validated Samples` i `Data Age`.
+
+Shadow Assist pokazuje rekomendację, którą w przyszłości mógłby wykonać regulator predykcyjny. Rekomendacja jest ograniczona do ±2 punktów procentowych i przechodzi bramkę jakości Predictora. W obecnym trybie nigdy nie zapisuje fizycznego PWM: `control_output_enabled=false`. Istniejące zabezpieczenia Adaptive PWM, slew limiter, Sign Guard, AI Cooling i tryb awaryjny pozostają bez zmian.
