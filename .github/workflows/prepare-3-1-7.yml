@@ -71,6 +71,7 @@ jobs:
         run: |
           git config user.name "SBC5 Release Bot"
           git config user.email "actions@users.noreply.github.com"
+          git restore .github/workflows/validate.yml
           git add -A
           git commit -m "SBC5 Control Center 3.1.7 — bucket-aware AI learning and thermal fast path [3.1.7 prepared]"
           git push origin HEAD:release/3.1.7-ai-bucket-thermal-fastpath
