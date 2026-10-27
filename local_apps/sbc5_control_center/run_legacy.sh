@@ -10,8 +10,8 @@ fi
 chmod 1777 /tmp 2>/dev/null || true
 export TMPDIR="${TMPDIR:-/tmp}"
 
-APP_VERSION="3.0.2"
-REQUIRED_PACKAGE_VERSION="3.0.2"
+APP_VERSION="3.0.3"
+REQUIRED_PACKAGE_VERSION="3.0.3"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -143,6 +143,8 @@ TELEMETRY_LAST_AI_RELAY_CHECK=0
 AI_RUNTIME_LAST_SIGNATURE=""
 AI_RUNTIME_RELAY_INTERVAL_SECONDS=15
 AI_RUNTIME_RELAY_KEEPALIVE_SECONDS=300
+ADAPTIVE_PWM_LOG_KEEPALIVE_WRITES=6
+AI_COOLING_LOG_KEEPALIVE_CYCLES=30
 PERF_PREV_CGROUP_USAGE_USEC=0
 PERF_PREV_WALL_USEC=0
 # v1.9.10 Multicore Telemetry: read-only diagnostic stages may run in parallel.
@@ -8691,7 +8693,7 @@ adaptive_pwm_controller_loop() {
   trap 'fan_control_shutdown_or_handoff controller_exit' EXIT
   trap 'fan_control_shutdown_or_handoff controller_signal; trap - EXIT; exit 0' TERM INT
   local dev="" temp_milli=0 target_milli=0 deadband_milli=200 error=0 current=0 max_state=0 desired=0 actual_after=0
-  local low_count=0 up_count=0 up_hold=0 deadband_count=0 controller_state=-1 base_state=-1 action="hold" writable=false last_logged="" safety_delta=10000 fast_delta=6000
+  local low_count=0 up_count=0 up_hold=0 deadband_count=0 controller_state=-1 base_state=-1 action="hold" writable=false last_logged="" adaptive_write_log_tick=0 adaptive_log_important=false safety_delta=10000 fast_delta=6000
   local min_run_floor=1 ownership_rc=0 owner_zone="" owner_original="" owner_method="" owner_now="" emergency_handoff_milli=70000
   # v2.6.9 Curve-Anchored Adaptive PWM. The custom1 curve is the absolute center
   # line; Adaptive keeps only a bounded trim around it. This prevents historical
@@ -8718,7 +8720,7 @@ adaptive_pwm_controller_loop() {
       load_custom_curve 1
       target_milli="$(awk -v t="$CURVE1_TARGET_C" 'BEGIN{printf "%d",t*1000+0.5}')"
       deadband_milli="$(awk -v t="$ADAPTIVE_PWM_DEADBAND_C" 'BEGIN{printf "%d",t*1000+0.5}')"
-      controller_state=-1; base_state=-1; adaptive_trim=0; low_count=0; up_count=0; up_hold=0; deadband_count=0; last_logged=""
+      controller_state=-1; base_state=-1; adaptive_trim=0; low_count=0; up_count=0; up_hold=0; deadband_count=0; last_logged=""; adaptive_write_log_tick=0
       log "Adaptive PWM: hot reload konfiguracji; cache custom1 odświeżony, target=${CURVE1_TARGET_C}°C, deadband=±${ADAPTIVE_PWM_DEADBAND_C}°C."
     fi
     if ! namespace_control_allowed; then
@@ -8992,9 +8994,9 @@ adaptive_pwm_controller_loop() {
           fi
           if [ "$ai_qualified_flag" = "1" ] && { [ "$ai_qualified_samples" = "1" ] || [ "$ai_qualified_samples" = "$AI_COOLING_MIN_SAMPLES" ] || [ $((ai_qualified_samples % 5)) -eq 0 ]; }; then
             log "AI Cooling: qualified sample; bucket=${ai_bucket}; quality=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; observations=${ai_bin_observations}; confidence=${ai_conf}%; prediction=${ai_prediction}%."
-          elif { [ "$ai_last_log" != "${ai_state}:${ai_reason}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}" ] || [ $((ai_log_tick % 6)) -eq 0 ]; } && { [ "$ai_state" = "assist" ] || [ "$ai_reason" = "insufficient_qualified_samples" ] || [ "$ai_bin_observations" = "1" ]; }; then
+          elif { [ "$ai_last_log" != "${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}" ] || [ $((ai_log_tick % AI_COOLING_LOG_KEEPALIVE_CYCLES)) -eq 0 ]; } && { [ "$ai_state" = "assist" ] || [ "$ai_reason" = "insufficient_qualified_samples" ] || [ "$ai_bin_observations" = "1" ]; }; then
             log "AI Cooling: state=${ai_state}; reason=${ai_reason}; bucket=${ai_bucket}; observations=${ai_bin_observations}; qualified=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}%; prediction=${ai_prediction}%; qualification=${ai_qualification_reason}."
-            ai_last_log="${ai_state}:${ai_reason}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}"
+            ai_last_log="${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}"
           fi
         fi
       fi
@@ -9053,8 +9055,15 @@ adaptive_pwm_controller_loop() {
         actual_after="$(cat "$dev/cur_state" 2>/dev/null || echo -1)"; case "$actual_after" in ''|*[!0-9]*) actual_after=-1 ;; esac
         if [ "$actual_after" -eq "$desired" ] 2>/dev/null; then
           controller_state="$desired"
+          adaptive_write_log_tick=$((adaptive_write_log_tick + 1))
+          adaptive_log_important=false
+          case "$action" in
+            *fast*|*sign_guard*|reassert_owner_state) adaptive_log_important=true ;;
+          esac
           if [ "$last_logged" != "$action:$current:$desired" ]; then
-            log "Adaptive PWM: T=$(millideg_to_c_1dp "$temp_milli")°C target=${CURVE1_TARGET_C}°C curve=${curve_state}% trim=${adaptive_trim}pp controller ${current}->${desired}/${max_state} (${action}); owner=adaptive."
+            if [ "$adaptive_log_important" = "true" ] || [ "$adaptive_write_log_tick" -eq 1 ] || [ $((adaptive_write_log_tick % ADAPTIVE_PWM_LOG_KEEPALIVE_WRITES)) -eq 0 ]; then
+              log "Adaptive PWM: T=$(millideg_to_c_1dp "$temp_milli")°C target=${CURVE1_TARGET_C}°C curve=${curve_state}% trim=${adaptive_trim}pp controller ${current}->${desired}/${max_state} (${action}); owner=adaptive."
+            fi
             last_logged="$action:$current:$desired"
           fi
         else
@@ -9209,7 +9218,7 @@ log "Update Handoff: seamless Adaptive PWM ownership transfer=enabled; timeout=$
 log "AI Cooling Preview: section=${AI_COOLING_SECTION_ENABLED}; configured=${AI_COOLING_MODE}; effective=${AI_COOLING_EFFECTIVE_MODE}; assist_limit=±${AI_COOLING_ASSIST_LIMIT_PCT}%; min_samples=${AI_COOLING_MIN_SAMPLES}; local_model=/data/ai_cooling_model.json."
 log "Restart Manager: policy=${RESTART_POLICY}, pre_check=${PRE_RESTART_CONFIG_CHECK}, notices=${RESTART_NOTICE_ON_START}"
 log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, sync=${CONFIG_TXT_OPTIONS_SYNC_INTERVAL}s, advanced=${CONFIG_TXT_OPTIONS_ADVANCED}"
-log "Performance: realtime=${REALTIME_PUBLISH_INTERVAL_SECONDS}s; telemetry=${TELEMETRY_PUBLISH_INTERVAL_SECONDS}s; relay=${HOST_RELAY_INTERVAL_SECONDS}s; AI-relay=${AI_RUNTIME_RELAY_INTERVAL_SECONDS}s; PMIC=${TELEMETRY_PMIC_INTERVAL_SECONDS}s; system=${TELEMETRY_EXTENDED_INTERVAL_SECONDS}s; power/USB/config=${TELEMETRY_POWER_INTERVAL_SECONDS}s; profile=${PROFILE_REPORT_INTERVAL_SECONDS}s; profile-options=${PROFILE_OPTIONS_SYNC_INTERVAL_SECONDS}s; UX-poll=${UX_RUNTIME_POLL_SECONDS}s; boot-cache=${BOOT_CONFIG_CACHE_SECONDS}s; AI evaluator=$((AI_COOLING_EVAL_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s."
+log "Performance: realtime=${REALTIME_PUBLISH_INTERVAL_SECONDS}s; telemetry=${TELEMETRY_PUBLISH_INTERVAL_SECONDS}s; relay=${HOST_RELAY_INTERVAL_SECONDS}s; AI-relay=${AI_RUNTIME_RELAY_INTERVAL_SECONDS}s; PMIC=${TELEMETRY_PMIC_INTERVAL_SECONDS}s; system=${TELEMETRY_EXTENDED_INTERVAL_SECONDS}s; power/USB/config=${TELEMETRY_POWER_INTERVAL_SECONDS}s; profile=${PROFILE_REPORT_INTERVAL_SECONDS}s; profile-options=${PROFILE_OPTIONS_SYNC_INTERVAL_SECONDS}s; UX-poll=${UX_RUNTIME_POLL_SECONDS}s; boot-cache=${BOOT_CONFIG_CACHE_SECONDS}s; AI evaluator=$((AI_COOLING_EVAL_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s; control-log=sample/${ADAPTIVE_PWM_LOG_KEEPALIVE_WRITES} writes; AI-log-keepalive=$((AI_COOLING_LOG_KEEPALIVE_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s."
 resolve_multicore_workers
 log "Multicore Telemetry: enabled=${MULTICORE_TELEMETRY_ENABLED}; workers=${MULTICORE_WORKERS_CONFIG} -> ${MULTICORE_WORKERS_EFFECTIVE}; cpus_allowed=$(read_cpu_allowed_list 2>/dev/null || echo unknown)."
 log "Polecenia: status, reload_config, diagnose, restore_backup, curve_editor_refresh, calibrate_fan, fan_calibration_refresh, restore_active_cooler_factory, restore_rpi5_app_defaults, resume_managed_rpi5_config, set_custom_curve_template, set_custom_curve_point, reset_custom_curve_parameter, reset_custom_curve_factory, reset_all_custom_curves_factory, reset_custom_curve, apply_ai_grid_suggestion, clear_ai_grid_override, ux_self_test, set_cpu_profile, set_gpu_profile, apply_system_config, restore_system_config_backup, apply_config_txt_parameter, remove_config_txt_parameter, restore_config_manager_backup, restart_status, restart_ha_confirmed, check_app_update, install_local_update, cleanup_update_packages, migration_status, migration_export, migration_import, migration_rollback"

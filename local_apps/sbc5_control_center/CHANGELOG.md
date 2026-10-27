@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.3 — 2026-10-27
+
+### English
+
+#### Changed
+
+- Expose the effective control-log sampling and AI-log keepalive policy in the startup Performance line.
+
+#### Performance
+
+- Sample routine Adaptive PWM write logs while preserving immediate safety/action logs and unchanged 10-second control execution.
+- Reduce AI Cooling steady-state logging to state/model changes plus a 5-minute keepalive; evaluator cadence remains unchanged.
+
+#### Security
+
+- Safety-critical ownership, write-failure, fast-response and sign-guard logs remain immediate.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Pokazanie efektywnej polityki próbkowania logów regulatora i keepalive AI w linii Performance przy starcie.
+
+#### Wydajność
+
+- Próbkowanie rutynowych logów zapisów Adaptive PWM przy zachowaniu natychmiastowych logów bezpieczeństwa i niezmienionego cyklu sterowania 10 s.
+- Ograniczenie logów AI Cooling w stanie ustalonym do zmian stanu/modelu i 5-minutowego keepalive; częstotliwość ewaluatora pozostaje bez zmian.
+
+#### Bezpieczeństwo
+
+- Krytyczne logi ownership, błędów zapisu, szybkiej reakcji i sign-guard pozostają natychmiastowe.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.0.2 — 2026-10-27
 
 ### English

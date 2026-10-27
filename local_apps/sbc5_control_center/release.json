@@ -1,14 +1,14 @@
 {
-  "version": "3.0.2",
+  "version": "3.0.3",
   "release_date": "2026-10-27",
   "restart_required": "none",
-  "summary": "Runtime efficiency hotfix: event-style local ZIP detection and correct Supervisor profile signature comparison eliminate redundant steady-state work.",
-  "package_version": "3.0.2",
-  "card_ui_version": "3.0.2",
+  "summary": "Reduce steady-state log I/O while preserving Adaptive PWM and AI execution cadence.",
+  "package_version": "3.0.3",
+  "card_ui_version": "3.0.3",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Hotfix wydajności runtime: zdarzeniowe wykrywanie lokalnych ZIP i poprawne porównanie podpisu profili Supervisor eliminują zbędną pracę w stanie ustalonym."
+  "summary_pl": "Ograniczenie I/O logów w stanie ustalonym bez zmiany częstotliwości działania Adaptive PWM i AI."
 }
