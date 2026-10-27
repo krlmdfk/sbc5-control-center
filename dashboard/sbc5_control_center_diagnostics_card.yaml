@@ -2145,7 +2145,7 @@ cards:
               entity: sensor.sbc5_ai_thermal_predictor_mae
               primary: Jakość modelu
               secondary: >-
-                MAE śr. {{ states('sensor.sbc5_ai_thermal_predictor_mae') }} °C
+                {{ states('sensor.sbc5_ai_thermal_predictor_quality') }} · MAE śr. {{ states('sensor.sbc5_ai_thermal_predictor_mae') }} °C
                 · trend {{ states('sensor.sbc5_ai_thermal_predictor_slope') }} °C/min
                 · walidacje {{ states('sensor.sbc5_ai_thermal_predictor_samples') }}
                 · wiek {{ states('sensor.sbc5_ai_thermal_predictor_age') }} s
@@ -2892,7 +2892,9 @@ cards:
 
     multiline_secondary: true
     primary: >-
-      {% set ps = states('sensor.sbc5_platform_compatibility') %}
+      {% set pc = state_attr('sensor.sbc5_control_center_host_telemetry','platform_compatibility') or {} %}
+      {% set direct = states('sensor.sbc5_platform_compatibility') %}
+      {% set ps = direct if direct not in ['unknown','unavailable','none',''] else pc.get('state','unknown') %}
       {% if ps == 'compatible' %}
         Platforma zgodna z wymaganiami SBC5 Control Center
       {% elif ps == 'incompatible' %}
@@ -2901,16 +2903,21 @@ cards:
         Zgodność platformy — brak pełnych danych
       {% endif %}
     secondary: >-
-      Core {{ state_attr('sensor.sbc5_platform_compatibility','installed_core') | default('—', true) }}
-      (min. {{ state_attr('sensor.sbc5_platform_compatibility','minimum_core') | default('2026.10.1', true) }}) · HA OS {{ state_attr('sensor.sbc5_platform_compatibility','installed_haos') | default('—', true) }}
-      (min. {{ state_attr('sensor.sbc5_platform_compatibility','minimum_haos') | default('18.3', true) }})
+      {% set pc = state_attr('sensor.sbc5_control_center_host_telemetry','platform_compatibility') or {} %}
+      Core {{ state_attr('sensor.sbc5_platform_compatibility','installed_core') | default(pc.get('installed_core','—'), true) }}
+      (min. {{ state_attr('sensor.sbc5_platform_compatibility','minimum_core') | default(pc.get('minimum_core','2026.10.1'), true) }}) · HA OS {{ state_attr('sensor.sbc5_platform_compatibility','installed_haos') | default(pc.get('installed_haos','—'), true) }}
+      (min. {{ state_attr('sensor.sbc5_platform_compatibility','minimum_haos') | default(pc.get('minimum_haos','18.3'), true) }})
     icon: >-
-      {% set ps = states('sensor.sbc5_platform_compatibility') %}
+      {% set pc = state_attr('sensor.sbc5_control_center_host_telemetry','platform_compatibility') or {} %}
+      {% set direct = states('sensor.sbc5_platform_compatibility') %}
+      {% set ps = direct if direct not in ['unknown','unavailable','none',''] else pc.get('state','unknown') %}
       {% if ps == 'compatible' %}mdi:shield-check
       {% elif ps == 'incompatible' %}mdi:shield-alert
       {% else %}mdi:shield-search{% endif %}
     icon_color: >-
-      {% set ps = states('sensor.sbc5_platform_compatibility') %}
+      {% set pc = state_attr('sensor.sbc5_control_center_host_telemetry','platform_compatibility') or {} %}
+      {% set direct = states('sensor.sbc5_platform_compatibility') %}
+      {% set ps = direct if direct not in ['unknown','unavailable','none',''] else pc.get('state','unknown') %}
       {% if ps == 'compatible' %}green
       {% elif ps == 'incompatible' %}red
       {% else %}orange{% endif %}

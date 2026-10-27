@@ -3951,7 +3951,26 @@ clear_completed_host_restart() {
       if { [ "$profile" = "factory" ] || [[ "$expected_arm" =~ ^[0-9]+$ ]]; } && cpu_profile_verify_after_boot "$profile" "$expected_arm"; then
         log "Restart Manager: bieżący boot już spełnia oczekiwany profil CPU/OC — usuwam osierocony marker restart=host."
         rm -f "$RESTART_STATE_FILE"
+        native_restart_repair_clear || true
       fi
+    elif [ "$scope" = "generic" ] || [ -z "$scope" ]; then
+      # 3.1.4 legacy reconciliation: old CPU markers did not carry scope/expected
+      # fields. Infer CPU ownership only from an explicit CPU/OC reason, then use
+      # the persistent requested profile plus Boot Verification as hard proof.
+      local legacy_reason requested_profile requested_arm
+      legacy_reason="$(jq -r '.reason // empty' "$RESTART_STATE_FILE" 2>/dev/null || true)"
+      case "${legacy_reason,,}" in
+        *"cpu/oc"*|*"profil cpu"*|*"arm_freq"*|*"taktowanie cpu"*)
+          requested_profile="$(cpu_profile_requested_profile 2>/dev/null || echo factory)"
+          requested_arm="$(cpu_profile_expected_arm_freq "$requested_profile" 2>/dev/null || true)"
+          if { [ "$requested_profile" = "factory" ] || [[ "$requested_arm" =~ ^[0-9]+$ ]]; } \
+             && cpu_profile_verify_after_boot "$requested_profile" "$requested_arm"; then
+            log "Restart Manager: legacy marker host dotyczył CPU/OC, a zapisany i aktywny profil są już zgodne — zamykam osierocone żądanie."
+            rm -f "$RESTART_STATE_FILE"
+            native_restart_repair_clear || true
+          fi
+          ;;
+      esac
     fi
     return 0
   fi

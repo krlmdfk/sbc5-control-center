@@ -22,7 +22,7 @@ cards:
       {% elif s == 'current' %}
         Wersja {{ installed }} jest aktualna
       {% elif s in ['unknown','unavailable','none',''] %}
-        Status aktualizacji chwilowo niedostępny
+        Wersja {{ installed }} · oczekiwanie na synchronizację statusu
       {% elif s == 'disabled' %}
         Automatyczne sprawdzanie jest wyłączone
       {% else %}

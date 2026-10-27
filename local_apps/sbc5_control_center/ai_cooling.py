@@ -282,8 +282,25 @@ def _thermal_predictor(model: dict[str, Any], temp: float, slope_c_per_min: floa
     maturity = min(1.0, sum(int(_num(samples.get(str(h)), 0)) for h in THERMAL_PREDICTOR_HORIZONS_SECONDS) / 24.0)
     known_errors = [_num(mae.get(str(h)), 0.0) for h in THERMAL_PREDICTOR_HORIZONS_SECONDS if int(_num(samples.get(str(h)), 0)) > 0]
     avg_mae = sum(known_errors) / len(known_errors) if known_errors else None
-    accuracy_factor = 0.55 if avg_mae is None else _clamp(1.0 - avg_mae / 4.0, 0.20, 1.0)
-    confidence = int(round(_clamp(20.0 + 30.0 * span_factor + 20.0 * point_factor + 20.0 * maturity + 10.0 * accuracy_factor, 0.0, 97.0)))
+    # 3.1.4: confidence is a quality score, not only a data-volume score.
+    # Prediction error now carries 35% of the result; a mature model with MAE
+    # around 2-3 C can no longer advertise >90% confidence. Observe-only remains.
+    accuracy_factor = 0.35 if avg_mae is None else _clamp(1.0 - avg_mae / 3.0, 0.0, 1.0)
+    confidence = int(round(_clamp(100.0 * (
+        0.25 * span_factor + 0.15 * point_factor + 0.25 * maturity + 0.35 * accuracy_factor
+    ), 0.0, 97.0)))
+    if avg_mae is None:
+        quality_state = "learning"
+    elif avg_mae <= 0.75:
+        quality_state = "excellent"
+    elif avg_mae <= 1.25:
+        quality_state = "good"
+    elif avg_mae <= 2.0:
+        quality_state = "fair"
+    elif avg_mae <= 3.0:
+        quality_state = "weak"
+    else:
+        quality_state = "poor"
 
     state = {
         "schema": 1,
@@ -294,6 +311,7 @@ def _thermal_predictor(model: dict[str, Any], temp: float, slope_c_per_min: floa
         "temperature_c": round(temp, 2),
         "slope_c_per_min": round(slope, 3),
         "confidence_percent": confidence,
+        "quality_state": quality_state,
         "mae_ema_c": {k: round(_num(v), 3) for k, v in mae.items()},
         "last_error_c": {k: round(_num(v), 3) for k, v in last_error.items()},
         "validated_samples": {k: int(_num(v)) for k, v in samples.items()},
