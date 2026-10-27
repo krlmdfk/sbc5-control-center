@@ -1,11 +1,11 @@
 #!/bin/bash
 set -u
 
-# SBC5 Control Center 3.0.5 native runtime bootstrap.
+# SBC5 Control Center 3.0.0 native runtime bootstrap.
 # These constants are intentionally retained in the package entrypoint because the
 # SBC5 package validator verifies them before accepting local/update packages.
-APP_VERSION="3.0.5"
-REQUIRED_PACKAGE_VERSION="3.0.5"
+APP_VERSION="3.0.0"
+REQUIRED_PACKAGE_VERSION="3.0.0"
 
 # The Rust core owns lightweight host telemetry and health state. The proven 2.8.x
 # control plane remains the compatibility layer during the stable 3.0 migration.
@@ -26,9 +26,6 @@ else
   [ -s /tmp/sbc5_rust_core_self_test.err ] && cat /tmp/sbc5_rust_core_self_test.err || true
 fi
 
-# Canary-only one-shot diagnostics. Read-only: reports the exact Adaptive PWM
-# blocker and Lovelace card scan result without changing fan or dashboard state.
-[ -x /canary_runtime_diag.sh ] && /canary_runtime_diag.sh &
 
 # Stable migration rule: fan safety/control remains authoritative in the proven
 # compatibility control plane until native controller parity tests are complete.

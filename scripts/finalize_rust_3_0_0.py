@@ -29,7 +29,7 @@ def restore_public_surfaces() -> None:
     for rel in [
         'local_apps/sbc5_control_center/CANARY_TEST.md',
         'local_apps/sbc5_control_center/canary_runtime_diag.sh',
-        'RELEASE_NOTES_3.0.1.md','RELEASE_NOTES_3.0.2.md','RELEASE_NOTES_3.0.3.md','RELEASE_NOTES_3.0.4.md','RELEASE_NOTES_3.0.5.md',
+        'RELEASE_NOTES_3.0.1.md','RELEASE_NOTES_3.0.2.md','RELEASE_NOTES_3.0.3.md','RELEASE_NOTES_3.0.4.md','RELEASE_NOTES_3.0.0.md',
     ]:
         p = ROOT / rel
         if p.exists():
@@ -40,7 +40,7 @@ def normalize_runtime() -> None:
     p = APP / 'run.sh'
     s = p.read_text(encoding='utf-8')
     s = re.sub(r'\n# Canary-only one-shot diagnostics\..*?\n\[ -x /canary_runtime_diag\.sh \] && /canary_runtime_diag\.sh &\n', '\n', s, flags=re.S)
-    s = s.replace('3.0.5', '3.0.0')
+    s = s.replace('3.0.0', '3.0.0')
     write(p, s)
 
     p = APP / 'Dockerfile'
@@ -57,8 +57,8 @@ def normalize_runtime() -> None:
             text = p.read_text(encoding='utf-8')
         except (UnicodeDecodeError, OSError):
             continue
-        if '3.0.5' in text:
-            write(p, text.replace('3.0.5','3.0.0'))
+        if '3.0.0' in text:
+            write(p, text.replace('3.0.0','3.0.0'))
 
 
 def write_metadata() -> None:

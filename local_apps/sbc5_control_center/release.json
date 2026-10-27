@@ -1,14 +1,14 @@
 {
-  "version": "3.0.5",
+  "version": "3.0.0",
   "release_date": "2026-10-27",
   "restart_required": "none",
-  "summary": "Rust canary runtime fix: recover orphaned Adaptive PWM thermal ownership and render Card UI with the current release version before Lovelace synchronization.",
-  "package_version": "3.0.5",
-  "card_ui_version": "3.0.5",
+  "summary": "Hybrid Rust Core release: native low-overhead host telemetry and runtime health with the proven compatibility control plane, verified preserved-state migration, Adaptive PWM/AI Cooling recovery and rollback safety.",
+  "package_version": "3.0.0",
+  "card_ui_version": "3.0.0",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Poprawka runtime Rust canary: odzyskiwanie osieroconego przejęcia termicznego Adaptive PWM oraz dynamiczna wersja Card UI przed synchronizacją Lovelace."
+  "summary_pl": "Hybrydowe wydanie Rust Core: natywna lekka telemetria hosta i kontrola zdrowia runtime ze sprawdzoną warstwą zgodności, zweryfikowaną migracją stanu, odzyskiwaniem Adaptive PWM/AI Cooling i bezpiecznym rollbackiem."
 }
