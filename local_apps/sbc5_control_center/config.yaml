@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.1
+version: 3.1.2
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.1 — Add AI Thermal Predictor telemetry to the main YAML dashboard card with responsive history-ready tiles."
+description: "SBC5 Control Center 3.1.2 — Fix AI Thermal Predictor delivery, Lovelace card version synchronization and Raspberry Pi network identity."
 arch:
 - aarch64
 homeassistant: 2026.10.1

@@ -1,5 +1,49 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.2 — 2026-10-27
+
+### English
+
+#### Changed
+
+- AI Thermal Predictor recorder entities are now owned by the native SBC5 integration and reuse the existing AI runtime relay without an additional polling loop.
+
+#### Fixed
+
+- Fixed browser-session Lovelace synchronization so runtime templates normalize Card UI, Update Card and SBC5CC version markers to the installed release.
+- Fixed the stale 2.8.34 Update Card marker that caused verification rollback after a successful 3.1.1 update.
+- Raspberry Pi device identity now uses the physical host network interface instead of ephemeral App/container MAC addresses.
+- Device Registry migration replaces accumulated stale MAC connections with the single verified host MAC.
+
+#### Performance
+
+- No new high-frequency polling loop was added; Predictor sensors reuse the existing 15-second native coordinator and AI runtime relay.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Encje Recordera AI Thermal Predictor są teraz obsługiwane przez natywną integrację SBC5 i korzystają z istniejącego przekaźnika AI runtime bez dodatkowej pętli odpytywania.
+
+#### Naprawiono
+
+- Naprawiono synchronizację Lovelace przez sesję przeglądarki: znaczniki wersji Card UI, Update Card i SBC5CC są normalizowane do zainstalowanego wydania.
+- Naprawiono stary znacznik Update Card 2.8.34, który powodował rollback weryfikacji po poprawnej aktualizacji 3.1.1.
+- Identyfikacja urządzenia Raspberry Pi korzysta teraz z fizycznego interfejsu sieciowego hosta zamiast zmiennych adresów MAC aplikacji/kontenera.
+- Migracja Device Registry zastępuje nagromadzone stare połączenia MAC jednym zweryfikowanym adresem MAC hosta.
+
+#### Wydajność
+
+- Nie dodano nowej pętli szybkiego odpytywania; sensory Predictora wykorzystują istniejący 15-sekundowy koordynator natywny i przekaźnik AI runtime.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.1 — 2026-10-27
 
 ### English
