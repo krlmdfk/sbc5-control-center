@@ -1,5 +1,55 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.4 — 2026-10-27
+
+### English
+
+#### Added
+
+- Expose AI Thermal Predictor quality state as a native Home Assistant sensor and on the expanded AI card.
+
+#### Changed
+
+- Reweight AI Thermal Predictor confidence so prediction accuracy contributes 35 percent of the score; MAE around 2-3 C can no longer report confidence above 90 percent.
+
+#### Fixed
+
+- Normalize SBC5 Package Version and current runtime version surfaces structurally during every release so stale literals such as 2.8.34 cannot survive future version bumps.
+- Reconcile legacy generic restart=host CPU/OC markers only when the marker reason identifies CPU configuration and Boot Verification proves the persisted requested profile is already active.
+- Use persistent host telemetry as a Lovelace fallback for platform compatibility and show the known installed version while transient update-state publication resynchronizes after Home Assistant Core restart.
+
+#### Performance
+
+- No new polling loops and no Adaptive PWM or AI Cooling control changes; all fixes reuse existing telemetry, coordinator and runtime paths.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Udostępniono stan jakości AI Thermal Predictor jako natywny sensor Home Assistant i na rozwijanej karcie AI.
+
+#### Zmieniono
+
+- Zmieniono wagę confidence AI Thermal Predictor: dokładność predykcji odpowiada za 35 procent wyniku, więc MAE około 2-3 C nie może już generować confidence powyżej 90 procent.
+
+#### Naprawiono
+
+- Każde wydanie strukturalnie normalizuje wersję pakietu SBC5 i bieżące powierzchnie runtime, dzięki czemu stare wartości takie jak 2.8.34 nie mogą przetrwać kolejnych aktualizacji.
+- Legacy marker restart=host o ogólnym scope jest zamykany tylko wtedy, gdy powód jednoznacznie wskazuje CPU/OC, a Boot Verification potwierdza zgodność zapisanego żądanego profilu ze stanem aktywnym.
+- Karta Lovelace korzysta z trwałej telemetrii hosta jako fallbacku zgodności platformy i pokazuje znaną wersję zainstalowaną podczas ponownej synchronizacji chwilowego statusu aktualizacji po restarcie Home Assistant Core.
+
+#### Wydajność
+
+- Bez nowych pętli odpytywania i bez zmian sterowania Adaptive PWM ani AI Cooling; poprawki wykorzystują istniejącą telemetrię, koordynator i ścieżki runtime.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.3 — 2026-10-27
 
 ### English
