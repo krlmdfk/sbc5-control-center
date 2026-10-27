@@ -7423,9 +7423,34 @@ collect_device_identity_cached() {
   SYS_OS_VERSION="$(sed -n 's/^VERSION_ID=//p' <<< "$os_release" | head -n1 | sed 's/^"//;s/"$//')"
   SYS_OS_PRETTY_NAME="$(sed -n 's/^PRETTY_NAME=//p' <<< "$os_release" | head -n1 | sed 's/^"//;s/"$//')"
 
+  # Device identity must come from the Raspberry Pi host, never from the
+  # App/container network namespace. Container veth/MAC addresses can change after
+  # upgrades and caused Device Registry to retain a growing list of stale MACs.
   SYS_NETWORK_MAC=""
-  if [ -n "${SYS_NET_IFACE:-}" ] && [ -r "/sys/class/net/$SYS_NET_IFACE/address" ]; then
-    SYS_NETWORK_MAC="$(tr '[:upper:]' '[:lower:]' < "/sys/class/net/$SYS_NET_IFACE/address" 2>/dev/null | tr -d '\r\n' || true)"
+  local host_net_iface="" host_mac_path="" host_mac="" ni=""
+  if command -v nsenter >/dev/null 2>&1 && command -v ip >/dev/null 2>&1; then
+    host_net_iface="$(nsenter -t 1 -n ip route 2>/dev/null | awk '/^default/ {print $5; exit}' || true)"
+  fi
+  if [ -z "$host_net_iface" ] && [ -d /proc/1/root/sys/class/net ]; then
+    for ni in /proc/1/root/sys/class/net/*; do
+      [ -e "$ni" ] || continue
+      [ "${ni##*/}" = "lo" ] && continue
+      # Prefer a real host device; skip virtual bridges/veth/tunnels.
+      [ -e "$ni/device" ] || continue
+      if [ -r "$ni/operstate" ] && [ "$(cat "$ni/operstate" 2>/dev/null || true)" = "up" ]; then
+        host_net_iface="${ni##*/}"; break
+      fi
+      [ -n "$host_net_iface" ] || host_net_iface="${ni##*/}"
+    done
+  fi
+  if [ -n "$host_net_iface" ]; then
+    host_mac_path="/proc/1/root/sys/class/net/$host_net_iface/address"
+    if [ -r "$host_mac_path" ]; then
+      host_mac="$(tr '[:upper:]' '[:lower:]' < "$host_mac_path" 2>/dev/null | tr -d '\r\n' || true)"
+      if [[ "$host_mac" =~ ^([0-9a-f]{2}:){5}[0-9a-f]{2}$ ]] && [ "$host_mac" != "00:00:00:00:00:00" ]; then
+        SYS_NETWORK_MAC="$host_mac"
+      fi
+    fi
   fi
 
   fw="$(vcgencmd version 2>/dev/null || true)"
