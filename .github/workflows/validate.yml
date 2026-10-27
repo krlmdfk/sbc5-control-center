@@ -26,6 +26,7 @@ jobs:
         run: |
           bash -n local_apps/sbc5_control_center/run.sh
           bash -n local_apps/sbc5_control_center/namespace_native_guard.sh
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
 
       - name: Compile Python
         run: |
@@ -53,6 +54,9 @@ jobs:
 
       - name: Test Thermal Predictor Accuracy Calibration
         run: python scripts/test_thermal_predictor_accuracy.py
+
+      - name: Test AI bucket-aware qualification and thermal fast path
+        run: python scripts/test_ai_bucket_qualification_v4.py
 
       - name: Check whitespace errors
         run: git diff --check HEAD^ HEAD || git diff --check

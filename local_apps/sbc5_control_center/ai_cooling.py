@@ -32,7 +32,7 @@ WORKLOAD_HYSTERESIS_PERCENT = 5.0
 WORKLOAD_WINDOW_SECONDS = 30.0
 WORKLOAD_STABLE_SECONDS = 30.0
 TRAIN_SAMPLE_INTERVAL_SECONDS = 30.0
-QUALIFICATION_POLICY = "quasi_steady_v3"
+QUALIFICATION_POLICY = "bucket_aware_quasi_steady_v4"
 QUALIFY_STABLE_SECONDS = 30.0
 QUALIFY_TEMP_BAND_MIN_C = 1.25 # window mean must stay close to the setpoint
 QUALIFY_TEMP_WINDOW_SECONDS = 60.0
@@ -46,6 +46,43 @@ QUALIFY_PWM_WINDOW_SECONDS = 30.0
 QUALIFY_PWM_RANGE_MAX = 8      # pp; physical slew is allowed while settling
 QUALIFY_GOLD_PWM_RANGE_MAX = 5
 QUALIFY_STREAK_REQUIRED = 3    # compatibility/diagnostic counter; time gate is authoritative
+
+
+def _qualification_limits(workload: str, deadband: float) -> dict[str, float | int]:
+    """Return workload-aware quality gates while preserving strict low-load learning."""
+    limits: dict[str, float | int] = {
+        "temperature_band_c": max(float(deadband), QUALIFY_TEMP_BAND_MIN_C),
+        "slope_abs_max_c_per_min": QUALIFY_SLOPE_MAX,
+        "temperature_range_max_c": QUALIFY_TEMP_RANGE_MAX_C,
+        "temperature_window_min_span_seconds": QUALIFY_TEMP_WINDOW_MIN_SPAN_SECONDS,
+        "temperature_window_min_points": QUALIFY_TEMP_WINDOW_MIN_POINTS,
+        "pwm_range_max_percent": QUALIFY_PWM_RANGE_MAX,
+        "workload_stable_seconds": WORKLOAD_STABLE_SECONDS,
+        "stable_seconds_required": QUALIFY_STABLE_SECONDS,
+    }
+    if workload == "medium":
+        limits.update({
+            "temperature_band_c": max(float(deadband), 2.0),
+            "slope_abs_max_c_per_min": 1.0,
+            "temperature_range_max_c": 3.0,
+            "temperature_window_min_span_seconds": 20.0,
+            "temperature_window_min_points": 3,
+            "pwm_range_max_percent": 12,
+            "workload_stable_seconds": 20.0,
+            "stable_seconds_required": 20.0,
+        })
+    elif workload == "high":
+        limits.update({
+            "temperature_band_c": max(float(deadband), 3.0),
+            "slope_abs_max_c_per_min": 1.5,
+            "temperature_range_max_c": 4.0,
+            "temperature_window_min_span_seconds": 20.0,
+            "temperature_window_min_points": 3,
+            "pwm_range_max_percent": 18,
+            "workload_stable_seconds": 20.0,
+            "stable_seconds_required": 20.0,
+        })
+    return limits
 
 # 3.1.0 AI Thermal Predictor — observe-only forecast layer.
 THERMAL_PREDICTOR_HORIZONS_SECONDS = (30, 60, 120)
@@ -924,6 +961,12 @@ def step(args: argparse.Namespace) -> int:
     pmic_power = telemetry.get("pmic_power_w")
     freq = telemetry.get("cpu_frequency_mhz")
 
+    # A bucket transition gets a clean short-term quality window. Learned bins,
+    # EMA values, observations and qualified counters are deliberately preserved.
+    if workload_changed:
+        model["qualification_temp_history"] = []
+        model["qualification_pwm_history"] = []
+    qualification_limits = _qualification_limits(workload, deadband)
     slope, temp_window_range, temp_window_span, temp_window_mean, temp_window_points = _update_temp_stability(model, temp, now)
 
     target_key = f"{target:.1f}"
@@ -948,17 +991,19 @@ def step(args: argparse.Namespace) -> int:
         model["last_training_sample_epoch"] = now
         observation_added = True
 
-    qualification_band = max(deadband, QUALIFY_TEMP_BAND_MIN_C)
-    window_ready = temp_window_span >= QUALIFY_TEMP_WINDOW_MIN_SPAN_SECONDS and temp_window_points >= QUALIFY_TEMP_WINDOW_MIN_POINTS
+    qualification_band = float(qualification_limits["temperature_band_c"])
+    window_ready = (
+        temp_window_span >= float(qualification_limits["temperature_window_min_span_seconds"])
+        and temp_window_points >= int(qualification_limits["temperature_window_min_points"])
+    )
     window_error = temp_window_mean - target
-    # Current value may move by one sensor quantum while the minute-long operating
-    # point remains stable. The window mean is therefore authoritative for quality.
+    # The clean bucket-local window mean is authoritative for quality.
     near_target = abs(window_error) <= qualification_band and abs(error) <= max(2.0, qualification_band * 1.6)
-    slope_stable = abs(slope) <= QUALIFY_SLOPE_MAX
-    temp_range_stable = temp_window_range <= QUALIFY_TEMP_RANGE_MAX_C
+    slope_stable = abs(slope) <= float(qualification_limits["slope_abs_max_c_per_min"])
+    temp_range_stable = temp_window_range <= float(qualification_limits["temperature_range_max_c"])
     pwm_window_range, pwm_window_span = _update_pwm_stability(model, current, now)
-    pwm_stable = pwm_window_range <= QUALIFY_PWM_RANGE_MAX
-    workload_stable = workload_age >= WORKLOAD_STABLE_SECONDS
+    pwm_stable = pwm_window_range <= int(qualification_limits["pwm_range_max_percent"])
+    workload_stable = workload_age >= float(qualification_limits["workload_stable_seconds"])
     controller_hold = _controller_hold(controller_action)
 
     reject_reasons: list[str] = []
@@ -995,7 +1040,7 @@ def step(args: argparse.Namespace) -> int:
     stable_seconds = max(0.0, now - stable_since) if stable_since > 0 else 0.0
     b["stable_streak"] = stable_streak
     b["stable_since_epoch"] = stable_since
-    qualified = observation_added and stable_candidate and stable_seconds >= QUALIFY_STABLE_SECONDS
+    qualified = observation_added and stable_candidate and stable_seconds >= float(qualification_limits["stable_seconds_required"])
     qualification_tier = ("gold" if qualified and gold_candidate else ("quasi_steady" if qualified else ("candidate" if stable_candidate else "rejected")))
     if qualified:
         rejection_reason = "qualified"
@@ -1022,7 +1067,7 @@ def step(args: argparse.Namespace) -> int:
         # weight so the model can mature without learning transient spikes.
         candidate = current + (0.50 * window_error) + (0.05 * slope)
         candidate = _clamp(candidate, min_safe, maximum)
-        quality_weight = 1.0 if qualification_tier == "gold" else 0.55
+        quality_weight = 1.0 if qualification_tier == "gold" else (0.55 if workload in {"idle", "low"} else (0.45 if workload == "medium" else 0.40))
         alpha_base = 0.25 if qn < 6 else (0.14 if qn < 30 else 0.07)
         alpha = alpha_base * quality_weight
         old = _num(b.get("ema_pwm"), candidate)
@@ -1164,21 +1209,22 @@ def step(args: argparse.Namespace) -> int:
         "stable_streak": stable_streak,
         "stable_streak_required": QUALIFY_STREAK_REQUIRED,
         "stable_seconds": int(round(stable_seconds)),
-        "stable_seconds_required": int(QUALIFY_STABLE_SECONDS),
+        "stable_seconds_required": int(qualification_limits["stable_seconds_required"]),
         "training_sample_due": sample_due,
         "training_sample_interval_seconds": int(TRAIN_SAMPLE_INTERVAL_SECONDS),
         "qualification_limits": {
             "temperature_band_c": qualification_band,
-            "slope_abs_max_c_per_min": QUALIFY_SLOPE_MAX,
-            "temperature_range_max_c": QUALIFY_TEMP_RANGE_MAX_C,
+            "slope_abs_max_c_per_min": float(qualification_limits["slope_abs_max_c_per_min"]),
+            "temperature_range_max_c": float(qualification_limits["temperature_range_max_c"]),
             "temperature_window_seconds": QUALIFY_TEMP_WINDOW_SECONDS,
-            "temperature_window_min_span_seconds": QUALIFY_TEMP_WINDOW_MIN_SPAN_SECONDS,
-            "temperature_window_min_points": QUALIFY_TEMP_WINDOW_MIN_POINTS,
-            "pwm_range_max_percent": QUALIFY_PWM_RANGE_MAX,
+            "temperature_window_min_span_seconds": float(qualification_limits["temperature_window_min_span_seconds"]),
+            "temperature_window_min_points": int(qualification_limits["temperature_window_min_points"]),
+            "pwm_range_max_percent": int(qualification_limits["pwm_range_max_percent"]),
             "pwm_window_seconds": QUALIFY_PWM_WINDOW_SECONDS,
             "workload_window_seconds": WORKLOAD_WINDOW_SECONDS,
-            "workload_stable_seconds": WORKLOAD_STABLE_SECONDS,
+            "workload_stable_seconds": float(qualification_limits["workload_stable_seconds"]),
             "workload_hysteresis_percent": WORKLOAD_HYSTERESIS_PERCENT,
+            "bucket_aware": True,
         },
         "confidence_percent": confidence,
         "prediction_pwm_percent": prediction if qn > 0 else None,
