@@ -22,19 +22,14 @@ text, n = re.subn(r'(?m)^AI_RUNTIME_RELAY_INTERVAL_SECONDS=\d+$', 'AI_RUNTIME_RE
 if n != 1: raise SystemExit('AI relay interval anchor not found')
 
 anchor = 'CONFIG_DISABLED_POLL_SECONDS=30\n'
-if anchor not in text:
-    raise SystemExit('CONFIG_DISABLED_POLL_SECONDS anchor not found')
+if anchor not in text: raise SystemExit('CONFIG_DISABLED_POLL_SECONDS anchor not found')
 text = text.replace(anchor, anchor + 'CONFIG_TXT_WATCHDOG_MIN_SECONDS=30\n', 1)
 
 start = text.find('config_txt_options_sync_loop() {')
 if start < 0: raise SystemExit('config_txt_options_sync_loop start not found')
-end = text.find('\n}\n', start)
-if end < 0: raise SystemExit('config_txt_options_sync_loop end not found')
-block = text[start:end+3]
-if 'sleep "$interval"' not in block:
-    raise SystemExit('config watchdog sleep anchor not found')
-block = block.replace('sleep "$interval"', 'sleep "$(( interval < CONFIG_TXT_WATCHDOG_MIN_SECONDS ? CONFIG_TXT_WATCHDOG_MIN_SECONDS : interval ))"', 1)
-text = text[:start] + block + text[end+3:]
+pos = text.find('sleep "$interval"', start)
+if pos < 0: raise SystemExit('config watchdog sleep anchor not found')
+text = text[:pos] + 'sleep "$(( interval < CONFIG_TXT_WATCHDOG_MIN_SECONDS ? CONFIG_TXT_WATCHDOG_MIN_SECONDS : interval ))"' + text[pos+len('sleep "$interval"'):]
 
 old_log = 'log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, sync=${CONFIG_TXT_OPTIONS_SYNC_INTERVAL}s, advanced=${CONFIG_TXT_OPTIONS_ADVANCED}"'
 new_log = 'log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, configured_sync=${CONFIG_TXT_OPTIONS_SYNC_INTERVAL}s, watchdog_min=${CONFIG_TXT_WATCHDOG_MIN_SECONDS}s, event_reload=immediate, advanced=${CONFIG_TXT_OPTIONS_ADVANCED}"'
