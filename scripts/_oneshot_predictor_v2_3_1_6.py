@@ -190,3 +190,5 @@ text = text.replace(old_call, new_call, 1)
 
 AI.write_text(text, encoding="utf-8")
 print("Applied Thermal Predictor v2 accuracy calibration patch")
+
+# trigger-only touch for the one-shot workflow
