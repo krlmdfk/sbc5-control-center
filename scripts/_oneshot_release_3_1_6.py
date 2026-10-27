@@ -80,3 +80,5 @@ cmd = [
 ]
 subprocess.run(cmd, cwd=ROOT, check=True)
 print('Prepared SBC5 3.1.6 code/docs/release candidate')
+
+# trigger-only touch
