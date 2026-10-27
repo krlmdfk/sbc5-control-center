@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.0.3
+version: 3.0.4
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.0.3 — Reduce steady-state log I/O while preserving Adaptive PWM and AI execution cadence."
+description: "SBC5 Control Center 3.0.4 — Lower steady-state polling overhead without changing cooling control cadence."
 arch:
 - aarch64
 homeassistant: 2026.10.1
@@ -69,7 +69,7 @@ options:
   multicore_workers: auto
   config_txt_manager:
     enabled: false
-    sync_interval_seconds: 5
+    sync_interval_seconds: 30
     advanced_mode: false
   section_cpu_enabled: false
   config_cpu_profile: factory

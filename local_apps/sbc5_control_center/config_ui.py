@@ -74,7 +74,7 @@ DEFAULTS = {
   'app_update_manifest_url':'https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/local_apps/sbc5_control_center/release.json','local_package_updates_enabled':True,
   'local_package_scan_interval_minutes':2,'local_package_keep_processed':True,'local_package_cleanup_enabled':True,'local_package_processed_retention':2,'local_package_failed_retention':2,
   'multicore_telemetry_enabled':True,'multicore_workers':'auto',
-  'config_txt_manager':{'enabled':False,'sync_interval_seconds':5,'advanced_mode':False},
+  'config_txt_manager':{'enabled':False,'sync_interval_seconds':30,'advanced_mode':False},
   'config_cpu_profile':'factory',
   'config_cpu':{'arm_freq':'auto','arm_freq_min':'auto','over_voltage':'auto','over_voltage_min':'auto','over_voltage_delta':'auto','force_turbo':'auto','initial_turbo':'auto','temp_limit':'auto'},
   'config_gpu_profile':'factory',

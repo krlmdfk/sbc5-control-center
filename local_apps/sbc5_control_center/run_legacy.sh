@@ -10,8 +10,8 @@ fi
 chmod 1777 /tmp 2>/dev/null || true
 export TMPDIR="${TMPDIR:-/tmp}"
 
-APP_VERSION="3.0.3"
-REQUIRED_PACKAGE_VERSION="3.0.3"
+APP_VERSION="3.0.4"
+REQUIRED_PACKAGE_VERSION="3.0.4"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -123,6 +123,7 @@ UX_RUNTIME_REFRESH_TICKS=30
 RESTART_MANAGER_INTERVAL_SECONDS=120
 RESTART_LAST_PUBLISHED_SIGNATURE=""
 CONFIG_DISABLED_POLL_SECONDS=30
+CONFIG_TXT_WATCHDOG_MIN_SECONDS=30
 TELEMETRY_LAST_POWER_REFRESH=0
 TELEMETRY_LAST_PMIC_REFRESH=0
 TELEMETRY_LAST_EXTENDED_REFRESH=0
@@ -141,7 +142,7 @@ TELEMETRY_LAST_RELAY_PUBLISH=0
 TELEMETRY_LAST_AI_RELAY_PUBLISH=0
 TELEMETRY_LAST_AI_RELAY_CHECK=0
 AI_RUNTIME_LAST_SIGNATURE=""
-AI_RUNTIME_RELAY_INTERVAL_SECONDS=15
+AI_RUNTIME_RELAY_INTERVAL_SECONDS=30
 AI_RUNTIME_RELAY_KEEPALIVE_SECONDS=300
 ADAPTIVE_PWM_LOG_KEEPALIVE_WRITES=6
 AI_COOLING_LOG_KEEPALIVE_CYCLES=30
@@ -6056,18 +6057,22 @@ clear_2_8_24_version_only_cpu_restart() {
 }
 
 config_txt_options_sync_loop() {
-  local sig interval enabled settings
+  local sig interval enabled settings effective_interval
   while true; do
     settings="$(jq -r '[(.config_txt_manager.enabled // false), (.config_txt_manager.sync_interval_seconds // 5)] | @tsv' "$OPTIONS_FILE" 2>/dev/null || printf 'false\t5')"
     IFS=$'\t' read -r enabled interval <<< "$settings"
-    num_in_range "${interval:-5}" 2 60 || interval=5
+    num_in_range "${interval:-30}" 2 60 || interval=30
+    effective_interval="$interval"
+    if [ "$effective_interval" -lt "$CONFIG_TXT_WATCHDOG_MIN_SECONDS" ] 2>/dev/null; then
+      effective_interval="$CONFIG_TXT_WATCHDOG_MIN_SECONDS"
+    fi
 
     if [ "$enabled" != "true" ]; then
       sleep "$CONFIG_DISABLED_POLL_SECONDS"
       continue
     fi
 
-    sleep "$interval"
+    sleep "$effective_interval"
     sig="$(config_txt_options_signature)"
     if [ -z "$LAST_CONFIG_OPTIONS_SIGNATURE" ] || [ "$sig" != "$LAST_CONFIG_OPTIONS_SIGNATURE" ]; then
       sync_config_txt_from_options false || true
@@ -9217,8 +9222,8 @@ log "Adaptive PWM: control_mode=${COOLING_CONTROL_MODE}; enabled=${ADAPTIVE_PWM_
 log "Update Handoff: seamless Adaptive PWM ownership transfer=enabled; timeout=${FAN_CONTROL_HANDOFF_MAX_AGE_SECONDS}s; arbitrary stop nadal zwalnia sterowanie do kernela."
 log "AI Cooling Preview: section=${AI_COOLING_SECTION_ENABLED}; configured=${AI_COOLING_MODE}; effective=${AI_COOLING_EFFECTIVE_MODE}; assist_limit=±${AI_COOLING_ASSIST_LIMIT_PCT}%; min_samples=${AI_COOLING_MIN_SAMPLES}; local_model=/data/ai_cooling_model.json."
 log "Restart Manager: policy=${RESTART_POLICY}, pre_check=${PRE_RESTART_CONFIG_CHECK}, notices=${RESTART_NOTICE_ON_START}"
-log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, sync=${CONFIG_TXT_OPTIONS_SYNC_INTERVAL}s, advanced=${CONFIG_TXT_OPTIONS_ADVANCED}"
-log "Performance: realtime=${REALTIME_PUBLISH_INTERVAL_SECONDS}s; telemetry=${TELEMETRY_PUBLISH_INTERVAL_SECONDS}s; relay=${HOST_RELAY_INTERVAL_SECONDS}s; AI-relay=${AI_RUNTIME_RELAY_INTERVAL_SECONDS}s; PMIC=${TELEMETRY_PMIC_INTERVAL_SECONDS}s; system=${TELEMETRY_EXTENDED_INTERVAL_SECONDS}s; power/USB/config=${TELEMETRY_POWER_INTERVAL_SECONDS}s; profile=${PROFILE_REPORT_INTERVAL_SECONDS}s; profile-options=${PROFILE_OPTIONS_SYNC_INTERVAL_SECONDS}s; UX-poll=${UX_RUNTIME_POLL_SECONDS}s; boot-cache=${BOOT_CONFIG_CACHE_SECONDS}s; AI evaluator=$((AI_COOLING_EVAL_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s; control-log=sample/${ADAPTIVE_PWM_LOG_KEEPALIVE_WRITES} writes; AI-log-keepalive=$((AI_COOLING_LOG_KEEPALIVE_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s."
+log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, configured_sync=${CONFIG_TXT_OPTIONS_SYNC_INTERVAL}s, watchdog_min=${CONFIG_TXT_WATCHDOG_MIN_SECONDS}s, event_reload=immediate, advanced=${CONFIG_TXT_OPTIONS_ADVANCED}"
+log "Performance: realtime=${REALTIME_PUBLISH_INTERVAL_SECONDS}s; telemetry=${TELEMETRY_PUBLISH_INTERVAL_SECONDS}s; relay=${HOST_RELAY_INTERVAL_SECONDS}s; AI-relay=${AI_RUNTIME_RELAY_INTERVAL_SECONDS}s; PMIC=${TELEMETRY_PMIC_INTERVAL_SECONDS}s; system=${TELEMETRY_EXTENDED_INTERVAL_SECONDS}s; power/USB/config=${TELEMETRY_POWER_INTERVAL_SECONDS}s; profile=${PROFILE_REPORT_INTERVAL_SECONDS}s; profile-options=${PROFILE_OPTIONS_SYNC_INTERVAL_SECONDS}s; UX-poll=${UX_RUNTIME_POLL_SECONDS}s; boot-cache=${BOOT_CONFIG_CACHE_SECONDS}s; AI evaluator=$((AI_COOLING_EVAL_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s; control-log=sample/${ADAPTIVE_PWM_LOG_KEEPALIVE_WRITES} writes; AI-log-keepalive=$((AI_COOLING_LOG_KEEPALIVE_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s; config-watchdog>=${CONFIG_TXT_WATCHDOG_MIN_SECONDS}s."
 resolve_multicore_workers
 log "Multicore Telemetry: enabled=${MULTICORE_TELEMETRY_ENABLED}; workers=${MULTICORE_WORKERS_CONFIG} -> ${MULTICORE_WORKERS_EFFECTIVE}; cpus_allowed=$(read_cpu_allowed_list 2>/dev/null || echo unknown)."
 log "Polecenia: status, reload_config, diagnose, restore_backup, curve_editor_refresh, calibrate_fan, fan_calibration_refresh, restore_active_cooler_factory, restore_rpi5_app_defaults, resume_managed_rpi5_config, set_custom_curve_template, set_custom_curve_point, reset_custom_curve_parameter, reset_custom_curve_factory, reset_all_custom_curves_factory, reset_custom_curve, apply_ai_grid_suggestion, clear_ai_grid_override, ux_self_test, set_cpu_profile, set_gpu_profile, apply_system_config, restore_system_config_backup, apply_config_txt_parameter, remove_config_txt_parameter, restore_config_manager_backup, restart_status, restart_ha_confirmed, check_app_update, install_local_update, cleanup_update_packages, migration_status, migration_export, migration_import, migration_rollback"

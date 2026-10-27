@@ -1,5 +1,37 @@
 # Changelog — SBC5 Control Center
 
+## 3.0.4 — 2026-10-27
+
+### English
+
+#### Changed
+
+- Default Config.txt Manager sync interval is now 30 seconds; existing values below 30 seconds remain accepted for compatibility but are clamped to a 30-second runtime watchdog.
+
+#### Performance
+
+- Raised the effective Config.txt Manager watchdog floor from 5 seconds to 30 seconds while preserving immediate event-driven UI reloads.
+- Reduced compact AI relay signature checks from every 15 seconds to every 30 seconds; the AI evaluator remains at 10 seconds.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Domyślny interwał synchronizacji Config.txt Manager wynosi teraz 30 sekund; starsze wartości poniżej 30 sekund pozostają akceptowane dla zgodności, ale runtime stosuje minimum 30 sekund.
+
+#### Wydajność
+
+- Podniesiono efektywne minimum watchdoga Config.txt Manager z 5 do 30 sekund, zachowując natychmiastowe przeładowanie po zapisie z UI.
+- Zmniejszono częstotliwość sprawdzania podpisu kompaktowego relay AI z 15 do 30 sekund; evaluator AI nadal działa co 10 sekund.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.0.3 — 2026-10-27
 
 ### English

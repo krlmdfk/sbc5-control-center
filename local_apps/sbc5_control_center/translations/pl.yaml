@@ -128,7 +128,7 @@ configuration:
         description: 'Włącz, aby ustawienia poniżej zarządzały `sbc5cc-managed.txt`. Domyślnie: wyłączone.'
       sync_interval_seconds:
         name: Interwał synchronizacji
-        description: Synchronizacja co 2–60 s; domyślnie 5 s. Zapis nie uruchamia SBC5 automatycznie.
+        description: Ustawienie 2–60 s; domyślnie 30 s. Minimalny watchdog runtime to 30 s, a zapis z UI nadal jest stosowany natychmiast.
       advanced_mode:
         name: Tryb zaawansowany
         description: Pozwala na parametry spoza katalogu i wybrane wartości poza zakresami ochronnymi. Walidacja składni pozostaje
