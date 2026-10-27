@@ -26,48 +26,28 @@ if anchor not in text:
     raise SystemExit('CONFIG_DISABLED_POLL_SECONDS anchor not found')
 text = text.replace(anchor, anchor + 'CONFIG_TXT_WATCHDOG_MIN_SECONDS=30\n', 1)
 
-pattern_local = r'(config_txt_options_sync_loop\(\)\s*\{\s*\n\s*local\s+)([^\n]+)'
-m = re.search(pattern_local, text)
-if not m:
-    raise SystemExit('config_txt_options_sync_loop local anchor not found')
-locals_line = m.group(2)
-if 'effective_interval' not in locals_line:
-    locals_line = locals_line.rstrip() + ' effective_interval'
-text = text[:m.start(2)] + locals_line + text[m.end(2):]
-
-pattern_interval = re.compile(
-    r'(?ms)(\s*num_in_range\s+"\$\{interval:-5\}"\s+2\s+60\s+\|\|\s+interval=5\s*\n)'
-    r'(\s*if\s+\[\s+"\$enabled"\s+!=\s+"true"\s+\];\s+then\s*\n\s*sleep\s+"\$CONFIG_DISABLED_POLL_SECONDS"\s*\n\s*continue\s*\n\s*fi\s*\n)'
-    r'(\s*sleep\s+"\$interval"\s*\n)'
-)
-m = pattern_interval.search(text)
-if not m:
-    raise SystemExit('config.txt watchdog interval anchor not found')
-replacement = '''    num_in_range "${interval:-30}" 2 60 || interval=30
-    effective_interval="$interval"
-    if [ "$effective_interval" -lt "$CONFIG_TXT_WATCHDOG_MIN_SECONDS" ] 2>/dev/null; then
-      effective_interval="$CONFIG_TXT_WATCHDOG_MIN_SECONDS"
-    fi
-
-    if [ "$enabled" != "true" ]; then
-      sleep "$CONFIG_DISABLED_POLL_SECONDS"
-      continue
-    fi
-
-    sleep "$effective_interval"
-'''
-text = text[:m.start()] + '\n' + replacement + text[m.end():]
+start = text.find('config_txt_options_sync_loop() {')
+if start < 0:
+    raise SystemExit('config_txt_options_sync_loop start not found')
+end = text.find('\n}\n', start)
+if end < 0:
+    raise SystemExit('config_txt_options_sync_loop end not found')
+block = text[start:end+3]
+block, n = re.subn(r'local sig interval enabled settings\b', 'local sig interval enabled settings effective_interval', block, count=1)
+if n != 1: raise SystemExit('config watchdog locals anchor not found')
+block, n = re.subn(r'num_in_range "\$\{interval:-5\}" 2 60 \|\| interval=5', 'num_in_range "${interval:-30}" 2 60 || interval=30\n    effective_interval="$interval"\n    if [ "$effective_interval" -lt "$CONFIG_TXT_WATCHDOG_MIN_SECONDS" ] 2>/dev/null; then\n      effective_interval="$CONFIG_TXT_WATCHDOG_MIN_SECONDS"\n    fi', block, count=1)
+if n != 1: raise SystemExit('config watchdog range anchor not found')
+block, n = re.subn(r'sleep "\$interval"', 'sleep "$effective_interval"', block, count=1)
+if n != 1: raise SystemExit('config watchdog sleep anchor not found')
+text = text[:start] + block + text[end+3:]
 
 old_log = 'log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, sync=${CONFIG_TXT_OPTIONS_SYNC_INTERVAL}s, advanced=${CONFIG_TXT_OPTIONS_ADVANCED}"'
 new_log = 'log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, configured_sync=${CONFIG_TXT_OPTIONS_SYNC_INTERVAL}s, watchdog_min=${CONFIG_TXT_WATCHDOG_MIN_SECONDS}s, event_reload=immediate, advanced=${CONFIG_TXT_OPTIONS_ADVANCED}"'
-if old_log not in text:
-    raise SystemExit('config.txt startup log anchor not found')
+if old_log not in text: raise SystemExit('config startup log anchor not found')
 text = text.replace(old_log, new_log, 1)
-
 old_perf = 'AI-log-keepalive=$((AI_COOLING_LOG_KEEPALIVE_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s.'
 new_perf = 'AI-log-keepalive=$((AI_COOLING_LOG_KEEPALIVE_CYCLES * ADAPTIVE_PWM_INTERVAL_SECONDS))s; config-watchdog>=${CONFIG_TXT_WATCHDOG_MIN_SECONDS}s.'
-if old_perf not in text:
-    raise SystemExit('performance log anchor not found')
+if old_perf not in text: raise SystemExit('performance log anchor not found')
 text = text.replace(old_perf, new_perf, 1)
 RUN.write_text(text, encoding="utf-8")
 
@@ -100,5 +80,4 @@ lock = LOCK.read_text(encoding="utf-8")
 lock, n = re.subn(r'(?ms)(name = "sbc5-core"\nversion = ")[^"]+(\")', rf'\g<1>{VERSION}\2', lock, count=1)
 if n != 1: raise SystemExit('Cargo.lock sbc5-core version anchor not found')
 LOCK.write_text(lock, encoding="utf-8")
-
 print('Prepared SBC5 3.0.4 polling/I-O optimization anchors')
