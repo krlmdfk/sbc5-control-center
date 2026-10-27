@@ -3939,11 +3939,23 @@ clear_completed_host_restart() {
   saved_boot="$(jq -r '.boot_id // empty' "$RESTART_STATE_FILE" 2>/dev/null || true)"
   verification_failed="$(jq -r '.verification_failed // false' "$RESTART_STATE_FILE" 2>/dev/null || echo false)"
   [ "$type" = "host" ] && [ -n "$saved_boot" ] || return 0
-  # Normal pending changes must wait for a new host boot. A marker that already
-  # failed verification may be revalidated on the same boot; this lets 2.7.2
-  # close the false 2.7.1 Repair without forcing an unnecessary second reboot.
-  if [ "$saved_boot" = "$CURRENT_BOOT_ID" ] && [ "$verification_failed" != "true" ]; then return 0; fi
   scope="$(jq -r '.scope // "generic"' "$RESTART_STATE_FILE" 2>/dev/null || echo generic)"
+
+  # 3.1.3: same-boot cleanup is permitted only for a deterministic CPU profile
+  # marker whose expected saved+active state can be proven by Boot Verification.
+  # Generic config.txt/Device Tree markers still require a real host boot.
+  if [ "$saved_boot" = "$CURRENT_BOOT_ID" ] && [ "$verification_failed" != "true" ]; then
+    if [ "$scope" = "cpu_profile" ]; then
+      profile="$(jq -r '.expected_profile // "factory"' "$RESTART_STATE_FILE" 2>/dev/null || echo factory)"
+      expected_arm="$(jq -r 'if .expected_arm_freq == null then "" else (.expected_arm_freq|tostring) end' "$RESTART_STATE_FILE" 2>/dev/null || true)"
+      if { [ "$profile" = "factory" ] || [[ "$expected_arm" =~ ^[0-9]+$ ]]; } && cpu_profile_verify_after_boot "$profile" "$expected_arm"; then
+        log "Restart Manager: bieżący boot już spełnia oczekiwany profil CPU/OC — usuwam osierocony marker restart=host."
+        rm -f "$RESTART_STATE_FILE"
+      fi
+    fi
+    return 0
+  fi
+
   if [ "$scope" = "cpu_profile" ]; then
     profile="$(jq -r '.expected_profile // "factory"' "$RESTART_STATE_FILE" 2>/dev/null || echo factory)"
     expected_arm="$(jq -r 'if .expected_arm_freq == null then "" else (.expected_arm_freq|tostring) end' "$RESTART_STATE_FILE" 2>/dev/null || true)"

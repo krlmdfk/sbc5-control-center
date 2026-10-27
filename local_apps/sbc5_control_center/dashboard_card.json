@@ -974,7 +974,7 @@
                 "type": "custom:mushroom-template-card",
                 "entity": "sensor.sbc5_ai_thermal_forecast_30s",
                 "primary": "Prognoza +30 s",
-                "secondary": "{% set v = states('sensor.sbc5_ai_thermal_forecast_30s') %} {{ v if v not in ['unknown','unavailable','none',''] else '—' }} °C",
+                "secondary": "{% set v = states('sensor.sbc5_ai_thermal_forecast_30s') %} {% if v not in ['unknown','unavailable','none',''] %}\n  {{ v }} °C\n{% else %}\n  {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}\n  {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}\n  {{ p.get('forecast_30s_c', '—') }} °C\n{% endif %}",
                 "icon": "mdi:thermometer-chevron-up",
                 "icon_color": "cyan",
                 "layout": "horizontal",
@@ -986,7 +986,7 @@
                 "type": "custom:mushroom-template-card",
                 "entity": "sensor.sbc5_ai_thermal_forecast_60s",
                 "primary": "Prognoza +60 s",
-                "secondary": "{% set v = states('sensor.sbc5_ai_thermal_forecast_60s') %} {{ v if v not in ['unknown','unavailable','none',''] else '—' }} °C",
+                "secondary": "{% set v = states('sensor.sbc5_ai_thermal_forecast_60s') %} {% if v not in ['unknown','unavailable','none',''] %}\n  {{ v }} °C\n{% else %}\n  {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}\n  {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}\n  {{ p.get('forecast_60s_c', '—') }} °C\n{% endif %}",
                 "icon": "mdi:thermometer-chevron-up",
                 "icon_color": "cyan",
                 "layout": "horizontal",
@@ -998,7 +998,7 @@
                 "type": "custom:mushroom-template-card",
                 "entity": "sensor.sbc5_ai_thermal_forecast_120s",
                 "primary": "Prognoza +120 s",
-                "secondary": "{% set v = states('sensor.sbc5_ai_thermal_forecast_120s') %} {{ v if v not in ['unknown','unavailable','none',''] else '—' }} °C",
+                "secondary": "{% set v = states('sensor.sbc5_ai_thermal_forecast_120s') %} {% if v not in ['unknown','unavailable','none',''] %}\n  {{ v }} °C\n{% else %}\n  {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}\n  {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}\n  {{ p.get('forecast_120s_c', '—') }} °C\n{% endif %}",
                 "icon": "mdi:thermometer-chevron-up",
                 "icon_color": "blue",
                 "layout": "horizontal",
@@ -1010,7 +1010,7 @@
                 "type": "custom:mushroom-template-card",
                 "entity": "sensor.sbc5_ai_thermal_predictor_confidence",
                 "primary": "Pewność predyktora",
-                "secondary": "{% set v = states('sensor.sbc5_ai_thermal_predictor_confidence') %} {{ v if v not in ['unknown','unavailable','none',''] else '—' }}% · observe-only",
+                "secondary": "{% set v = states('sensor.sbc5_ai_thermal_predictor_confidence') %} {% if v not in ['unknown','unavailable','none',''] %}\n  {{ v }}% · observe-only\n{% else %}\n  {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}\n  {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}\n  {{ p.get('confidence_percent', '—') }}% · observe-only\n{% endif %}",
                 "icon": "mdi:brain",
                 "icon_color": "{% set c = states('sensor.sbc5_ai_thermal_predictor_confidence') | int(0) %} {% if c >= 80 %}green{% elif c >= 55 %}cyan{% else %}blue{% endif %}",
                 "layout": "horizontal",
@@ -1021,6 +1021,83 @@
             ],
             "card_mod": {
               "style": "#root { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; gap: clamp(6px, 1.8vw, 10px) !important; align-items: stretch !important; }\n#root > * { min-width: 0 !important; height: 100% !important; }\n@media (max-width: 339px) { #root { grid-template-columns: 1fr !important; } }\n"
+            }
+          },
+          {
+            "type": "markdown",
+            "content": "#### Jakość predykcji\nBłąd prognozy, trend i dojrzałość modelu · dane tylko diagnostyczne\n",
+            "card_mod": {
+              "style": "ha-card { background: transparent; box-shadow: none; padding: 2px 6px 0 6px; margin: 0; }\nha-markdown { padding: 0 !important; }\nh4 { margin: 0 !important; font-size: 14px !important; line-height: 1.1 !important; }\n"
+            }
+          },
+          {
+            "type": "grid",
+            "columns": 2,
+            "square": false,
+            "cards": [
+              {
+                "type": "custom:mushroom-template-card",
+                "entity": "sensor.sbc5_ai_thermal_predictor_mae_30s",
+                "primary": "MAE +30 s",
+                "secondary": "{{ states('sensor.sbc5_ai_thermal_predictor_mae_30s') }} °C · ostatni błąd {{ states('sensor.sbc5_ai_thermal_predictor_last_error_30s') }} °C",
+                "icon": "mdi:chart-timeline-variant",
+                "icon_color": "cyan",
+                "multiline_secondary": true,
+                "tap_action": {
+                  "action": "more-info"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "entity": "sensor.sbc5_ai_thermal_predictor_mae_60s",
+                "primary": "MAE +60 s",
+                "secondary": "{{ states('sensor.sbc5_ai_thermal_predictor_mae_60s') }} °C · ostatni błąd {{ states('sensor.sbc5_ai_thermal_predictor_last_error_60s') }} °C",
+                "icon": "mdi:chart-timeline-variant",
+                "icon_color": "cyan",
+                "multiline_secondary": true,
+                "tap_action": {
+                  "action": "more-info"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "entity": "sensor.sbc5_ai_thermal_predictor_mae_120s",
+                "primary": "MAE +120 s",
+                "secondary": "{{ states('sensor.sbc5_ai_thermal_predictor_mae_120s') }} °C · ostatni błąd {{ states('sensor.sbc5_ai_thermal_predictor_last_error_120s') }} °C",
+                "icon": "mdi:chart-timeline-variant",
+                "icon_color": "blue",
+                "multiline_secondary": true,
+                "tap_action": {
+                  "action": "more-info"
+                }
+              },
+              {
+                "type": "custom:mushroom-template-card",
+                "entity": "sensor.sbc5_ai_thermal_predictor_mae",
+                "primary": "Jakość modelu",
+                "secondary": "MAE śr. {{ states('sensor.sbc5_ai_thermal_predictor_mae') }} °C · trend {{ states('sensor.sbc5_ai_thermal_predictor_slope') }} °C/min · walidacje {{ states('sensor.sbc5_ai_thermal_predictor_samples') }} · wiek {{ states('sensor.sbc5_ai_thermal_predictor_age') }} s",
+                "icon": "mdi:brain-check-outline",
+                "icon_color": "{% set m = states('sensor.sbc5_ai_thermal_predictor_mae') | float(99) %} {% if m <= 0.75 %}green{% elif m <= 1.5 %}cyan{% else %}orange{% endif %}",
+                "multiline_secondary": true,
+                "tap_action": {
+                  "action": "more-info"
+                }
+              }
+            ],
+            "card_mod": {
+              "style": "#root { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; gap: clamp(6px, 1.8vw, 10px) !important; align-items: stretch !important; }\n#root > * { min-width: 0 !important; height: 100% !important; }\n@media (max-width: 339px) { #root { grid-template-columns: 1fr !important; } }\n"
+            }
+          },
+          {
+            "type": "custom:mushroom-template-card",
+            "entity": "sensor.sbc5_network_mac",
+            "primary": "Tożsamość sieciowa SBC5",
+            "secondary": "MAC hosta {{ states('sensor.sbc5_network_mac') }} · interfejs {{ states('sensor.sbc5_network_interface') }}",
+            "icon": "mdi:lan-connect",
+            "icon_color": "teal",
+            "multiline_secondary": true,
+            "tap_action": {
+              "action": "more-info"
             }
           },
           {
