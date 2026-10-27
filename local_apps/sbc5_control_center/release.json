@@ -1,14 +1,14 @@
 {
-  "version": "3.1.4",
+  "version": "3.1.5",
   "release_date": "2026-10-27",
   "restart_required": "none",
-  "summary": "Fix runtime version/status consistency, reconcile legacy CPU restart markers, and calibrate AI Thermal Predictor confidence to measured error.",
-  "package_version": "3.1.4",
-  "card_ui_version": "3.1.4",
+  "summary": "Add AI Thermal Predictor Shadow Assist to evaluate bounded predictive PWM corrections before control activation.",
+  "package_version": "3.1.5",
+  "card_ui_version": "3.1.5",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Naprawa spójności wersji i statusów runtime, uzgadnianie legacy markerów restartu CPU oraz kalibracja confidence AI Thermal Predictor do rzeczywistego błędu."
+  "summary_pl": "Dodano AI Thermal Predictor Shadow Assist do oceny ograniczonych korekt predykcyjnych PWM przed aktywacją sterowania."
 }

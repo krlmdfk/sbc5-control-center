@@ -53,6 +53,12 @@ THERMAL_PREDICTOR_MAX_SLOPE_C_PER_MIN = 3.0
 THERMAL_PREDICTOR_QUEUE_MAX = 48
 THERMAL_PREDICTOR_ERROR_ALPHA = 0.18
 THERMAL_PREDICTOR_DAMPING = {30: 0.90, 60: 0.72, 120: 0.52}
+THERMAL_SHADOW_MAX_DELTA_PP = 2
+THERMAL_SHADOW_MIN_CONFIDENCE = 80
+THERMAL_SHADOW_MAX_MAE_C = 1.25
+THERMAL_SHADOW_MIN_VALIDATED_PER_HORIZON = 8
+THERMAL_SHADOW_NEUTRAL_BAND_C = 0.60
+THERMAL_SHADOW_STRONG_BAND_C = 1.80
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -327,6 +333,95 @@ def _thermal_predictor(model: dict[str, Any], temp: float, slope_c_per_min: floa
     public = dict(state)
     public.pop("queue", None)
     return public
+
+
+def _thermal_shadow_assist(
+    predictor: dict[str, Any],
+    *,
+    target: float,
+    baseline: int,
+    min_safe: int,
+    maximum: int,
+    control_mode: str,
+    controller_action: str,
+) -> dict[str, Any]:
+    """Return a bounded hypothetical PWM correction without changing control output.
+
+    Shadow Assist is deliberately non-authoritative. It evaluates the thermal
+    forecasts and records what a future predictive controller *would* request.
+    Adaptive PWM + AI Cooling remain the only control path and the returned
+    suggestion is never applied to ``output_pwm_percent``.
+    """
+    quality = str(predictor.get("quality_state") or "learning")
+    confidence = int(round(_num(predictor.get("confidence_percent"), 0.0)))
+    avg_mae = predictor.get("average_mae_c")
+    avg_mae_num = _num(avg_mae, 999.0) if avg_mae is not None else 999.0
+    samples = predictor.get("validated_samples")
+    samples = samples if isinstance(samples, dict) else {}
+    per_horizon = {str(h): int(_num(samples.get(str(h)), 0)) for h in THERMAL_PREDICTOR_HORIZONS_SECONDS}
+
+    forecasts = [
+        _num(predictor.get("forecast_30s_c"), target),
+        _num(predictor.get("forecast_60s_c"), target),
+        _num(predictor.get("forecast_120s_c"), target),
+    ]
+    weighted_forecast = 0.55 * forecasts[0] + 0.30 * forecasts[1] + 0.15 * forecasts[2]
+    forecast_error = weighted_forecast - target
+    slope = _num(predictor.get("slope_c_per_min"), 0.0)
+
+    suggested_delta = 0
+    reason = "near_target"
+    if forecast_error >= THERMAL_SHADOW_STRONG_BAND_C:
+        suggested_delta = 2
+        reason = "forecast_hot_strong"
+    elif forecast_error >= THERMAL_SHADOW_NEUTRAL_BAND_C:
+        suggested_delta = 1
+        reason = "forecast_hot"
+    elif forecast_error <= -THERMAL_SHADOW_STRONG_BAND_C and slope <= 0.0:
+        suggested_delta = -2
+        reason = "forecast_cool_strong"
+    elif forecast_error <= -THERMAL_SHADOW_NEUTRAL_BAND_C and slope <= 0.0:
+        suggested_delta = -1
+        reason = "forecast_cool"
+    elif forecast_error < -THERMAL_SHADOW_NEUTRAL_BAND_C:
+        reason = "cool_forecast_but_rising"
+
+    suggested_delta = int(_clamp(suggested_delta, -THERMAL_SHADOW_MAX_DELTA_PP, THERMAL_SHADOW_MAX_DELTA_PP))
+    suggested_pwm = int(_clamp(baseline + suggested_delta, min_safe, maximum))
+    suggested_delta = suggested_pwm - baseline
+
+    gate_reason = "eligible"
+    eligible = True
+    if control_mode != "automatic":
+        eligible = False; gate_reason = "automatic_mode_required"
+    elif "safety" in str(controller_action or "").lower():
+        eligible = False; gate_reason = "safety_action_active"
+    elif quality not in {"good", "excellent"}:
+        eligible = False; gate_reason = "quality_below_good"
+    elif confidence < THERMAL_SHADOW_MIN_CONFIDENCE:
+        eligible = False; gate_reason = "confidence_below_threshold"
+    elif avg_mae_num > THERMAL_SHADOW_MAX_MAE_C:
+        eligible = False; gate_reason = "mae_above_threshold"
+    elif min(per_horizon.values(), default=0) < THERMAL_SHADOW_MIN_VALIDATED_PER_HORIZON:
+        eligible = False; gate_reason = "insufficient_validated_forecasts"
+
+    return {
+        "mode": "shadow",
+        "control_output_enabled": False,
+        "eligible": eligible,
+        "gate_reason": gate_reason,
+        "decision_reason": reason,
+        "suggested_delta_pp": suggested_delta,
+        "suggested_pwm_percent": suggested_pwm,
+        "baseline_pwm_percent": baseline,
+        "weighted_forecast_c": round(weighted_forecast, 2),
+        "weighted_forecast_error_c": round(forecast_error, 2),
+        "max_delta_pp": THERMAL_SHADOW_MAX_DELTA_PP,
+        "minimum_confidence_percent": THERMAL_SHADOW_MIN_CONFIDENCE,
+        "maximum_mae_c": THERMAL_SHADOW_MAX_MAE_C,
+        "minimum_validated_per_horizon": THERMAL_SHADOW_MIN_VALIDATED_PER_HORIZON,
+        "validated_per_horizon": per_horizon,
+    }
 
 
 def _controller_hold(action: str) -> bool:
@@ -952,6 +1047,14 @@ def step(args: argparse.Namespace) -> int:
     if grid_application.get("active"):
         grid_suggestion = {**grid_suggestion, "available": False, "apply_supported": False, "reason": "grid_applied"}
     thermal_predictor = _thermal_predictor(model, temp, slope, now, temp_window_span, temp_window_points)
+    thermal_shadow = _thermal_shadow_assist(
+        thermal_predictor,
+        target=target, baseline=baseline, min_safe=min_safe, maximum=maximum,
+        control_mode=control_mode, controller_action=controller_action,
+    )
+    thermal_predictor["shadow_assist"] = thermal_shadow
+    # Shadow Assist is telemetry only. Do not mutate `output`, `correction` or the
+    # physical controller target from this block.
     status = {
         "schema": SCHEMA,
         "thermal_predictor": thermal_predictor,
