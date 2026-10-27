@@ -1,0 +1,23 @@
+name: Finalize Rust 3.0.0
+
+on:
+  push:
+    branches:
+      - migration/rust-3.0.0-finalize
+    paths:
+      - .github/workflows/finalize-rust-3.0.0.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: migration/rust-3.0.0-finalize
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
