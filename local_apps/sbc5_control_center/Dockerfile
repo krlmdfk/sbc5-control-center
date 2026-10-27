@@ -22,6 +22,7 @@ LABEL \
 COPY --from=rust-builder /build/target/release/sbc5-core /usr/local/bin/sbc5-core
 COPY run.sh /
 COPY run_legacy.sh /
+COPY canary_runtime_diag.sh /
 COPY release.json /
 COPY config_txt_catalog.json /config_txt_catalog.json
 COPY logo.png /logo.png
@@ -56,7 +57,7 @@ COPY TRADEMARKS.md /usr/share/licenses/sbc5-control-center/TRADEMARKS.md
 COPY LEGAL.md /usr/share/licenses/sbc5-control-center/LEGAL.md
 COPY LICENSE_AUDIT.md /usr/share/licenses/sbc5-control-center/LICENSE_AUDIT.md
 
-RUN chmod a+x /run.sh /run_legacy.sh /usr/local/bin/sbc5-core /config_ui.py /ai_cooling.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
+RUN chmod a+x /run.sh /run_legacy.sh /canary_runtime_diag.sh /usr/local/bin/sbc5-core /config_ui.py /ai_cooling.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
 
 ENTRYPOINT ["/run.sh"]
 CMD []
