@@ -51,5 +51,8 @@ jobs:
       - name: Test Thermal Predictor Shadow Assist
         run: python scripts/test_thermal_predictor_shadow.py
 
+      - name: Test Thermal Predictor Accuracy Calibration
+        run: python scripts/test_thermal_predictor_accuracy.py
+
       - name: Check whitespace errors
         run: git diff --check HEAD^ HEAD || git diff --check

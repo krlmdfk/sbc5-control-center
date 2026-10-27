@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.6 — 2026-10-27
+
+### English
+
+#### Changed
+
+- Thermal Predictor v2 uses horizon-specific target anchoring and bounded signed online bias calibration for +30/+60/+120 s forecasts.
+- Shadow Assist remains telemetry-only with control_output_enabled=false and the existing ±2 pp recommendation limit.
+
+#### Fixed
+
+- Archive Predictor v1 quality statistics when migrating to v2 so historical errors cannot distort the new accuracy gate.
+
+#### Performance
+
+- Reuse the existing AI runtime cadence; no new fast polling loop or physical PWM write path is added.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Thermal Predictor v2 wykorzystuje zależne od horyzontu dociąganie do celu i ograniczoną znakowaną korektę błędu online dla prognoz +30/+60/+120 s.
+- Shadow Assist pozostaje wyłącznie telemetryczny z control_output_enabled=false i dotychczasowym limitem rekomendacji ±2 pp.
+
+#### Naprawiono
+
+- Archiwizacja statystyk jakości Predictora v1 podczas migracji do v2, aby historyczne błędy nie zafałszowały nowej bramki jakości.
+
+#### Wydajność
+
+- Wykorzystanie istniejącego cyklu AI runtime bez nowej szybkiej pętli odpytywania i bez nowej ścieżki zapisu fizycznego PWM.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.5 — 2026-10-27
 
 ### English
