@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install validators
+        run: python -m pip install --disable-pip-version-check pyyaml
       - name: Apply patch
         run: python scripts/_oneshot_patch_3_1_4.py
       - name: Regenerate card JSON
