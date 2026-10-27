@@ -143,7 +143,7 @@ configuration:
         description: Off by default for safe upgrade. Enable to make the options below control sbc5cc-managed.txt.
       sync_interval_seconds:
         name: Sync interval
-        description: 2–60 seconds; default 5.
+        description: 2–60 seconds configured; default 30. Runtime watchdog minimum is 30 seconds; UI saves still apply immediately.
       advanced_mode:
         name: Advanced mode
         description: Allows unknown parameters and bypasses selected protective numeric ranges; syntax checks remain active.

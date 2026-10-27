@@ -1,14 +1,14 @@
 {
-  "version": "3.0.3",
+  "version": "3.0.4",
   "release_date": "2026-10-27",
   "restart_required": "none",
-  "summary": "Reduce steady-state log I/O while preserving Adaptive PWM and AI execution cadence.",
-  "package_version": "3.0.3",
-  "card_ui_version": "3.0.3",
+  "summary": "Lower steady-state polling overhead without changing cooling control cadence.",
+  "package_version": "3.0.4",
+  "card_ui_version": "3.0.4",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Ograniczenie I/O logów w stanie ustalonym bez zmiany częstotliwości działania Adaptive PWM i AI."
+  "summary_pl": "Zmniejszono stałe obciążenie pollingiem bez zmiany częstotliwości sterowania chłodzeniem."
 }

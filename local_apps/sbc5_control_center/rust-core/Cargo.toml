@@ -1,6 +1,6 @@
 [package]
 name = "sbc5-core"
-version = "3.0.3"
+version = "3.0.4"
 edition = "2021"
 description = "Native Rust runtime core for SBC5 Control Center"
 license = "Apache-2.0"
