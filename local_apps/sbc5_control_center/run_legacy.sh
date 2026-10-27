@@ -10,8 +10,8 @@ fi
 chmod 1777 /tmp 2>/dev/null || true
 export TMPDIR="${TMPDIR:-/tmp}"
 
-APP_VERSION="2.8.32"
-REQUIRED_PACKAGE_VERSION="2.8.32"
+APP_VERSION="3.0.1"
+REQUIRED_PACKAGE_VERSION="3.0.1"
 DEVICE_IDENTITY_REFRESH_SECONDS=300
 DEVICE_IDENTITY_LAST_REFRESH=0
 SYS_BOARD_REVISION=""
@@ -197,7 +197,7 @@ CPU_PROFILE_STATE_SCHEMA=2
 GPU_PROFILE_STATE_FILE="/data/gpu_profile_state.json"
 GPU_PROFILE_STATE_SCHEMA=1
 # v2.8.18: canonical profile reconciliation across YAML, Ingress UI and native Supervisor options.
-PROFILE_STATE_RECONCILE_INTERVAL_SECONDS=30
+PROFILE_STATE_RECONCILE_INTERVAL_SECONDS=300
 LAST_PROFILE_STATE_OPTIONS_SIGNATURE=""
 # v2.8.18: tracks the last profile subset persisted in Supervisor so native Configuration edits
 # can be distinguished from stale/default Supervisor values after an upgrade or reboot.
@@ -1961,7 +1961,6 @@ ux_runtime_state_loop() {
           publish_restart_requirement false || true
           report_active_profile || true
           ha_sync_selected_profile_to_requested || true
-          check_app_update || true
           log "UX Runtime: Home Assistant dostępny — odtworzono stany Curve Editora, Restart Manager, profil i status aktualizacji."
         fi
         ticks=0
@@ -3227,7 +3226,7 @@ local_update_native_health_loop() {
 }
 
 local_update_watch_loop() {
-  sleep 15
+  sleep 45
   while true; do
     load_options
     if [ "$LOCAL_PACKAGE_UPDATES_ENABLED" = "true" ]; then

@@ -1,7 +1,9 @@
 name: SBC5 Control Center
-version: 3.0.0
+version: 3.0.1
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.0.0 — Rust Core migration: native low-overhead host telemetry and runtime health with automatic compatibility fallback. Existing Adaptive PWM safety, AI Cooling learning data, fan calibration, CPU/GPU profiles and persistent state remain compatible."
+description: 'SBC5 Control Center 3.0.1 — maintenance optimization: lower steady-state
+  Supervisor/profile reconciliation churn and deduplicated startup update checks;
+  Adaptive PWM, AI Cooling and fan safety logic unchanged.'
 arch:
 - aarch64
 homeassistant: 2026.10.1
@@ -57,7 +59,7 @@ options:
   update_check_enabled: true
   update_check_interval_hours: 6
   update_notify: true
-  app_update_manifest_url: 'https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/local_apps/sbc5_control_center/release.json'
+  app_update_manifest_url: https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/local_apps/sbc5_control_center/release.json
   local_package_updates_enabled: true
   local_package_scan_interval_minutes: 2
   local_package_keep_processed: true
