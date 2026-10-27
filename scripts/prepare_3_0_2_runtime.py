@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "local_apps" / "sbc5_control_center"
 RUN = APP / "run_legacy.sh"
 CARGO = APP / "rust-core" / "Cargo.toml"
+RELEASE_PREPARE = ROOT / "scripts" / "release_prepare.py"
 VERSION = "3.0.2"
 
 text = RUN.read_text(encoding="utf-8")
@@ -90,5 +91,20 @@ cargo, n = re.subn(r'(?m)^version = "[^"]+"$', f'version = "{VERSION}"', cargo, 
 if n != 1:
     raise SystemExit("Cargo package version anchor not found")
 CARGO.write_text(cargo, encoding="utf-8")
+
+# Permanently fix the release generator: config.yaml descriptions can be quoted/folded across
+# multiple lines. Replace the whole YAML scalar block, not only the first physical line.
+rp = RELEASE_PREPARE.read_text(encoding="utf-8")
+old = '''    text = re.sub(r"(?m)^description:\\s*.*$", f"description: {json.dumps(desc, ensure_ascii=False)}", text, count=1)'''
+new = '''    text = re.sub(
+        r"(?ms)^description:\\s*.*?(?=^[A-Za-z_][A-Za-z0-9_-]*:\\s|\\Z)",
+        f"description: {json.dumps(desc, ensure_ascii=False)}\\n",
+        text,
+        count=1,
+    )'''
+if old not in rp:
+    raise SystemExit("release_prepare multiline description anchor not found")
+rp = rp.replace(old, new, 1)
+RELEASE_PREPARE.write_text(rp, encoding="utf-8")
 
 print("Prepared SBC5 3.0.2 runtime optimization anchors")
