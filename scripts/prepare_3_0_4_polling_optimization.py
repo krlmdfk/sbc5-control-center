@@ -27,18 +27,13 @@ if anchor not in text:
 text = text.replace(anchor, anchor + 'CONFIG_TXT_WATCHDOG_MIN_SECONDS=30\n', 1)
 
 start = text.find('config_txt_options_sync_loop() {')
-if start < 0:
-    raise SystemExit('config_txt_options_sync_loop start not found')
+if start < 0: raise SystemExit('config_txt_options_sync_loop start not found')
 end = text.find('\n}\n', start)
-if end < 0:
-    raise SystemExit('config_txt_options_sync_loop end not found')
+if end < 0: raise SystemExit('config_txt_options_sync_loop end not found')
 block = text[start:end+3]
-block, n = re.subn(r'local sig interval enabled settings\b', 'local sig interval enabled settings effective_interval', block, count=1)
-if n != 1: raise SystemExit('config watchdog locals anchor not found')
-block, n = re.subn(r'num_in_range "\$\{interval:-5\}" 2 60 \|\| interval=5', 'num_in_range "${interval:-30}" 2 60 || interval=30\n    effective_interval="$interval"\n    if [ "$effective_interval" -lt "$CONFIG_TXT_WATCHDOG_MIN_SECONDS" ] 2>/dev/null; then\n      effective_interval="$CONFIG_TXT_WATCHDOG_MIN_SECONDS"\n    fi', block, count=1)
-if n != 1: raise SystemExit('config watchdog range anchor not found')
-block, n = re.subn(r'sleep "\$interval"', 'sleep "$effective_interval"', block, count=1)
-if n != 1: raise SystemExit('config watchdog sleep anchor not found')
+if 'sleep "$interval"' not in block:
+    raise SystemExit('config watchdog sleep anchor not found')
+block = block.replace('sleep "$interval"', 'sleep "$(( interval < CONFIG_TXT_WATCHDOG_MIN_SECONDS ? CONFIG_TXT_WATCHDOG_MIN_SECONDS : interval ))"', 1)
 text = text[:start] + block + text[end+3:]
 
 old_log = 'log "Config.txt Options UI: enabled=${CONFIG_TXT_OPTIONS_ENABLED}, sync=${CONFIG_TXT_OPTIONS_SYNC_INTERVAL}s, advanced=${CONFIG_TXT_OPTIONS_ADVANCED}"'
