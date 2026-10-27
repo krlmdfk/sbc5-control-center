@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import json, os, tempfile, time, copy
+import json, os, tempfile, time, copy, re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError
@@ -48,6 +48,27 @@ def current_card_json_path():
 
 def current_update_card_json_path():
     return UPDATE_CARD_JSON_OVERRIDE if UPDATE_CARD_JSON_OVERRIDE.is_file() else UPDATE_CARD_JSON
+
+def _runtime_versioned_card(card):
+    """Normalize embedded card markers to the release Card UI version.
+
+    Browser-session Lovelace sync uses these template endpoints directly.  Returning
+    raw packaged JSON previously allowed an old Update Card marker (2.8.34) to be
+    written back even while the App and Card UI were already 3.1.2.
+    """
+    version = current_card_ui_version()
+    def walk(value):
+        if isinstance(value, str):
+            value = re.sub(r'Card UI v\d+\.\d+\.\d+', f'Card UI v{version}', value)
+            value = re.sub(r'Update Card v\d+\.\d+\.\d+', f'Update Card v{version}', value)
+            value = re.sub(r'SBC5CC \d+\.\d+\.\d+', f'SBC5CC {version}', value)
+            return value
+        if isinstance(value, list):
+            return [walk(v) for v in value]
+        if isinstance(value, dict):
+            return {k: walk(v) for k, v in value.items()}
+        return value
+    return walk(card)
 
 OPTIONS = Path('/data/options.json')
 RELOAD = Path('/data/config_ui_reload.request')
@@ -501,12 +522,12 @@ class H(BaseHTTPRequestHandler):
             except Exception as e: self.send_json({'ok':False,'error':str(e)},500); return
         if p=='/api/dashboard_card/template':
             try:
-                card=json.loads(current_card_json_path().read_text(encoding='utf-8'))
+                card=_runtime_versioned_card(json.loads(current_card_json_path().read_text(encoding='utf-8')))
                 self.send_json({'ok':True,'packaged_version':current_card_ui_version(),'card':card}); return
             except Exception as e: self.send_json({'ok':False,'error':f'Nie można odczytać wzorca karty: {e}'},500); return
         if p=='/api/update_card/template':
             try:
-                card=json.loads(current_update_card_json_path().read_text(encoding='utf-8'))
+                card=_runtime_versioned_card(json.loads(current_update_card_json_path().read_text(encoding='utf-8')))
                 self.send_json({'ok':True,'packaged_version':current_card_ui_version(),'card':card}); return
             except Exception as e: self.send_json({'ok':False,'error':f'Nie można odczytać wzorca karty update: {e}'},500); return
         self.send_error(404)

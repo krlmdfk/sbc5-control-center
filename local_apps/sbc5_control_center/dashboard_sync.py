@@ -49,6 +49,7 @@ def _runtime_versioned_card(card):
     def walk(value):
         if isinstance(value, str):
             value = re.sub(r'Card UI v\d+\.\d+\.\d+', f'Card UI v{version}', value)
+            value = re.sub(r'Update Card v\d+\.\d+\.\d+', f'Update Card v{version}', value)
             value = re.sub(r'SBC5CC \d+\.\d+\.\d+', f'SBC5CC {version}', value)
             return value
         if isinstance(value, list):
