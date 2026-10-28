@@ -1,0 +1,60 @@
+name: Prepare 3.1.10 release
+
+on:
+  push:
+    branches:
+      - release/3.1.10-ai-v5-observability
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/3.1.10-ai-v5-observability
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Prepare release metadata once
+        run: |
+          if grep -q '^APP_VERSION="3.1.10"' local_apps/sbc5_control_center/run_legacy.sh; then
+            echo '3.1.10 release metadata already prepared.'
+          else
+            python scripts/release_prepare.py \
+              --version 3.1.10 \
+              --restart-required none \
+              --summary-en "Expose AI Cooling v5 hierarchical direct/global/effective diagnostics and reduce duplicate Restart Manager cleanup noise without changing cooling control." \
+              --summary-pl "Pełna obserwowalność AI Cooling v5 direct/global/effective oraz ograniczenie powtarzających się logów czyszczenia Restart Managera bez zmian w sterowaniu chłodzeniem." \
+              --added-en "Expose direct, global and effective AI confidence/prediction plus transfer source and effective coverage in runtime logs and dashboard telemetry." \
+              --added-pl "Udostępniono bezpośrednią, globalną i efektywną pewność/predykcję AI, źródło transferu i efektywne pokrycie w logach runtime oraz na karcie." \
+              --changed-en "AI v5 observability reuses the existing evaluator TSV and adds no extra polling or per-cycle JSON parsing." \
+              --changed-pl "Diagnostyka AI v5 wykorzystuje istniejący TSV ewaluatora bez dodatkowego pollingu i bez dodatkowego parsowania JSON w każdym cyklu." \
+              --fixed-en "Log completed Repairs cleanup only when a native Repair marker actually existed." \
+              --fixed-pl "Log czyszczenia zakończonego Repairs pojawia się tylko wtedy, gdy faktycznie istniał marker natywnego Repair." \
+              --performance-en "No new polling loop; observability fields travel in the existing 10-second AI evaluator result." \
+              --performance-pl "Bez nowej pętli pollingu; pola observability są przekazywane w istniejącym wyniku ewaluatora AI co 10 s."
+          fi
+      - name: Validate prepared release
+        run: |
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          python scripts/test_ai_v5_observability.py
+          python scripts/test_ai_hierarchical_v5.py
+          python scripts/test_restart_manager_hacs_handoff.py
+          python scripts/validate_release.py --strict-manifest-hashes
+          git diff --check
+      - name: Commit release metadata
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A ':!.github/workflows/prepare-3.1.10-release.yml'
+          if git diff --cached --quiet; then
+            echo 'No release changes to commit.'
+          else
+            git commit -m 'prepare: SBC5 Control Center 3.1.10'
+            git push origin HEAD:release/3.1.10-ai-v5-observability
+          fi
