@@ -1,0 +1,42 @@
+name: Prepare 3.1.9 restart race hotfix
+
+on:
+  push:
+    branches:
+      - release/3.1.9-restart-race-hotfix
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/3.1.9-restart-race-hotfix
+          fetch-depth: 0
+      - name: Apply hotfix
+        run: |
+          if grep -q 'restart_prompt_owned_by_hacs()' local_apps/sbc5_control_center/run_legacy.sh; then
+            echo 'Hotfix already applied; nothing to do.'
+          else
+            python scripts/prepare_restart_hotfix_3_1_9.py
+          fi
+      - name: Validate hotfix
+        run: |
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          python scripts/test_restart_manager_hacs_handoff.py
+          python scripts/test_runtime_robustness.py
+          git diff --check
+      - name: Commit prepared source changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add local_apps/sbc5_control_center/run_legacy.sh scripts/test_restart_manager_hacs_handoff.py
+          if git diff --cached --quiet; then
+            echo 'No source changes to commit.'
+          else
+            git commit -m 'fix: suppress duplicate HACS restart repair race'
+            git push origin HEAD:release/3.1.9-restart-race-hotfix
+          fi
