@@ -1,0 +1,52 @@
+name: Prepare SBC5 3.1.8 metadata
+
+on:
+  push:
+    branches:
+      - release/3.1.8-hierarchical-ai-cooling
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: ${{ github.event.head_commit.message != 'prepare: SBC5 Control Center 3.1.8 metadata' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/3.1.8-hierarchical-ai-cooling
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Prepare unified 3.1.8 release
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.1.8 \
+            --release-date 2026-10-28 \
+            --restart-required none \
+            --summary-en "Introduce AI Cooling v5 hierarchical continuous learning for transferable medium/high workload modeling without requiring long sustained CPU load." \
+            --summary-pl "Wprowadza AI Cooling v5 z hierarchicznym ciągłym uczeniem, aby modelować medium/high bez wymagania długotrwałego obciążenia CPU." \
+            --added-en "Added a hierarchical global cooling model above the proven bucket-aware v4 learner, with continuous CPU-load anchors and conservative knowledge transfer between workload ranges." \
+            --added-pl "Dodano hierarchiczny globalny model chłodzenia nad sprawdzonym learnerem v4, z ciągłymi anchorami obciążenia CPU i konserwatywnym transferem wiedzy między zakresami obciążenia." \
+            --added-en "Added direct, global and effective confidence surfaces so sparse medium/high buckets no longer appear as having no usable model." \
+            --added-pl "Dodano osobne wskaźniki direct, global i effective confidence, dzięki czemu rzadkie buckety medium/high nie są już traktowane jak całkowity brak modelu." \
+            --changed-en "Short real-world workload bursts can contribute bounded low-weight evidence to the global model; fully qualified v4 samples retain the strongest learning weight." \
+            --changed-pl "Krótkie rzeczywiste skoki obciążenia mogą wnosić ograniczone dane o małej wadze do modelu globalnego; w pełni zakwalifikowane próbki v4 zachowują najwyższą wagę uczenia." \
+            --changed-en "Mature direct bucket models remain authoritative; hierarchical assist is used only when direct bucket evidence is sparse and all existing Adaptive PWM sign/safety limits still apply." \
+            --changed-pl "Dojrzałe bezpośrednie modele bucketów pozostają nadrzędne; hierarchiczny assist jest używany tylko przy małej liczbie danych lokalnych, z zachowaniem istniejących ograniczeń kierunku i bezpieczeństwa Adaptive PWM." \
+            --performance-en "No additional polling loop was introduced; v5 runs inside the existing AI evaluator cadence and preserves the v4 fail-open fallback." \
+            --performance-pl "Nie dodano nowej pętli pollingu; v5 działa w istniejącym cyklu ewaluatora AI i zachowuje fail-open fallback do v4."
+
+      - name: Commit prepared metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "prepare: SBC5 Control Center 3.1.8 metadata"
+          git push origin HEAD:release/3.1.8-hierarchical-ai-cooling
