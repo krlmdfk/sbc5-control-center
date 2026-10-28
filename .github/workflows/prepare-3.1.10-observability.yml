@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   prepare:
-    if: github.event.head_commit.message == 'ci: prepare 3.1.10 AI v5 observability'
+    if: ${{ github.event.head_commit.message == 'ci: fix 3.1.10 observability preparer trigger' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
