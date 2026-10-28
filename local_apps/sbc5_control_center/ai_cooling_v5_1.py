@@ -11,6 +11,12 @@ Safety properties:
 - one burst cannot make a sparse bucket assist-ready by itself;
 - Adaptive PWM, thermal fast/critical paths and sign guards remain authoritative;
 - no additional polling loop is created.
+
+3.1.12 observability:
+- transient evidence is encoded into the already transported ``transfer_source``
+  field, so the legacy shell/relay contract does not gain another parser or poll;
+- the token has the compact form ``+transient[c=<confidence>,n=<samples>,s=<support>]``;
+- canonical status JSON still exposes the structured transient fields.
 """
 from __future__ import annotations
 
@@ -82,7 +88,6 @@ def _transient_observation_weight(status: dict[str, Any]) -> float:
     slope = abs(_num(status.get("temperature_slope_c_per_min"), 0.0))
     pwm_range = abs(_num(status.get("pwm_range_30s_percent"), 0.0))
     age_factor = _clamp((age - 10.0) / 40.0, 0.20, 1.0)
-    # Unlike the steady-state learner, a clear rise/fall is useful evidence here.
     signal_factor = _clamp((error + 0.45 * slope) / 5.0, 0.30, 1.0)
     actuator_factor = _clamp(1.0 - pwm_range / 65.0, 0.45, 1.0)
     bucket_factor = 1.0 if bucket == "medium" else 0.90
@@ -192,6 +197,13 @@ def _transient_confidence(target_state: dict[str, Any], load: float) -> tuple[in
     return confidence, support, samples
 
 
+def _transient_token(target_state: dict[str, Any], load: float) -> str:
+    confidence, support, samples = _transient_confidence(target_state, load)
+    if confidence <= 0 and samples <= 0:
+        return ""
+    return f"+transient[c={confidence},n={samples},s={support:.3f}]"
+
+
 def _global_prediction_v5_1(target_state: dict[str, Any], load: float):
     prediction, base_conf, distance, source = _original_global_prediction(target_state, load)
     transient_conf, _, _ = _transient_confidence(target_state, load)
@@ -199,11 +211,9 @@ def _global_prediction_v5_1(target_state: dict[str, Any], load: float):
         return prediction, base_conf, distance, source
     residual_room = max(0.0, 96.0 - float(base_conf))
     confidence = int(round(_clamp(float(base_conf) + residual_room * (transient_conf / 100.0), 0.0, 96.0)))
-    return prediction, confidence, distance, source + "+transient"
+    return prediction, confidence, distance, source + _transient_token(target_state, load)
 
 
-# Make the base v5 learner use transient-aware confidence while preserving its
-# steady-state PWM prediction math.
 base._global_prediction = _global_prediction_v5_1
 base.V5_POLICY = POLICY
 
@@ -238,7 +248,6 @@ def _augment_transient_diagnostics(status: dict[str, Any], target_state: dict[st
 
 
 def _apply_hierarchical_step(model: dict[str, Any], status: dict[str, Any], fields: list[str]):
-    # Existing v5 performs all steady-state learning and physical-assist decisions.
     model, status, fields = _original_apply(model, status, fields)
 
     target = _num(status.get("target_temp_c"), 49.0)
@@ -256,9 +265,17 @@ def _apply_hierarchical_step(model: dict[str, Any], status: dict[str, Any], fiel
         target_state["last_transient_epoch"] = int(time.time())
     target_state["last_transient_observations_total"] = observations_total
 
-    # Diagnostics reflect the new sample immediately. Steady PWM prediction stays
-    # unchanged; the confidence boost is used by v5 from the next evaluator cycle.
     _augment_transient_diagnostics(status, target_state, load, weight)
+
+    # Keep the 22-field v5 stdout ABI intact. The existing transfer-source field
+    # already crosses run_legacy/relay/card, so carry transient observability there.
+    if len(fields) >= 21:
+        source = str(fields[20] or status.get("transfer_source") or "none")
+        token = _transient_token(target_state, load)
+        if token and "+transient[" not in source:
+            source += token
+        fields[20] = source
+        status["transfer_source"] = source
     return model, status, fields
 
 
