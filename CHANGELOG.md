@@ -1,5 +1,37 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.15 — 2026-10-28
+
+### English
+
+#### Changed
+
+- Transient learning c/n/s diagnostics are shown on a separate readable line in the AI prediction tile.
+
+#### Fixed
+
+- Card UI no longer substitutes effective/general confidence for direct confidence when a bucket has zero qualified samples.
+- Direct PWM prediction now renders as an em dash when no direct model prediction exists.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Diagnostyka transient learning c/n/s jest wyświetlana w osobnej czytelnej linii kafelka predykcji AI.
+
+#### Naprawiono
+
+- Card UI nie podstawia już pewności effective/ogólnej jako direct, gdy bucket ma zero próbek jakościowych.
+- Predykcja PWM direct jest teraz wyświetlana jako myślnik, gdy bezpośredni model nie ma predykcji.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.14 — 2026-10-28
 
 ### English

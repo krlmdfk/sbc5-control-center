@@ -32,5 +32,11 @@ assert "local had_posted_repair=false" in run
 assert '[ "$had_posted_repair" = "true" ] && log "Restart Manager: wyczyszczono zakończone zgłoszenie Repairs."' in run
 for token in ("direct {{ direct }}%", "global {{ global }}%", "effective {{ effective }}%", "eff.conf idle", "pokrycie direct"):
     assert token in card_text, token
+
+# sparse_direct_ui_guard_v315
+assert "ai.direct_confidence_percent | default(ai.confidence_percent" not in card_text
+assert "ai.direct_prediction_pwm_percent | default(ai.prediction_pwm_percent" not in card_text
+assert "ai.direct_confidence_percent if ai.direct_confidence_percent is defined else '—'" in card_text
+assert "replace(',', ' · ')" in card_text and "transient" in card_text
 assert card_yaml == card_json
 print("AI v5 observability + idempotent Restart Manager logging: PASS")

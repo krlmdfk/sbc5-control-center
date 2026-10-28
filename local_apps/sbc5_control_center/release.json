@@ -1,14 +1,14 @@
 {
-  "version": "3.1.14",
+  "version": "3.1.15",
   "release_date": "2026-10-28",
-  "restart_required": "host",
-  "summary": "Fix Active Cooler custom overlay reconciliation after HAOS A/B slot switches.",
-  "package_version": "3.1.14",
-  "card_ui_version": "3.1.14",
+  "restart_required": "none",
+  "summary": "Fix sparse-bucket AI diagnostics in Card UI without changing cooling control or learning.",
+  "package_version": "3.1.15",
+  "card_ui_version": "3.1.15",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Naprawa aktywacji niestandardowego profilu Active Cooler po przełączeniu slotu A/B przez HAOS."
+  "summary_pl": "Naprawiono diagnostykę AI dla rzadkich bucketów w Card UI bez zmian sterowania chłodzeniem ani uczenia."
 }
