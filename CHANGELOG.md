@@ -1,5 +1,51 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.11 — 2026-10-28
+
+### English
+
+#### Added
+
+- AI Cooling v5.1 transient-response learning for short medium/high workload bursts.
+
+#### Changed
+
+- Dynamic evidence raises transfer confidence only; it does not increment qualified counters or directly alter steady-state PWM prediction.
+
+#### Fixed
+
+- Medium/high bursts rejected by the quasi-steady v4 qualifier can now contribute bounded learning evidence instead of being discarded completely.
+
+#### Performance
+
+- No new polling loop; v5.1 runs inside the existing 10-second AI evaluator.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- AI Cooling v5.1 z uczeniem odpowiedzi przejściowej dla krótkich obciążeń medium/high.
+
+#### Zmieniono
+
+- Dowody dynamiczne zwiększają wyłącznie pewność transferu; nie zwiększają liczników qualified i nie zmieniają bezpośrednio predykcji steady-state PWM.
+
+#### Naprawiono
+
+- Krótkie obciążenia medium/high odrzucone przez kwalifikator quasi-steady v4 mogą teraz wnosić ograniczony sygnał uczący zamiast być całkowicie pomijane.
+
+#### Wydajność
+
+- Brak nowej pętli pollingu; v5.1 działa wewnątrz istniejącego ewaluatora AI co 10 s.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.10 — 2026-10-28
 
 ### English

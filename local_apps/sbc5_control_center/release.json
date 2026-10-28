@@ -1,14 +1,14 @@
 {
-  "version": "3.1.10",
+  "version": "3.1.11",
   "release_date": "2026-10-28",
   "restart_required": "none",
-  "summary": "Expose AI Cooling v5 hierarchical direct/global/effective diagnostics and reduce duplicate Restart Manager cleanup noise without changing cooling control.",
-  "package_version": "3.1.10",
-  "card_ui_version": "3.1.10",
+  "summary": "AI Cooling v5.1 learns bounded transient thermal evidence from short medium/high workload bursts without changing steady-state PWM predictions.",
+  "package_version": "3.1.11",
+  "card_ui_version": "3.1.11",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Pełna obserwowalność AI Cooling v5 direct/global/effective oraz ograniczenie powtarzających się logów czyszczenia Restart Managera bez zmian w sterowaniu chłodzeniem."
+  "summary_pl": "AI Cooling v5.1 uczy się ograniczonych dowodów dynamicznej odpowiedzi cieplnej z krótkich obciążeń medium/high bez zmiany predykcji steady-state PWM."
 }

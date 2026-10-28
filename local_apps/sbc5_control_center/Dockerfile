@@ -29,10 +29,11 @@ COPY rpi5-stable50-10step-overlay.dts /
 COPY rpi5-stable50-15step-overlay.dts /
 COPY bridge /bridge
 COPY config_ui.py /config_ui.py
-# 3.1.8: keep the proven bucket-aware learner as a fail-open fallback and
-# expose the hierarchical continuous learner through the canonical runtime path.
+# 3.1.11: retain v4 and v5 as fail-open layers; v5.1 adds conservative
+# transient-response confidence learning for short medium/high workload bursts.
 COPY ai_cooling.py /ai_cooling_legacy.py
-COPY ai_cooling_v5.py /ai_cooling.py
+COPY ai_cooling_v5.py /ai_cooling_v5.py
+COPY ai_cooling_v5_1.py /ai_cooling.py
 COPY dashboard_sync.py /dashboard_sync.py
 COPY dashboard_card.json /dashboard_card.json
 COPY update_status_card.json /update_status_card.json
@@ -59,7 +60,7 @@ COPY TRADEMARKS.md /usr/share/licenses/sbc5-control-center/TRADEMARKS.md
 COPY LEGAL.md /usr/share/licenses/sbc5-control-center/LEGAL.md
 COPY LICENSE_AUDIT.md /usr/share/licenses/sbc5-control-center/LICENSE_AUDIT.md
 
-RUN chmod a+x /run.sh /run_legacy.sh /usr/local/bin/sbc5-core /config_ui.py /ai_cooling.py /ai_cooling_legacy.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
+RUN chmod a+x /run.sh /run_legacy.sh /usr/local/bin/sbc5-core /config_ui.py /ai_cooling.py /ai_cooling_v5.py /ai_cooling_legacy.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
 
 ENTRYPOINT ["/run.sh"]
 CMD []
