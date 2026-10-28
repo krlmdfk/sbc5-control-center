@@ -1,5 +1,51 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.10 — 2026-10-28
+
+### English
+
+#### Added
+
+- Expose direct, global and effective AI confidence/prediction plus transfer source and effective coverage in runtime logs and dashboard telemetry.
+
+#### Changed
+
+- AI v5 observability reuses the existing evaluator TSV and adds no extra polling or per-cycle JSON parsing.
+
+#### Fixed
+
+- Log completed Repairs cleanup only when a native Repair marker actually existed.
+
+#### Performance
+
+- No new polling loop; observability fields travel in the existing 10-second AI evaluator result.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Udostępniono bezpośrednią, globalną i efektywną pewność/predykcję AI, źródło transferu i efektywne pokrycie w logach runtime oraz na karcie.
+
+#### Zmieniono
+
+- Diagnostyka AI v5 wykorzystuje istniejący TSV ewaluatora bez dodatkowego pollingu i bez dodatkowego parsowania JSON w każdym cyklu.
+
+#### Naprawiono
+
+- Log czyszczenia zakończonego Repairs pojawia się tylko wtedy, gdy faktycznie istniał marker natywnego Repair.
+
+#### Wydajność
+
+- Bez nowej pętli pollingu; pola observability są przekazywane w istniejącym wyniku ewaluatora AI co 10 s.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.9 — 2026-10-28
 
 ### English
