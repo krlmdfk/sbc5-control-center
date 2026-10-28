@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.13 — 2026-10-28
+
+### English
+
+#### Changed
+
+- AI diagnostics hardening: sparse buckets now report direct confidence strictly from qualified evidence while transient/global/effective learning remains unchanged.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Utwardzenie diagnostyki AI: sparse buckety pokazują direct confidence wyłącznie z próbek jakościowych, bez zmian w uczeniu transient/global/effective i sterowaniu chłodzeniem.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.12 — 2026-10-28
 
 ### English

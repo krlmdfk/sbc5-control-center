@@ -17,6 +17,13 @@ Safety properties:
   field, so the legacy shell/relay contract does not gain another parser or poll;
 - the token has the compact form ``+transient[c=<confidence>,n=<samples>,s=<support>]``;
 - canonical status JSON still exposes the structured transient fields.
+
+3.1.13 diagnostics hardening:
+- ``direct_confidence_percent`` is normalized to 0 whenever the current bucket has
+  zero qualified samples, preventing effective/transfer confidence from being
+  presented as direct model maturity;
+- direct prediction is hidden for a bucket with zero qualified samples;
+- transient structured diagnostics remain independent from this normalization.
 """
 from __future__ import annotations
 
@@ -247,6 +254,26 @@ def _augment_transient_diagnostics(status: dict[str, Any], target_state: dict[st
         meta["transient_anchor_count"] = len(anchors) if isinstance(anchors, dict) else 0
 
 
+def _normalize_direct_diagnostics(status: dict[str, Any], fields: list[str]) -> None:
+    """Keep direct diagnostics tied strictly to direct qualified evidence.
+
+    v4 defines direct confidence from ``qualified_n`` and therefore a bucket with
+    zero qualified samples must never expose a non-zero direct confidence. This
+    normalization is presentation/diagnostics only; it does not alter effective
+    confidence, global transfer, transient learning, or physical PWM control.
+    """
+    qn = int(_num(status.get("bin_qualified_samples"), 0))
+    if qn > 0:
+        return
+    status["direct_confidence_percent"] = 0
+    status["direct_prediction_pwm_percent"] = None
+    status["direct_model_maturity_percent"] = 0
+    status["direct_blend_percent"] = 0
+    if len(fields) >= 18:
+        fields[14] = "0"
+        fields[17] = "-1"
+
+
 def _apply_hierarchical_step(model: dict[str, Any], status: dict[str, Any], fields: list[str]):
     model, status, fields = _original_apply(model, status, fields)
 
@@ -266,6 +293,7 @@ def _apply_hierarchical_step(model: dict[str, Any], status: dict[str, Any], fiel
     target_state["last_transient_observations_total"] = observations_total
 
     _augment_transient_diagnostics(status, target_state, load, weight)
+    _normalize_direct_diagnostics(status, fields)
 
     # Keep the 22-field v5 stdout ABI intact. The existing transfer-source field
     # already crosses run_legacy/relay/card, so carry transient observability there.

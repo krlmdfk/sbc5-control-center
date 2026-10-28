@@ -1,14 +1,14 @@
 {
-  "version": "3.1.12",
+  "version": "3.1.13",
   "release_date": "2026-10-28",
   "restart_required": "none",
-  "summary": "Expose AI Cooling v5.1 transient-learning evidence through the existing transfer diagnostics path without changing cooling behavior or adding polling.",
-  "package_version": "3.1.12",
-  "card_ui_version": "3.1.12",
+  "summary": "AI diagnostics hardening: sparse buckets now report direct confidence strictly from qualified evidence while transient/global/effective learning remains unchanged.",
+  "package_version": "3.1.13",
+  "card_ui_version": "3.1.13",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Udostępnia diagnostykę uczenia transient AI Cooling v5.1 przez istniejącą ścieżkę transferu bez zmiany sterowania chłodzeniem i bez dodatkowego pollingu."
+  "summary_pl": "Utwardzenie diagnostyki AI: sparse buckety pokazują direct confidence wyłącznie z próbek jakościowych, bez zmian w uczeniu transient/global/effective i sterowaniu chłodzeniem."
 }
