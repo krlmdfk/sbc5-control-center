@@ -2592,6 +2592,8 @@ native_restart_repair_set() {
 }
 
 native_restart_repair_clear() {
+  local had_posted_repair=false
+  [ -r "$NATIVE_REPAIR_POSTED_FILE" ] && had_posted_repair=true
   # Najpierw usuń trwały marker, aby kolejny start HA nie odtworzył starego Repair.
   rm -f "$NATIVE_RESTART_MARKER" 2>/dev/null || true
 
@@ -2620,7 +2622,7 @@ native_restart_repair_clear() {
   case "$code" in
     2??)
       rm -f "$NATIVE_REPAIR_POSTED_FILE" 2>/dev/null || true
-      log "Restart Manager: wyczyszczono zakończone zgłoszenie Repairs."
+      [ "$had_posted_repair" = "true" ] && log "Restart Manager: wyczyszczono zakończone zgłoszenie Repairs."
       return 0
       ;;
     *)
@@ -8802,7 +8804,7 @@ adaptive_pwm_controller_loop() {
   local trim_sign_decay_step=2 trim_sign_threshold=250 sign_guard=""
   local down_direct_delta=1000 down_fast_delta=2000 up_direct_delta=2000
   local up_confirm_cycles=2 up_hold_cycles=3
-  local ai_cycle="$AI_COOLING_EVAL_CYCLES" ai_result="" ai_output="" ai_state="" ai_reason="" ai_conf=0 ai_prediction=-1 ai_qualified_samples=0 ai_correction=0 ai_bucket="" ai_observations_total=0 ai_bin_observations=0 ai_qualified_total=0 ai_qualified_flag=0 ai_qualification_reason="" ai_stable_streak=0 ai_last_log="" ai_log_tick=0
+  local ai_cycle="$AI_COOLING_EVAL_CYCLES" ai_result="" ai_output="" ai_state="" ai_reason="" ai_conf=0 ai_prediction=-1 ai_qualified_samples=0 ai_correction=0 ai_bucket="" ai_observations_total=0 ai_bin_observations=0 ai_qualified_total=0 ai_qualified_flag=0 ai_qualification_reason="" ai_stable_streak=0 ai_last_log="" ai_log_tick=0 ai_direct_conf=0 ai_global_conf=0 ai_effective_conf=0 ai_direct_prediction=-1 ai_global_prediction=-1 ai_effective_prediction=-1 ai_transfer_source="legacy" ai_effective_coverage=0
   local reload_token="" reload_now=""
 
   load_custom_curve 1
@@ -9078,7 +9080,7 @@ adaptive_pwm_controller_loop() {
           --min-samples "$AI_COOLING_MIN_SAMPLES" --grid-profile "$AI_GRID_PROFILE_FILE" --curve-points-csv "$CUSTOM_TRIPS_CSV" 2>/dev/null || true)"
         if [ -n "$ai_result" ]; then
           ai_log_tick=$((ai_log_tick + 1))
-          IFS=$'\t' read -r ai_output ai_state ai_reason ai_conf ai_prediction ai_qualified_samples ai_correction ai_bucket ai_observations_total ai_bin_observations ai_qualified_total ai_qualified_flag ai_qualification_reason ai_stable_streak <<< "$ai_result"
+          IFS=$'\t' read -r ai_output ai_state ai_reason ai_conf ai_prediction ai_qualified_samples ai_correction ai_bucket ai_observations_total ai_bin_observations ai_qualified_total ai_qualified_flag ai_qualification_reason ai_stable_streak ai_direct_conf ai_global_conf ai_effective_conf ai_direct_prediction ai_global_prediction ai_effective_prediction ai_transfer_source ai_effective_coverage <<< "$ai_result"
           case "$ai_output" in ''|*[!0-9]*) ai_output="$desired" ;; esac
           case "$ai_conf" in ''|*[!0-9]*) ai_conf=0 ;; esac
           case "$ai_prediction" in ''|*[!0-9]*) ai_prediction=-1 ;; esac
@@ -9086,15 +9088,23 @@ adaptive_pwm_controller_loop() {
           case "$ai_qualified_samples" in ''|*[!0-9]*) ai_qualified_samples=0 ;; esac
           case "$ai_bin_observations" in ''|*[!0-9]*) ai_bin_observations=0 ;; esac
           case "$ai_qualified_total" in ''|*[!0-9]*) ai_qualified_total=0 ;; esac
+          case "$ai_direct_conf" in ''|*[!0-9]*) ai_direct_conf="$ai_conf" ;; esac
+          case "$ai_global_conf" in ''|*[!0-9]*) ai_global_conf=0 ;; esac
+          case "$ai_effective_conf" in ''|*[!0-9]*) ai_effective_conf="$ai_conf" ;; esac
+          case "$ai_direct_prediction" in ''|-|*[!0-9.-]*) ai_direct_prediction="$ai_prediction" ;; esac
+          case "$ai_global_prediction" in ''|-|*[!0-9.-]*) ai_global_prediction=-1 ;; esac
+          case "$ai_effective_prediction" in ''|-|*[!0-9.-]*) ai_effective_prediction="$ai_prediction" ;; esac
+          [ -n "$ai_transfer_source" ] || ai_transfer_source="legacy"
+          case "$ai_effective_coverage" in ''|*[!0-9]*) ai_effective_coverage=0 ;; esac
           if [ "$AI_COOLING_EFFECTIVE_MODE" = "assist" ] && [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$ai_output" -ne "$desired" ] 2>/dev/null; then
             desired="$ai_output"
             action="${action}_ai_assist"
           fi
           if [ "$ai_qualified_flag" = "1" ] && { [ "$ai_qualified_samples" = "1" ] || [ "$ai_qualified_samples" = "$AI_COOLING_MIN_SAMPLES" ] || [ $((ai_qualified_samples % 5)) -eq 0 ]; }; then
-            log "AI Cooling: qualified sample; bucket=${ai_bucket}; quality=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; observations=${ai_bin_observations}; confidence=${ai_conf}%; prediction=${ai_prediction}%."
+            log "AI Cooling: qualified sample; bucket=${ai_bucket}; quality=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; observations=${ai_bin_observations}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%."
           elif { [ "$ai_last_log" != "${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}" ] || [ $((ai_log_tick % AI_COOLING_LOG_KEEPALIVE_CYCLES)) -eq 0 ]; } && { [ "$ai_state" = "assist" ] || [ "$ai_reason" = "insufficient_qualified_samples" ] || [ "$ai_bin_observations" = "1" ]; }; then
-            log "AI Cooling: state=${ai_state}; reason=${ai_reason}; bucket=${ai_bucket}; observations=${ai_bin_observations}; qualified=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}%; prediction=${ai_prediction}%; qualification=${ai_qualification_reason}."
-            ai_last_log="${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}"
+            log "AI Cooling: state=${ai_state}; reason=${ai_reason}; bucket=${ai_bucket}; observations=${ai_bin_observations}; qualified=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%; qualification=${ai_qualification_reason}."
+            ai_last_log="${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}:${ai_effective_conf}:${ai_transfer_source}:${ai_effective_coverage}"
           fi
         fi
       fi

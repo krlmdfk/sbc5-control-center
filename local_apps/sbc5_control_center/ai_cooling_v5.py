@@ -492,6 +492,29 @@ def _apply_hierarchical_step(model: dict[str, Any], status: dict[str, Any], fiel
         pred = status.get("prediction_pwm_percent")
         fields[4] = str(int(round(_num(pred, _num(fields[4], 0)))))
         fields[6] = str(correction)
+
+    # v3.1.10 observability: append diagnostics to the existing evaluator TSV
+    # instead of making run_legacy perform extra jq/file reads every 10 seconds.
+    # The first 14 fields remain byte-for-byte compatible with v4 consumers.
+    def _obs(value: Any, fallback: str = "-1") -> str:
+        if value is None:
+            return fallback
+        return str(value)
+
+    observability_fields = [
+        str(int(_num(status.get("direct_confidence_percent"), direct_conf))),
+        str(int(_num(status.get("global_confidence_percent"), global_conf))),
+        str(int(_num(status.get("effective_confidence_percent"), effective_conf))),
+        _obs(status.get("direct_prediction_pwm_percent")),
+        _obs(status.get("global_prediction_pwm_percent")),
+        _obs(status.get("effective_prediction_pwm_percent")),
+        str(status.get("transfer_source") or "none"),
+        str(int(_num(status.get("effective_model_coverage_percent"), 0))),
+    ]
+    if len(fields) < 22:
+        fields.extend(observability_fields)
+    else:
+        fields[14:22] = observability_fields
     return model, status, fields
 
 
