@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.8
+version: 3.1.9
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.8 — Introduce AI Cooling v5 hierarchical continuous learning for transferable medium/high workload modeling without requiring long sustained CPU load."
+description: "SBC5 Control Center 3.1.9 — Fix Restart Manager startup race and duplicate HACS restart repairs while keeping AI Cooling v5 unchanged."
 arch:
 - aarch64
 homeassistant: 2026.10.1

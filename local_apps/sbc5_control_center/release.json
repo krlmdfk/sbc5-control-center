@@ -1,14 +1,14 @@
 {
-  "version": "3.1.8",
+  "version": "3.1.9",
   "release_date": "2026-10-28",
   "restart_required": "none",
-  "summary": "Introduce AI Cooling v5 hierarchical continuous learning for transferable medium/high workload modeling without requiring long sustained CPU load.",
-  "package_version": "3.1.8",
-  "card_ui_version": "3.1.8",
+  "summary": "Fix Restart Manager startup race and duplicate HACS restart repairs while keeping AI Cooling v5 unchanged.",
+  "package_version": "3.1.9",
+  "card_ui_version": "3.1.9",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Wprowadza AI Cooling v5 z hierarchicznym ciągłym uczeniem, aby modelować medium/high bez wymagania długotrwałego obciążenia CPU."
+  "summary_pl": "Naprawa wyścigu Restart Managera przy starcie i podwójnych zgłoszeń restartu HACS bez zmian w AI Cooling v5."
 }

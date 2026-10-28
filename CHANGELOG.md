@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.9 — 2026-10-28
+
+### English
+
+#### Changed
+
+- Refresh Adaptive PWM startup diagnostics to show +8 pp thermal-fast, +12 pp thermal-critical and -5 pp fast-down limits.
+
+#### Fixed
+
+- Distinguish a package already synchronized on disk from an older package version still loaded by Home Assistant Core.
+- Suppress the duplicate SBC5 native Repair when HACS already owns and has installed the matching bridge version.
+
+#### Performance
+
+- No new polling loop; restart ownership checks only reuse existing startup/restart evaluation.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Zaktualizowano diagnostykę startową Adaptive PWM: +8 pp thermal-fast, +12 pp thermal-critical i -5 pp fast-down.
+
+#### Naprawiono
+
+- Rozróżniono package już zsynchronizowany na dysku od starszej wersji nadal załadowanej w Home Assistant Core.
+- Usunięto podwójny Repair SBC5, gdy HACS zarządza integracją i ma już zainstalowaną zgodną wersję bridge.
+
+#### Wydajność
+
+- Bez nowej pętli pollingu; sprawdzenie własności restartu wykorzystuje istniejącą ścieżkę startową/Restart Managera.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.8 — 2026-10-28
 
 ### English
