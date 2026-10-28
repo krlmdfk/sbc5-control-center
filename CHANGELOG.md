@@ -1,5 +1,47 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.8 — 2026-10-28
+
+### English
+
+#### Added
+
+- Added a hierarchical global cooling model above the proven bucket-aware v4 learner, with continuous CPU-load anchors and conservative knowledge transfer between workload ranges.
+- Added direct, global and effective confidence surfaces so sparse medium/high buckets no longer appear as having no usable model.
+
+#### Changed
+
+- Short real-world workload bursts can contribute bounded low-weight evidence to the global model; fully qualified v4 samples retain the strongest learning weight.
+- Mature direct bucket models remain authoritative; hierarchical assist is used only when direct bucket evidence is sparse and all existing Adaptive PWM sign/safety limits still apply.
+
+#### Performance
+
+- No additional polling loop was introduced; v5 runs inside the existing AI evaluator cadence and preserves the v4 fail-open fallback.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Dodano hierarchiczny globalny model chłodzenia nad sprawdzonym learnerem v4, z ciągłymi anchorami obciążenia CPU i konserwatywnym transferem wiedzy między zakresami obciążenia.
+- Dodano osobne wskaźniki direct, global i effective confidence, dzięki czemu rzadkie buckety medium/high nie są już traktowane jak całkowity brak modelu.
+
+#### Zmieniono
+
+- Krótkie rzeczywiste skoki obciążenia mogą wnosić ograniczone dane o małej wadze do modelu globalnego; w pełni zakwalifikowane próbki v4 zachowują najwyższą wagę uczenia.
+- Dojrzałe bezpośrednie modele bucketów pozostają nadrzędne; hierarchiczny assist jest używany tylko przy małej liczbie danych lokalnych, z zachowaniem istniejących ograniczeń kierunku i bezpieczeństwa Adaptive PWM.
+
+#### Wydajność
+
+- Nie dodano nowej pętli pollingu; v5 działa w istniejącym cyklu ewaluatora AI i zachowuje fail-open fallback do v4.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.7 — 2026-10-27
 
 ### English

@@ -1,14 +1,14 @@
 {
-  "version": "3.1.7",
-  "release_date": "2026-10-27",
+  "version": "3.1.8",
+  "release_date": "2026-10-28",
   "restart_required": "none",
-  "summary": "Improve AI Cooling learning for medium/high workloads and accelerate safe fan response during large thermal excursions.",
-  "package_version": "3.1.7",
-  "card_ui_version": "3.1.7",
+  "summary": "Introduce AI Cooling v5 hierarchical continuous learning for transferable medium/high workload modeling without requiring long sustained CPU load.",
+  "package_version": "3.1.8",
+  "card_ui_version": "3.1.8",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Poprawa uczenia AI Cooling dla obciążeń medium/high oraz szybsza, bezpieczna reakcja wentylatora przy dużym odchyleniu temperatury."
+  "summary_pl": "Wprowadza AI Cooling v5 z hierarchicznym ciągłym uczeniem, aby modelować medium/high bez wymagania długotrwałego obciążenia CPU."
 }
