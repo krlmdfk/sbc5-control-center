@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   prepare:
-    if: ${{ github.event.head_commit.message != 'prepare: SBC5 Control Center 3.1.8 metadata' }}
+    if: ${{ github.event.head_commit.message != 'prepare-3.1.8-metadata' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,5 +48,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "prepare: SBC5 Control Center 3.1.8 metadata"
+          git commit -m "prepare-3.1.8-metadata"
           git push origin HEAD:release/3.1.8-hierarchical-ai-cooling
