@@ -64,5 +64,8 @@ jobs:
       - name: Test Restart Manager HACS handoff
         run: python scripts/test_restart_manager_hacs_handoff.py
 
+      - name: Test AI v5 observability and log cleanup
+        run: python scripts/test_ai_v5_observability.py
+
       - name: Check whitespace errors
         run: git diff --check HEAD^ HEAD || git diff --check
