@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
       - name: Prepare release 3.1.14
         if: github.ref == 'refs/heads/release/3.1.14-active-slot-overlay'
         run: |
@@ -43,9 +46,6 @@ jobs:
             git commit -m "release: prepare SBC5 Control Center 3.1.14"
             git push origin HEAD:release/3.1.14-active-slot-overlay
           fi
-
-      - name: Install validators
-        run: python -m pip install --disable-pip-version-check pyyaml jinja2
 
       - name: Validate Bash
         run: |
