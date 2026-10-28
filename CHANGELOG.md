@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.14 — 2026-10-28
+
+### English
+
+#### Changed
+
+- Fix Active Cooler custom overlay reconciliation after HAOS A/B slot switches.
+
+#### Fixed
+
+- Validate rpi5-custom1.dtbo in the currently booted HAOS RAUC slot instead of accepting a stale copy from any slot.
+- Automatically rebuild the custom fan overlay when the active slot is missing it after an HAOS update.
+
+#### Performance
+
+- No new polling loop; active-slot detection runs only during existing startup reconciliation.
+
+#### Upgrade notes
+
+- A full Raspberry Pi 5 host restart is required after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Naprawa aktywacji niestandardowego profilu Active Cooler po przełączeniu slotu A/B przez HAOS.
+
+#### Naprawiono
+
+- Walidacja rpi5-custom1.dtbo dotyczy teraz aktualnie uruchomionego slotu RAUC HAOS, a nie dowolnej starej kopii z innego slotu.
+- Automatyczna odbudowa nakładki profilu wentylatora, gdy aktywny slot nie ma jej po aktualizacji HAOS.
+
+#### Wydajność
+
+- Bez nowej pętli odpytywania; wykrywanie aktywnego slotu działa wyłącznie w istniejącej fazie uzgadniania przy starcie.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji wymagany jest pełny restart hosta Raspberry Pi 5.
+
 ## 3.1.13 — 2026-10-28
 
 ### English

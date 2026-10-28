@@ -1,14 +1,14 @@
 {
-  "version": "3.1.13",
+  "version": "3.1.14",
   "release_date": "2026-10-28",
-  "restart_required": "none",
-  "summary": "AI diagnostics hardening: sparse buckets now report direct confidence strictly from qualified evidence while transient/global/effective learning remains unchanged.",
-  "package_version": "3.1.13",
-  "card_ui_version": "3.1.13",
+  "restart_required": "host",
+  "summary": "Fix Active Cooler custom overlay reconciliation after HAOS A/B slot switches.",
+  "package_version": "3.1.14",
+  "card_ui_version": "3.1.14",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Utwardzenie diagnostyki AI: sparse buckety pokazują direct confidence wyłącznie z próbek jakościowych, bez zmian w uczeniu transient/global/effective i sterowaniu chłodzeniem."
+  "summary_pl": "Naprawa aktywacji niestandardowego profilu Active Cooler po przełączeniu slotu A/B przez HAOS."
 }

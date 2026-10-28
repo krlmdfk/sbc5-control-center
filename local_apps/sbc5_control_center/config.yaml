@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.13
+version: 3.1.14
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.13 — AI diagnostics hardening: sparse buckets now report direct confidence strictly from qualified evidence while transient/global/effective learning remains unchanged."
+description: "SBC5 Control Center 3.1.14 — Fix Active Cooler custom overlay reconciliation after HAOS A/B slot switches."
 arch:
 - aarch64
 homeassistant: 2026.10.1
