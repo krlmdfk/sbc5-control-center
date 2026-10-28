@@ -1,0 +1,41 @@
+name: Prepare 3.1.13 metadata
+
+on:
+  push:
+    branches:
+      - release/3.1.13-ai-diagnostics
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Prepare release metadata
+        run: |
+          set -euo pipefail
+          current="$(python -c 'import json; print(json.load(open("local_apps/sbc5_control_center/release.json"))["version"])')"
+          if [ "$current" = "3.1.13" ]; then
+            echo "3.1.13 already prepared"
+            exit 0
+          fi
+          python scripts/release_prepare.py \
+            --version 3.1.13 \
+            --restart-required none \
+            --summary-en "AI diagnostics hardening: sparse buckets now report direct confidence strictly from qualified evidence while transient/global/effective learning remains unchanged." \
+            --summary-pl "Utwardzenie diagnostyki AI: sparse buckety pokazują direct confidence wyłącznie z próbek jakościowych, bez zmian w uczeniu transient/global/effective i sterowaniu chłodzeniem."
+          python scripts/validate_release.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Release 3.1.13'
+          git push origin HEAD:release/3.1.13-ai-diagnostics
