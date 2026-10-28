@@ -4055,9 +4055,36 @@ detect_restart_requirement() {
   fi
 
   if [ "$LOADED_PACKAGE_VERSION" != "$REQUIRED_PACKAGE_VERSION" ]; then
+    local disk_package_version=""
+    disk_package_version="$(package_version_on_disk)"
     RESTART_REQUIRED_TYPE="home_assistant"
-    RESTART_REQUIRED_REASON="Pakiet Home Assistant nie jest jeszcze wczytany w wersji ${REQUIRED_PACKAGE_VERSION} (aktualnie: ${LOADED_PACKAGE_VERSION}). Podmień packages/sbc5_control_center.yaml z tej wersji aplikacji, a następnie uruchom ponownie Home Assistant."
+    if [ "$disk_package_version" = "$REQUIRED_PACKAGE_VERSION" ]; then
+      RESTART_REQUIRED_REASON="Pakiet Home Assistant ${REQUIRED_PACKAGE_VERSION} jest już zsynchronizowany na dysku; bieżący Core ma nadal aktywną wersję ${LOADED_PACKAGE_VERSION}. Wymagany jest wyłącznie restart Home Assistant, aby wczytać nowy package."
+    else
+      RESTART_REQUIRED_REASON="Pakiet Home Assistant na dysku nie jest zgodny z wymaganą wersją ${REQUIRED_PACKAGE_VERSION} (plik: ${disk_package_version:-brak}, aktywnie w Core: ${LOADED_PACKAGE_VERSION}). Uruchom ponownie synchronizację/aktualizację SBC5 przed restartem Home Assistant."
+    fi
   fi
+}
+
+
+package_version_on_disk() {
+  sed -n 's/^# SBC5 Control Center Package Version:[[:space:]]*//p' \
+    /homeassistant/packages/sbc5_control_center.yaml 2>/dev/null | head -n1
+}
+
+bridge_version_on_disk() {
+  jq -r '.version // empty' "$BRIDGE_DEST_DIR/manifest.json" 2>/dev/null || true
+}
+
+restart_prompt_owned_by_hacs() {
+  # 3.1.9: when HACS already owns and has installed the current bridge, HACS
+  # presents its own native restart repair. SBC5 keeps its internal restart state
+  # for dashboard/health tracking, but must not create a second duplicate Repair.
+  [ "$RESTART_REQUIRED_TYPE" = "home_assistant" ] || return 1
+  [ -f "$BRIDGE_EXTERNAL_MARKER" ] || return 1
+  [ "$(package_version_on_disk)" = "$REQUIRED_PACKAGE_VERSION" ] || return 1
+  [ "$(bridge_version_on_disk)" = "$APP_VERSION" ] || return 1
+  return 0
 }
 
 publish_restart_requirement() {
@@ -4080,9 +4107,19 @@ publish_restart_requirement() {
       post_from="$(jq -r '.from_version // empty' "$POST_UPDATE_STATE_FILE" 2>/dev/null || true)"
       post_to="$(jq -r '.to_version // empty' "$POST_UPDATE_STATE_FILE" 2>/dev/null || echo "$APP_VERSION")"
     fi
-    native_restart_repair_set "$RESTART_REQUIRED_TYPE" "$RESTART_REQUIRED_REASON" "$post_from" "$post_to"
-    if [ "$force_notify" = "true" ] || [ "$RESTART_REQUIRED_TYPE" != "$LAST_RESTART_STATE" ]; then
-      ha_restart_notification "$RESTART_REQUIRED_TYPE" "$RESTART_REQUIRED_REASON"
+    if restart_prompt_owned_by_hacs; then
+      if [ -r "$NATIVE_RESTART_MARKER" ] || [ -r "$NATIVE_REPAIR_POSTED_FILE" ]; then
+        native_restart_repair_clear || true
+      fi
+      ha_dismiss_restart_notification
+      if [ "$force_notify" = "true" ] || [ "$RESTART_REQUIRED_TYPE" != "$LAST_RESTART_STATE" ]; then
+        log "Restart Manager: HACS/Marketplace ma już bridge ${APP_VERSION} i package ${REQUIRED_PACKAGE_VERSION} na dysku — nie tworzę drugiego Repair; oczekuję tylko na restart Home Assistant."
+      fi
+    else
+      native_restart_repair_set "$RESTART_REQUIRED_TYPE" "$RESTART_REQUIRED_REASON" "$post_from" "$post_to"
+      if [ "$force_notify" = "true" ] || [ "$RESTART_REQUIRED_TYPE" != "$LAST_RESTART_STATE" ]; then
+        ha_restart_notification "$RESTART_REQUIRED_TYPE" "$RESTART_REQUIRED_REASON"
+      fi
     fi
   fi
 
@@ -9278,7 +9315,7 @@ log "SBC5 Control Center v${APP_VERSION} uruchomiony."
 log "Profile: factory, custom1 (profile legacy ukryte i zachowane tylko dla migracji/diagnostyki)"
 load_custom_curve 1
 log "Active Cooler: profil=custom1; control_mode=${COOLING_CONTROL_MODE}; auto_style=${COOLING_AUTO_STYLE}; target=${CUSTOM_TARGET_C}°C; hyst=${CUSTOM_HYST_DENSE_C}/${CUSTOM_HYST_OUTER_C}°C; PWM=${CUSTOM_MIN_PWM_PCT}/${CUSTOM_TARGET_PWM_PCT}/${CUSTOM_MAX_PWM_PCT}%; hybrid_limit=±${HYBRID_CORRECTION_LIMIT_PCT}%."
-log "Adaptive PWM: control_mode=${COOLING_CONTROL_MODE}; enabled=${ADAPTIVE_PWM_ENABLED}; deadband=±${ADAPTIVE_PWM_DEADBAND_C}°C; interval=${ADAPTIVE_PWM_INTERVAL_SECONDS}s; up_confirm=2; anti_windup_hold=3 cykle; down_confirm=${ADAPTIVE_PWM_DOWN_CONFIRM_CYCLES}; grid=1%; baza=custom1(T)+bounded trim ±12pp; deadband=actuator-hold + sign-aware decay + trim leak 1pp/~10s; sign_guard=enabled; curve_cache=hot-reload; owner=exclusive auto(user_space|mode_disabled); reentry=slew-limited; actuator slew=+3/-4pp na cykl (fast +5/-5); telemetry runtime=canonical relay schema 10."
+log "Adaptive PWM: control_mode=${COOLING_CONTROL_MODE}; enabled=${ADAPTIVE_PWM_ENABLED}; deadband=±${ADAPTIVE_PWM_DEADBAND_C}°C; interval=${ADAPTIVE_PWM_INTERVAL_SECONDS}s; up_confirm=2; anti_windup_hold=3 cykle; down_confirm=${ADAPTIVE_PWM_DOWN_CONFIRM_CYCLES}; grid=1%; baza=custom1(T)+bounded trim ±12pp; deadband=actuator-hold + sign-aware decay + trim leak 1pp/~10s; sign_guard=enabled; curve_cache=hot-reload; owner=exclusive auto(user_space|mode_disabled); reentry=slew-limited; actuator slew=+3/-4pp na cykl (fast-up +8pp @ +5°C; critical-up +12pp @ +7°C; fast-down -5pp); telemetry runtime=canonical relay schema 10."
 log "Update Handoff: seamless Adaptive PWM ownership transfer=enabled; timeout=${FAN_CONTROL_HANDOFF_MAX_AGE_SECONDS}s; arbitrary stop nadal zwalnia sterowanie do kernela."
 log "AI Cooling Preview: section=${AI_COOLING_SECTION_ENABLED}; configured=${AI_COOLING_MODE}; effective=${AI_COOLING_EFFECTIVE_MODE}; assist_limit=±${AI_COOLING_ASSIST_LIMIT_PCT}%; min_samples=${AI_COOLING_MIN_SAMPLES}; local_model=/data/ai_cooling_model.json."
 log "Restart Manager: policy=${RESTART_POLICY}, pre_check=${PRE_RESTART_CONFIG_CHECK}, notices=${RESTART_NOTICE_ON_START}"

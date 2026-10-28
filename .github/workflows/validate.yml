@@ -61,5 +61,8 @@ jobs:
       - name: Test AI Cooling hierarchical continuous learning v5
         run: python scripts/test_ai_hierarchical_v5.py
 
+      - name: Test Restart Manager HACS handoff
+        run: python scripts/test_restart_manager_hacs_handoff.py
+
       - name: Check whitespace errors
         run: git diff --check HEAD^ HEAD || git diff --check
