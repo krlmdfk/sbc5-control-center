@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.12 — 2026-10-28
+
+### English
+
+#### Changed
+
+- Expose AI Cooling v5.1 transient-learning evidence through the existing transfer diagnostics path without changing cooling behavior or adding polling.
+
+#### Fixed
+
+- Expose transient confidence, sample count and support in the existing transfer_source telemetry token so medium/high burst learning is visible end to end.
+- Keep the existing 22-field evaluator ABI intact; no run_legacy parser expansion or new telemetry loop is required.
+
+#### Performance
+
+- No additional polling, Home Assistant REST reads or control-loop work is introduced.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Udostępnia diagnostykę uczenia transient AI Cooling v5.1 przez istniejącą ścieżkę transferu bez zmiany sterowania chłodzeniem i bez dodatkowego pollingu.
+
+#### Naprawiono
+
+- Udostępniono pewność transient, liczbę próbek i support w istniejącym tokenie transfer_source, dzięki czemu uczenie z krótkich obciążeń medium/high jest widoczne end-to-end.
+- Zachowano istniejące 22-polowe ABI ewaluatora; nie rozszerzano parsera run_legacy ani nie dodawano nowej pętli telemetrii.
+
+#### Wydajność
+
+- Nie dodano pollingu, odczytów REST Home Assistant ani dodatkowej pracy w pętli sterowania.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.11 — 2026-10-28
 
 ### English
