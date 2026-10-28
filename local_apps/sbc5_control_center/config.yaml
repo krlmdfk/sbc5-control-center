@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.10
+version: 3.1.11
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.10 — Expose AI Cooling v5 hierarchical direct/global/effective diagnostics and reduce duplicate Restart Manager cleanup noise without changing cooling control."
+description: "SBC5 Control Center 3.1.11 — AI Cooling v5.1 learns bounded transient thermal evidence from short medium/high workload bursts without changing steady-state PWM predictions."
 arch:
 - aarch64
 homeassistant: 2026.10.1
