@@ -1,0 +1,50 @@
+name: Prepare 3.1.9 release
+
+on:
+  push:
+    branches:
+      - release/3.1.9-restart-race-hotfix
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/3.1.9-restart-race-hotfix
+          fetch-depth: 0
+      - name: Prepare release metadata
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.1.9 \
+            --restart-required none \
+            --summary-en "Fix Restart Manager startup race and duplicate HACS restart repairs while keeping AI Cooling v5 unchanged." \
+            --summary-pl "Naprawa wyścigu Restart Managera przy starcie i podwójnych zgłoszeń restartu HACS bez zmian w AI Cooling v5." \
+            --fixed-en "Distinguish a package already synchronized on disk from an older package version still loaded by Home Assistant Core." \
+            --fixed-pl "Rozróżniono package już zsynchronizowany na dysku od starszej wersji nadal załadowanej w Home Assistant Core." \
+            --fixed-en "Suppress the duplicate SBC5 native Repair when HACS already owns and has installed the matching bridge version." \
+            --fixed-pl "Usunięto podwójny Repair SBC5, gdy HACS zarządza integracją i ma już zainstalowaną zgodną wersję bridge." \
+            --changed-en "Refresh Adaptive PWM startup diagnostics to show +8 pp thermal-fast, +12 pp thermal-critical and -5 pp fast-down limits." \
+            --changed-pl "Zaktualizowano diagnostykę startową Adaptive PWM: +8 pp thermal-fast, +12 pp thermal-critical i -5 pp fast-down." \
+            --performance-en "No new polling loop; restart ownership checks only reuse existing startup/restart evaluation." \
+            --performance-pl "Bez nowej pętli pollingu; sprawdzenie własności restartu wykorzystuje istniejącą ścieżkę startową/Restart Managera."
+      - name: Validate prepared release
+        run: |
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          python scripts/test_restart_manager_hacs_handoff.py
+          python scripts/validate_release.py --strict-manifest-hashes
+          git diff --check
+      - name: Commit release metadata
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A ':!.github/workflows/prepare-3.1.9-release.yml'
+          if git diff --cached --quiet; then
+            echo 'No release changes to commit.'
+          else
+            git commit -m 'prepare: SBC5 Control Center 3.1.9'
+            git push origin HEAD:release/3.1.9-restart-race-hotfix
+          fi
