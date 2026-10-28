@@ -58,5 +58,8 @@ jobs:
       - name: Test AI bucket-aware qualification and thermal fast path
         run: python scripts/test_ai_bucket_qualification_v4.py
 
+      - name: Test AI Cooling hierarchical continuous learning v5
+        run: python scripts/test_ai_hierarchical_v5.py
+
       - name: Check whitespace errors
         run: git diff --check HEAD^ HEAD || git diff --check
