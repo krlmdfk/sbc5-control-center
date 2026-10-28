@@ -21,15 +21,26 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Apply 3.1.14 active-slot overlay fix
+      - name: Prepare release 3.1.14
         if: github.ref == 'refs/heads/release/3.1.14-active-slot-overlay'
         run: |
-          python scripts/prepare_active_slot_overlay_fix_3_1_14.py
-          if ! git diff --quiet -- local_apps/sbc5_control_center/run_legacy.sh scripts/test_fan_profile_active_slot_overlay.py; then
+          current="$(python -c 'import json; print(json.load(open("local_apps/sbc5_control_center/release.json"))["version"])')"
+          if [ "$current" != "3.1.14" ]; then
+            python scripts/release_prepare.py \
+              --version 3.1.14 \
+              --restart-required host \
+              --summary-en "Fix Active Cooler custom overlay reconciliation after HAOS A/B slot switches." \
+              --summary-pl "Naprawa aktywacji niestandardowego profilu Active Cooler po przełączeniu slotu A/B przez HAOS." \
+              --fixed-en "Validate rpi5-custom1.dtbo in the currently booted HAOS RAUC slot instead of accepting a stale copy from any slot." \
+              --fixed-en "Automatically rebuild the custom fan overlay when the active slot is missing it after an HAOS update." \
+              --fixed-pl "Walidacja rpi5-custom1.dtbo dotyczy teraz aktualnie uruchomionego slotu RAUC HAOS, a nie dowolnej starej kopii z innego slotu." \
+              --fixed-pl "Automatyczna odbudowa nakładki profilu wentylatora, gdy aktywny slot nie ma jej po aktualizacji HAOS." \
+              --performance-en "No new polling loop; active-slot detection runs only during existing startup reconciliation." \
+              --performance-pl "Bez nowej pętli odpytywania; wykrywanie aktywnego slotu działa wyłącznie w istniejącej fazie uzgadniania przy starcie."
             git config user.name github-actions[bot]
             git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add local_apps/sbc5_control_center/run_legacy.sh scripts/test_fan_profile_active_slot_overlay.py
-            git commit -m "fix: validate custom fan overlay in active HAOS slot"
+            git add -A
+            git commit -m "release: prepare SBC5 Control Center 3.1.14"
             git push origin HEAD:release/3.1.14-active-slot-overlay
           fi
 
