@@ -67,5 +67,8 @@ jobs:
       - name: Test AI v5 observability and log cleanup
         run: python scripts/test_ai_v5_observability.py
 
+      - name: Test AI Cooling v5.1 transient learning guards
+        run: python scripts/test_ai_v5_1_transient_learning.py
+
       - name: Check whitespace errors
         run: git diff --check HEAD^ HEAD || git diff --check
