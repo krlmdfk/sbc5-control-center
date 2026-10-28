@@ -52,7 +52,11 @@ def _thermal_predictor(
     )
 
 
-# Legacy invariants intentionally preserved for validation and runtime safety:
+# Legacy invariants intentionally preserved for validation and runtime safety.
+# The implementation remains in ai_cooling_legacy.py, including:
+# if workload_changed:
+#     model["qualification_temp_history"] = []
+#     model["qualification_pwm_history"] = []
 # thermal_predictor["shadow_assist"] = thermal_shadow
 # Shadow Assist is telemetry only; v3 also returns "control_output_enabled": False.
 # step() lives in the preserved legacy module, therefore patch its global lookup.
