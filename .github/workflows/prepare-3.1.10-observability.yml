@@ -39,7 +39,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add local_apps/sbc5_control_center/ai_cooling_v5.py local_apps/sbc5_control_center/run_legacy.sh dashboard/sbc5_control_center_diagnostics_card.yaml local_apps/sbc5_control_center/dashboard_card.json .github/workflows/validate.yml
+          git restore .github/workflows/validate.yml || true
+          git add local_apps/sbc5_control_center/ai_cooling_v5.py local_apps/sbc5_control_center/run_legacy.sh dashboard/sbc5_control_center_diagnostics_card.yaml local_apps/sbc5_control_center/dashboard_card.json
           [ -f scripts/test_ai_v5_observability.py ] && git add scripts/test_ai_v5_observability.py || true
           if git diff --cached --quiet; then
             echo 'No prepared source changes to commit.'
