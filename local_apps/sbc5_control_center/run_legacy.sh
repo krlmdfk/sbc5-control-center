@@ -4243,8 +4243,31 @@ fan_profile_reconcile_write_state() {
     > "$tmp" 2>/dev/null && mv -f "$tmp" "$FAN_PROFILE_RECONCILE_FILE" || rm -f "$tmp" 2>/dev/null || true
 }
 
+fan_profile_active_boot_slot() {
+  local slot="" cmdline=""
+  # The running kernel is authoritative. HAOS/RPi5 exposes the RAUC slot in
+  # the kernel command line; /proc is shared with the host kernel even when
+  # SBC5 runs in the app container.
+  cmdline="$(cat /proc/cmdline 2>/dev/null || true)"
+  slot="$(printf '%s\n' "$cmdline" | sed -n 's/.*[[:space:]]rauc\.slot=\([AB]\)\([[:space:]].*\)\?$/\1/p')"
+  if [ "$slot" = "A" ] || [ "$slot" = "B" ]; then
+    printf '%s\n' "$slot"
+    return 0
+  fi
+
+  # Fallback for diagnostics/older HAOS layouts: use the committed os_prefix.
+  if [ -n "${BOOT_CFG:-}" ] && [ -r "$BOOT_CFG" ]; then
+    slot="$(sed -n 's/^[[:space:]]*os_prefix=slot-\([AB]\)\/[[:space:]]*$/\1/p' "$BOOT_CFG" | tail -n1)"
+  fi
+  if [ "$slot" = "A" ] || [ "$slot" = "B" ]; then
+    printf '%s\n' "$slot"
+    return 0
+  fi
+  return 1
+}
+
 fan_profile_custom1_boot_artifacts_state() {
-  local config_ok=false overlay_ok=false d
+  local config_ok=false overlay_ok=false d active_slot="" active_overlay=""
   if ! find_boot_config; then
     printf 'false\tfalse\n'
     return 1
@@ -4255,9 +4278,19 @@ fan_profile_custom1_boot_artifacts_state() {
     config_ok=true
   fi
 
-  for d in "$BOOT_MP/overlays" "$BOOT_MP/slot-A/overlays" "$BOOT_MP/slot-B/overlays"; do
-    if [ -s "$d/rpi5-custom1.dtbo" ]; then overlay_ok=true; break; fi
-  done
+  active_slot="$(fan_profile_active_boot_slot 2>/dev/null || true)"
+  if [ "$active_slot" = "A" ] || [ "$active_slot" = "B" ]; then
+    active_overlay="$BOOT_MP/slot-${active_slot}/overlays/rpi5-custom1.dtbo"
+    [ -s "$active_overlay" ] && overlay_ok=true
+    log "Fan Profile Boot Slot: active=${active_slot}; overlay=${active_overlay#$BOOT_MP/}; present=${overlay_ok}."
+  else
+    # Legacy/non-RAUC fallback only. Do not accept an arbitrary inactive slot
+    # as proof that the currently booted firmware can load the overlay.
+    d="$BOOT_MP/overlays/rpi5-custom1.dtbo"
+    [ -s "$d" ] && overlay_ok=true
+    log "Fan Profile Boot Slot: nie udało się ustalić aktywnego slotu RAUC; fallback=overlays/rpi5-custom1.dtbo; present=${overlay_ok}."
+  fi
+
   printf '%s\t%s\n' "$config_ok" "$overlay_ok"
   cleanup_mount
   [ "$config_ok" = "true" ] && [ "$overlay_ok" = "true" ]
