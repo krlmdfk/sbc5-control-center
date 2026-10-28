@@ -1,14 +1,14 @@
 {
-  "version": "3.1.11",
+  "version": "3.1.12",
   "release_date": "2026-10-28",
   "restart_required": "none",
-  "summary": "AI Cooling v5.1 learns bounded transient thermal evidence from short medium/high workload bursts without changing steady-state PWM predictions.",
-  "package_version": "3.1.11",
-  "card_ui_version": "3.1.11",
+  "summary": "Expose AI Cooling v5.1 transient-learning evidence through the existing transfer diagnostics path without changing cooling behavior or adding polling.",
+  "package_version": "3.1.12",
+  "card_ui_version": "3.1.12",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "AI Cooling v5.1 uczy się ograniczonych dowodów dynamicznej odpowiedzi cieplnej z krótkich obciążeń medium/high bez zmiany predykcji steady-state PWM."
+  "summary_pl": "Udostępnia diagnostykę uczenia transient AI Cooling v5.1 przez istniejącą ścieżkę transferu bez zmiany sterowania chłodzeniem i bez dodatkowego pollingu."
 }

@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.11
+version: 3.1.12
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.11 — AI Cooling v5.1 learns bounded transient thermal evidence from short medium/high workload bursts without changing steady-state PWM predictions."
+description: "SBC5 Control Center 3.1.12 — Expose AI Cooling v5.1 transient-learning evidence through the existing transfer diagnostics path without changing cooling behavior or adding polling."
 arch:
 - aarch64
 homeassistant: 2026.10.1

@@ -46,7 +46,19 @@ assert conf_after > conf_before, (conf_before, conf_after)
 assert transient_conf > 0
 assert support > 0
 assert samples >= 6
-assert source_after.endswith("+transient")
+assert "+transient[c=" in source_after, source_after
+assert f"n={samples}" in source_after, source_after
+assert f"s={support:.3f}" in source_after, source_after
+
+# The observability transport deliberately stays inside the existing 22-field
+# stdout ABI by appending the token only to field 20 (transfer_source).
+fields = ["0"] * 22
+fields[20] = "interpolation"
+token = mod._transient_token(target, 55.0)
+assert token.startswith("+transient[c=")
+fields[20] += token
+assert len(fields) == 22
+assert "transient[c=" in fields[20]
 
 # A short burst must not make a sparse bucket assist-ready on confidence alone.
 effective = mod.base._effective_confidence(
@@ -65,4 +77,4 @@ assert effective < mod.base.ASSIST_MIN_EFFECTIVE_CONFIDENCE, effective
 assert mod._transient_observation_weight({**status, "temperature_error_c": 10.0}) > 0
 assert mod.base._observation_weight({**status, "temperature_error_c": 10.0}) == 0.0
 
-print("AI Cooling v5.1 transient learning guards: PASS")
+print("AI Cooling v5.1 transient learning + observability guards: PASS")
