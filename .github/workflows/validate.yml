@@ -58,6 +58,9 @@ jobs:
       - name: Test Thermal Predictor Accuracy Calibration
         run: python scripts/test_thermal_predictor_accuracy.py
 
+      - name: Test AI runtime layer wiring
+        run: python scripts/test_ai_runtime_wiring_3_1_20.py
+
       - name: Test AI bucket-aware qualification and thermal fast path
         run: python scripts/test_ai_bucket_qualification_v4.py
 
