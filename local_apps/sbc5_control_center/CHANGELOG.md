@@ -1,5 +1,43 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.19 — 2026-10-29
+
+### English
+
+#### Changed
+
+- Thermal Predictor v3.1 validates +30/+60/+120 s forecasts against the interpolated CPU temperature at the exact forecast due timestamp instead of a later polling sample.
+- Replaced ordinary linear trend estimation with a robust median pairwise slope estimator to reduce sensitivity to isolated temperature spikes.
+- Predictor context validation now covers the complete forecast path, so transient workload, target or PWM changes cannot be mistaken for model error after conditions return to their starting point.
+- Compatible Thermal Predictor v3 regime/global calibration is retained during migration to v3.1, while the old pending forecast queue is discarded because validation semantics changed.
+- Added separate accepted/rejected forecast counters, rejection categories and reasons, exact validation diagnostics, condition-shift MAE and per-horizon accuracy targets.
+
+#### Fixed
+
+- Prevented late or irregular telemetry polling from inflating Predictor MAE by evaluating a forecast at the poll time rather than its intended horizon.
+
+#### Restart
+
+- No Raspberry Pi host reboot is required. The application is restarted normally by the update process.
+
+### Polski
+
+#### Zmieniono
+
+- Thermal Predictor v3.1 waliduje prognozy +30/+60/+120 s względem interpolowanej temperatury CPU dokładnie w czasie zapadalności prognozy, a nie względem późniejszej próbki pollingu.
+- Zwykłe liniowe wyznaczanie trendu zastąpiono odpornym estymatorem medianowym nachylenia, ograniczając wpływ pojedynczych skoków temperatury.
+- Walidacja kontekstu Predictora obejmuje teraz całą ścieżkę prognozy, dzięki czemu chwilowe zmiany obciążenia, celu lub PWM nie są traktowane jako błąd modelu po powrocie warunków do stanu początkowego.
+- Przy migracji z Thermal Predictor v3 zachowywana jest zgodna kalibracja regime/global, natomiast stara kolejka oczekujących prognoz jest odrzucana ze względu na zmianę semantyki walidacji.
+- Dodano osobne liczniki prognoz zaakceptowanych i odrzuconych, kategorie i przyczyny odrzuceń, diagnostykę dokładnej walidacji, MAE zmian warunków oraz cele dokładności dla każdego horyzontu.
+
+#### Naprawiono
+
+- Usunięto zawyżanie MAE Predictora przy opóźnionym lub nieregularnym pollingu, gdy prognoza była oceniana w chwili odczytu zamiast dla właściwego horyzontu.
+
+#### Restart
+
+- Pełny restart hosta Raspberry Pi nie jest wymagany. Aplikacja jest standardowo restartowana przez proces aktualizacji.
+
 ## 3.1.18 — 2026-10-29
 
 ### English
