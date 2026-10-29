@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.18
+version: 3.1.19
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.18 — Persist Ethernet EEE choices across host reboots and correct userspace-managed custom1 fan profile status."
+description: "SBC5 Control Center 3.1.19 — Improve Thermal Predictor accuracy with exact due-time validation, path-aware context filtering and robust thermal trend estimation."
 arch:
 - aarch64
 homeassistant: 2026.10.1
