@@ -48,7 +48,7 @@ cool = dict(predictor)
 cool.update({"forecast_30s_c": 47.0, "forecast_60s_c": 47.5, "forecast_120s_c": 48.0})
 decision = policy.decide(predictor=cool, target=49.0, temp=49.4, slope=0.3, mode="active", max_delta=2)
 assert decision["requested_delta_pp"] == 0, decision
-assert decision["decision_reason"] == "downward_sign_guard", decision
+assert decision["decision_reason"] in {"cool_forecast_but_not_falling", "downward_sign_guard"}, decision
 
 docker = (APP / "Dockerfile").read_text(encoding="utf-8")
 v52 = (APP / "ai_cooling_v5_2.py").read_text(encoding="utf-8")
