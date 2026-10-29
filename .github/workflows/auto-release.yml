@@ -28,7 +28,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install release validators
-        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+        run: python -m pip install --disable-pip-check pyyaml jinja2
 
       - name: Resolve release version
         id: version
@@ -44,6 +44,29 @@ jobs:
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Verify companion HACS integration parity
+        if: steps.version.outputs.exists != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request
+          version = os.environ['VERSION']
+          manifest_url = 'https://raw.githubusercontent.com/krlmdfk/sbc5-control-center-integration/main/custom_components/sbc5_control_center/manifest.json'
+          with urllib.request.urlopen(manifest_url, timeout=20) as response:
+              manifest = json.load(response)
+          hacs_version = str(manifest.get('version', ''))
+          if hacs_version != version:
+              raise SystemExit(f'HACS integration version mismatch: App={version}, HACS={hacs_version}')
+          release_url = f'https://api.github.com/repos/krlmdfk/sbc5-control-center-integration/releases/tags/{version}'
+          req = urllib.request.Request(release_url, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'sbc5-release-sync-guard'})
+          with urllib.request.urlopen(req, timeout=20) as response:
+              release = json.load(response)
+          if str(release.get('tag_name', '')) != version or bool(release.get('draft')):
+              raise SystemExit(f'HACS release {version} is not published')
+          print(f'HACS parity PASS — manifest and release are both {version}')
+          PY
 
       - name: Strict release validation
         if: steps.version.outputs.exists != 'true'
