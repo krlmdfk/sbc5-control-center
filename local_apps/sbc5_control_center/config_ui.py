@@ -23,7 +23,7 @@ def _release_version():
             return version
     except Exception:
         pass
-    return '3.1.15'
+    return '3.1.16'
 
 APP_VERSION = _release_version()
 
@@ -54,7 +54,7 @@ def _runtime_versioned_card(card):
 
     Browser-session Lovelace sync uses these template endpoints directly.  Returning
     raw packaged JSON previously allowed an old Update Card marker (2.8.34) to be
-    written back even while the App and Card UI were already 3.1.15.
+    written back even while the App and Card UI were already 3.1.16.
     """
     version = current_card_ui_version()
     def walk(value):

@@ -1,5 +1,57 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.16 — 2026-10-29
+
+### English
+
+#### Added
+
+- Thermal Predictor v3 with separate fast and slow temperature trends that persist across workload bucket changes.
+- Per-bucket and per-horizon calibration for LOW, MEDIUM and HIGH operating regimes.
+
+#### Changed
+
+- Forecasts now account for CPU workload context, physical PWM state and recent context deltas instead of relying mainly on one temperature slope.
+- Quality scoring weights +30 s and +60 s forecasts more strongly while still tracking +120 s accuracy separately.
+
+#### Fixed
+
+- Prevented workload-bucket transitions from erasing the thermal trend history used by the predictor.
+- Context-shift guard prevents abrupt CPU/PWM changes from contaminating predictor bias and MAE calibration.
+
+#### Performance
+
+- Thermal Predictor v3 remains observe-only and adds no new polling loop or physical PWM authority.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Thermal Predictor v3 z osobnym szybkim i wolnym trendem temperatury, zachowywanym przy zmianach bucketów obciążenia.
+- Kalibrację per bucket i per horyzont dla reżimów LOW, MEDIUM i HIGH.
+
+#### Zmieniono
+
+- Prognozy uwzględniają teraz kontekst obciążenia CPU, fizyczny PWM i ostatnie zmiany kontekstu zamiast opierać się głównie na jednym trendzie temperatury.
+- Ocena jakości mocniej uwzględnia prognozy +30 s i +60 s, zachowując osobne monitorowanie dokładności +120 s.
+
+#### Naprawiono
+
+- Zmiana bucketu obciążenia nie zeruje już historii trendu temperatury używanej przez Predictor.
+- Context-shift guard zapobiega zanieczyszczaniu kalibracji bias/MAE przez nagłe zmiany obciążenia CPU lub PWM.
+
+#### Wydajność
+
+- Thermal Predictor v3 pozostaje w trybie observe-only, bez nowej pętli pollingu i bez wpływu na fizyczne sterowanie PWM.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.15 — 2026-10-28
 
 ### English

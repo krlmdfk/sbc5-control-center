@@ -1,6 +1,6 @@
 ###############################################################################
 # RASPBERRY PI 5 ACTIVE COOLER
-# SBC5 Control Center Package Version: 3.1.15
+# SBC5 Control Center Package Version: 3.1.16
 # 2.6.24: APP_VERSION import + package-version sensor + non-destructive namespace recovery.
 # 2.6.23: native integration bootstrap recovery; runtime cooling/AI logic unchanged.
 # 2.6.7: Workload Buckets v2 — 30 s moving average, progi 10/30/60%, histereza ±5 pp i diagnostyka kwalifikacji
@@ -329,7 +329,7 @@ template:
   - sensor:
 
 
-      # AI Thermal Predictor entities are native integration sensors since 3.1.15.
+      # AI Thermal Predictor entities are native integration sensors since 3.1.16.
       - name: SBC5 AI Prediction PWM
         unique_id: sbc5_ai_prediction_pwm
         icon: mdi:chart-bell-curve-cumulative
@@ -399,7 +399,7 @@ template:
       - name: SBC5 Package Version
         unique_id: sbc5_package_version
         icon: mdi:package-variant-closed-check
-        state: "3.1.15"
+        state: "3.1.16"
 
       - name: SBC5 CPU OC Profile
         unique_id: sbc5_cpu_oc_profile
