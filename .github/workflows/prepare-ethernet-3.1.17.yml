@@ -1,0 +1,66 @@
+name: Prepare Ethernet Stability 3.1.17
+
+on:
+  push:
+    branches:
+      - feat/ethernet-eee-stability-3.1.17
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: ${{ !contains(github.event.head_commit.message, 'generated: prepare SBC5 3.1.17') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/ethernet-eee-stability-3.1.17
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install release validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Remove one-shot workflow from final release tree
+        run: rm -f .github/workflows/prepare-ethernet-3.1.17.yml
+
+      - name: Prepare Ethernet stability source surfaces
+        run: python scripts/prepare_ethernet_stability_3_1_17.py
+
+      - name: Prepare unified 3.1.17 release metadata and hashes
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.1.17 \
+            --release-date 2026-10-29 \
+            --restart-required none \
+            --summary-en "Add Raspberry Pi 5 Ethernet EEE stability control and end0 link-flap diagnostics." \
+            --summary-pl "Dodano kontrolę stabilności Ethernet EEE dla Raspberry Pi 5 oraz diagnostykę zrywania linku end0." \
+            --added-en "Add opt-in Energy Efficient Ethernet control with auto and off modes; off writes dtparam=eee=off to a dedicated SBC5-managed boot block." \
+            --added-pl "Dodano opcjonalne sterowanie Energy Efficient Ethernet z trybami auto i off; tryb off zapisuje dtparam=eee=off w osobnym bloku zarządzanym przez SBC5." \
+            --added-en "Add Ethernet Health, Ethernet Link Flaps and Ethernet EEE Status sensors through the native SBC5 integration." \
+            --added-pl "Dodano sensory Ethernet Health, Ethernet Link Flaps oraz Ethernet EEE Status w natywnej integracji SBC5." \
+            --changed-en "App Configuration now exposes Ethernet monitoring, flap window and DEGRADED threshold without changing EEE unless the user explicitly selects off." \
+            --changed-pl "Konfiguracja aplikacji udostępnia monitorowanie Ethernet, okno flappingu i próg DEGRADED bez zmiany EEE, dopóki użytkownik jawnie nie wybierze off." \
+            --fixed-en "Prevent duplicate SBC5 EEE entries, preserve user-managed EEE settings and refuse conflicting external dtparam=eee=on configuration." \
+            --fixed-pl "Zapobiegnięto duplikowaniu wpisów EEE, zachowano ręczne ustawienia użytkownika i dodano odmowę zapisu przy konflikcie z zewnętrznym dtparam=eee=on." \
+            --performance-en "Ethernet health is sampled from host sysfs by the app guard and relayed through a small JSON state file, avoiding additional Home Assistant network polling." \
+            --performance-pl "Stan Ethernet jest próbkowany z hostowego sysfs przez lekki guard aplikacji i przekazywany małym plikiem JSON, bez dodatkowego odpytywania sieci przez Home Assistant."
+
+      - name: Run Ethernet guard tests
+        run: python scripts/test_ethernet_stability.py
+
+      - name: Validate repository strictly
+        run: python scripts/validate_release.py --strict-manifest-hashes
+
+      - name: Commit generated release tree
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "generated: prepare SBC5 3.1.17 Ethernet stability release"
+          git push origin HEAD:feat/ethernet-eee-stability-3.1.17
