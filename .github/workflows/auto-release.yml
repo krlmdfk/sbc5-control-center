@@ -28,7 +28,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install release validators
-        run: python -m pip install --disable-pip-check pyyaml jinja2
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
 
       - name: Resolve release version
         id: version
