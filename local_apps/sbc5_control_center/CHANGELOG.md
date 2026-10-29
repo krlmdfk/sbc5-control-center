@@ -1,5 +1,21 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.21 — 2026-10-29
+
+### English
+- Added Thermal Predictor guided assist through the existing guarded AI Cooling / Adaptive PWM path; no second actuator path is introduced.
+- Added MAE-aware dynamic weighting for +30/+60/+120 s forecasts so more accurate horizons contribute more strongly.
+- Predictor guidance automatically weakens with lower confidence or higher average MAE.
+- Added a dedicated `Thermal Predictor:` runtime diagnostic log with forecasts, confidence, MAE, weighted forecast, horizon weights, gain and accepted/rejected counters.
+- Extended the evaluator TSV without adding another polling loop and preserved the existing AI Cooling assist limits, deadband, sign guards and thermal safety paths.
+
+### Polski
+- Dodano Thermal Predictor guided assist przez istniejącą zabezpieczoną ścieżkę AI Cooling / Adaptive PWM — bez tworzenia drugiego toru sterowania.
+- Dodano dynamiczne ważenie prognoz +30/+60/+120 s według MAE, dzięki czemu dokładniejszy horyzont ma większy wpływ.
+- Wpływ Predictora automatycznie maleje przy niższym confidence lub wyższym średnim MAE.
+- Dodano osobny log `Thermal Predictor:` z prognozami, confidence, MAE, prognozą ważoną, wagami horyzontów, gain oraz licznikami accepted/rejected.
+- Rozszerzono istniejący wynik evaluatora bez nowej pętli odpytywania; zachowano limity AI Cooling, deadband, sign guard i termiczne ścieżki bezpieczeństwa.
+
 ## 3.1.20 — 2026-10-29
 
 ### English
