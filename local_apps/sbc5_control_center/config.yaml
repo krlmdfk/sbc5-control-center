@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.20
+version: 3.1.21
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.20 — Improve Thermal Predictor accuracy with exact due-time validation, path-aware context filtering and robust thermal trend estimation."
+description: "SBC5 Control Center 3.1.21 — Improve Thermal Predictor accuracy with exact due-time validation, path-aware context filtering and robust thermal trend estimation."
 arch:
 - aarch64
 homeassistant: 2026.10.1

@@ -1,14 +1,14 @@
 {
-  "version": "3.1.20",
+  "version": "3.1.21",
   "release_date": "2026-10-29",
   "restart_required": "none",
-  "summary": "Fix AI Cooling runtime layer wiring so Thermal Predictor remains live and add a combined 24-hour CPU/forecast history view.",
-  "package_version": "3.1.20",
-  "card_ui_version": "3.1.20",
+  "summary": "Thermal Predictor guided assist with MAE-aware horizon weighting and dedicated runtime diagnostics through the existing guarded AI Cooling path.",
+  "package_version": "3.1.21",
+  "card_ui_version": "3.1.21",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Naprawiono łańcuch warstw runtime AI Cooling, aby Thermal Predictor pozostawał aktywny, oraz dodano wspólny 24-godzinny wykres temperatury CPU i prognoz."
+  "summary_pl": "Thermal Predictor guided assist z dynamicznym ważeniem horyzontów według MAE i osobną diagnostyką runtime przez istniejącą zabezpieczoną ścieżkę AI Cooling."
 }

@@ -58,6 +58,9 @@ jobs:
       - name: Test Thermal Predictor Accuracy Calibration
         run: python scripts/test_thermal_predictor_accuracy.py
 
+      - name: Test Thermal Predictor guided assist
+        run: python scripts/test_thermal_predictor_guided_3_1_21.py
+
       - name: Test AI runtime layer wiring
         run: python scripts/test_ai_runtime_wiring_3_1_20.py
 
