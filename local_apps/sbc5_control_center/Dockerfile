@@ -30,14 +30,15 @@ COPY rpi5-stable50-10step-overlay.dts /
 COPY rpi5-stable50-15step-overlay.dts /
 COPY bridge /bridge
 COPY config_ui.py /config_ui.py
-# 3.1.20: keep every AI layer on a distinct runtime path. The v4 compatibility
-# wrapper injects Thermal Predictor v3.x into the proven legacy engine, v5 wraps
-# that layer, and v5.1 remains the public /ai_cooling.py entry point.
+# 3.1.21 AI stack: proven legacy learner -> v4 Thermal Predictor wrapper ->
+# hierarchical v5 -> transient v5.1 -> Thermal Predictor guided v5.2.
 COPY ai_cooling_legacy.py /ai_cooling_legacy.py
 COPY thermal_predictor_v3.py /thermal_predictor_v3.py
+COPY thermal_active_policy.py /thermal_active_policy.py
 COPY ai_cooling.py /ai_cooling_v4.py
 COPY ai_cooling_v5.py /ai_cooling_v5.py
-COPY ai_cooling_v5_1.py /ai_cooling.py
+COPY ai_cooling_v5_1.py /ai_cooling_v5_1.py
+COPY ai_cooling_v5_2.py /ai_cooling.py
 COPY dashboard_sync.py /dashboard_sync.py
 COPY dashboard_card.json /dashboard_card.json
 COPY update_status_card.json /update_status_card.json
@@ -64,7 +65,7 @@ COPY TRADEMARKS.md /usr/share/licenses/sbc5-control-center/TRADEMARKS.md
 COPY LEGAL.md /usr/share/licenses/sbc5-control-center/LEGAL.md
 COPY LICENSE_AUDIT.md /usr/share/licenses/sbc5-control-center/LICENSE_AUDIT.md
 
-RUN chmod a+x /run.sh /run_legacy.sh /ethernet_guard.py /usr/local/bin/sbc5-core /config_ui.py /ai_cooling.py /ai_cooling_v4.py /ai_cooling_v5.py /ai_cooling_legacy.py /thermal_predictor_v3.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
+RUN chmod a+x /run.sh /run_legacy.sh /ethernet_guard.py /usr/local/bin/sbc5-core /config_ui.py /ai_cooling.py /ai_cooling_v4.py /ai_cooling_v5.py /ai_cooling_v5_1.py /ai_cooling_v5_2.py /ai_cooling_legacy.py /thermal_predictor_v3.py /thermal_active_policy.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
 
 ENTRYPOINT ["/run.sh"]
 CMD []
