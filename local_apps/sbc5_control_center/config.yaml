@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.15
+version: 3.1.16
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.15 — Fix sparse-bucket AI diagnostics in Card UI without changing cooling control or learning."
+description: "SBC5 Control Center 3.1.16 — Introduce Thermal Predictor v3 with regime-aware dual-slope forecasting and context-safe online calibration."
 arch:
 - aarch64
 homeassistant: 2026.10.1
