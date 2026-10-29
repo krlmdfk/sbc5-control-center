@@ -19,6 +19,8 @@ from pathlib import Path
 
 APP_VERSION = os.environ.get("SBC5CC_APP_VERSION", "unknown")
 OPTIONS_PATH = Path("/data/options.json")
+SETTINGS_PATH = Path("/data/ethernet_settings.json")
+SETTINGS_SCHEMA = 1
 STATE_DATA_PATH = Path("/data/ethernet_health.json")
 STATE_HA_PATH = Path("/homeassistant/sbc5_control_center/ethernet_health.json")
 BACKUP_DIR = Path("/data/boot_config_backups")
@@ -88,12 +90,58 @@ def atomic_json_write(path: Path, data: dict) -> None:
             pass
 
 
+def read_persistent_settings() -> dict:
+    state = read_json(SETTINGS_PATH, {})
+    if not isinstance(state, dict) or int(state.get("schema", 0) or 0) != SETTINGS_SCHEMA:
+        return {}
+    mode = str(state.get("ethernet_eee_mode", "")).strip().lower()
+    if mode not in {"auto", "off"}:
+        return {}
+    return state
+
+
+def seed_persistent_settings(raw: dict) -> dict:
+    mode = str(raw.get("ethernet_eee_mode", "auto")).strip().lower()
+    if mode not in {"auto", "off"}:
+        mode = "auto"
+    try:
+        window = min(1440, max(1, int(raw.get("ethernet_flap_window_minutes", 60))))
+    except (TypeError, ValueError):
+        window = 60
+    try:
+        threshold = min(50, max(1, int(raw.get("ethernet_flap_degraded_threshold", 3))))
+    except (TypeError, ValueError):
+        threshold = 3
+    state = {
+        "schema": SETTINGS_SCHEMA,
+        "ethernet_eee_mode": mode,
+        "ethernet_health_monitor_enabled": bool(raw.get("ethernet_health_monitor_enabled", True)),
+        "ethernet_flap_window_minutes": window,
+        "ethernet_flap_degraded_threshold": threshold,
+        "source": "guard_initial_seed",
+        "updated": utc_now(),
+    }
+    try:
+        atomic_json_write(SETTINGS_PATH, state)
+    except OSError as exc:
+        log(f"persistent settings seed failed: {exc}")
+    return state
+
+
 def load_options() -> dict:
     raw = read_json(OPTIONS_PATH, {})
     if not isinstance(raw, dict):
         raw = {}
     out = dict(DEFAULTS)
     out.update({k: raw.get(k, v) for k, v in DEFAULTS.items()})
+    # v3.1.18: /data/ethernet_settings.json is the canonical requested state.
+    # Supervisor may recreate options.json from schema defaults after a host reboot.
+    persistent = read_persistent_settings()
+    if not persistent:
+        persistent = seed_persistent_settings(out)
+    for key in DEFAULTS:
+        if key in persistent:
+            out[key] = persistent[key]
 
     mode = str(out.get("ethernet_eee_mode", "auto")).strip().lower()
     out["ethernet_eee_mode"] = mode if mode in {"auto", "off"} else "auto"
@@ -360,7 +408,8 @@ def publish_state(state: dict) -> None:
 
 
 def main() -> int:
-    log(f"starting v{APP_VERSION}; EEE ownership is opt-in (default=auto).")
+    startup_options = load_options()
+    log(f"starting v{APP_VERSION}; requested_eee={startup_options.get('ethernet_eee_mode', 'auto')}; persistent_state={'yes' if SETTINGS_PATH.exists() else 'no'}.")
     previous = read_json(STATE_DATA_PATH, {})
     if not isinstance(previous, dict):
         previous = {}
@@ -443,7 +492,9 @@ def main() -> int:
             elif pending:
                 eee_status = "off_pending_restart"
             else:
-                eee_status = "off_configured"
+                eee_status = "off_active"
+        elif pending:
+            eee_status = "auto_pending_restart"
         elif boot_result.get("external_eee_off"):
             eee_status = "off_external"
 
@@ -461,6 +512,7 @@ def main() -> int:
             "last_link_down_epoch": round(down_events[-1], 3) if down_events else None,
             "eee_requested": mode,
             "eee_status": eee_status,
+            "settings_source": "persistent" if read_persistent_settings() else "options",
             "eee_configured_off": bool(boot_result.get("configured_off")),
             "eee_configuration_source": boot_result.get("configuration_source", "unavailable"),
             "eee_external_off": bool(boot_result.get("external_eee_off")),

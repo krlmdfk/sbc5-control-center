@@ -26,6 +26,17 @@ assert 'exec /run_legacy.sh' in bootstrap
 assert 'COPY run_legacy.sh ' in docker
 assert 'chmod a+x /run.sh /run_legacy.sh' in docker
 
+# 3.1.18 Ethernet state persistence regression.
+guard = (APP / 'ethernet_guard.py').read_text(encoding='utf-8')
+config_ui = (APP / 'config_ui.py').read_text(encoding='utf-8')
+assert 'SETTINGS_PATH = Path("/data/ethernet_settings.json")' in guard
+assert 'persistent = read_persistent_settings()' in guard
+assert 'eee_status = "off_active"' in guard
+assert 'eee_status = "auto_pending_restart"' in guard
+assert "ETHERNET_STATE = Path('/data/ethernet_settings.json')" in config_ui
+assert "persist_ethernet_state(o,source='config_ui',explicit=True)" in config_ui
+assert 'tee -a /tmp/sbc5_ethernet_guard.log' in bootstrap
+
 # Host-access warning throttling and Supervisor diagnostics remain authoritative
 # in the compatibility control plane during the stable 3.0.0 migration.
 assert 'boot_access_warn_throttled' in legacy

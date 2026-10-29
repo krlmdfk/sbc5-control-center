@@ -1,11 +1,11 @@
 #!/bin/bash
 set -u
 
-# SBC5 Control Center 3.1.17 native runtime bootstrap.
+# SBC5 Control Center 3.1.18 native runtime bootstrap.
 # These constants are intentionally retained in the package entrypoint because the
 # SBC5 package validator verifies them before accepting local/update packages.
-APP_VERSION="3.1.17"
-REQUIRED_PACKAGE_VERSION="3.1.17"
+APP_VERSION="3.1.18"
+REQUIRED_PACKAGE_VERSION="3.1.18"
 export SBC5CC_APP_VERSION="$APP_VERSION"
 
 # The Rust core owns lightweight host telemetry and health state. The proven 2.8.x
@@ -32,8 +32,8 @@ fi
 # read-only by default (EEE=auto); config.txt is touched only after the user selects
 # EEE=off in App Configuration. The guard also publishes lightweight end0 health.
 if [ -x "$ETHERNET_GUARD" ]; then
-  "$ETHERNET_GUARD" >/tmp/sbc5_ethernet_guard.log 2>&1 &
-  echo "[SBC5 ${APP_VERSION}] Ethernet Stability Guard: enabled (EEE default=auto)."
+  "$ETHERNET_GUARD" > >(tee -a /tmp/sbc5_ethernet_guard.log) 2>&1 &
+  echo "[SBC5 ${APP_VERSION}] Ethernet Stability Guard: enabled (persistent EEE state + end0 health)."
 else
   echo "[SBC5 ${APP_VERSION}] Ethernet Stability Guard: unavailable; continuing fail-open."
 fi

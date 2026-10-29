@@ -1,14 +1,14 @@
 {
-  "version": "3.1.17",
+  "version": "3.1.18",
   "release_date": "2026-10-29",
   "restart_required": "none",
-  "summary": "Add Raspberry Pi 5 Ethernet EEE stability control and end0 link-flap diagnostics.",
-  "package_version": "3.1.17",
-  "card_ui_version": "3.1.17",
+  "summary": "Persist Ethernet EEE choices across host reboots and correct userspace-managed custom1 fan profile status.",
+  "package_version": "3.1.18",
+  "card_ui_version": "3.1.18",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Dodano kontrolę stabilności Ethernet EEE dla Raspberry Pi 5 oraz diagnostykę zrywania linku end0."
+  "summary_pl": "Utrwalono wybór Ethernet EEE po restartach hosta i poprawiono status profilu custom1 zarządzanego przez Adaptive PWM."
 }

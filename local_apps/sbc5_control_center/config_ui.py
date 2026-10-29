@@ -23,7 +23,7 @@ def _release_version():
             return version
     except Exception:
         pass
-    return '3.1.17'
+    return '3.1.18'
 
 APP_VERSION = _release_version()
 
@@ -54,7 +54,7 @@ def _runtime_versioned_card(card):
 
     Browser-session Lovelace sync uses these template endpoints directly.  Returning
     raw packaged JSON previously allowed an old Update Card marker (2.8.34) to be
-    written back even while the App and Card UI were already 3.1.17.
+    written back even while the App and Card UI were already 3.1.18.
     """
     version = current_card_ui_version()
     def walk(value):
@@ -78,6 +78,9 @@ CPU_STATE = Path('/data/cpu_profile_state.json')
 CPU_STATE_SCHEMA = 2
 GPU_STATE = Path('/data/gpu_profile_state.json')
 GPU_STATE_SCHEMA = 1
+ETHERNET_STATE = Path('/data/ethernet_settings.json')
+ETHERNET_STATE_SCHEMA=1
+ETHERNET_KEYS=('ethernet_eee_mode','ethernet_health_monitor_enabled','ethernet_flap_window_minutes','ethernet_flap_degraded_threshold')
 
 DEFAULTS = {
   'custom_curve_1_name':'Zbalansowana','custom_target_temp_c':50.0,
@@ -282,6 +285,35 @@ def persist_gpu_state(options, source='config_ui', explicit=True):
     _atomic_json_write(GPU_STATE,state)
     return state
 
+def read_ethernet_state():
+    try:
+        st=json.loads(ETHERNET_STATE.read_text()) if ETHERNET_STATE.exists() else {}
+        if not isinstance(st,dict) or int(st.get('schema',0)) != ETHERNET_STATE_SCHEMA: return {}
+        if str(st.get('ethernet_eee_mode','')).lower() not in ('auto','off'): return {}
+        return st
+    except Exception:
+        return {}
+
+def persist_ethernet_state(options, source='config_ui', explicit=True):
+    mode=str(options.get('ethernet_eee_mode','auto')).strip().lower()
+    if mode not in ('auto','off'): mode='auto'
+    try: window=max(1,min(1440,int(options.get('ethernet_flap_window_minutes',60))))
+    except Exception: window=60
+    try: threshold=max(1,min(50,int(options.get('ethernet_flap_degraded_threshold',3))))
+    except Exception: threshold=3
+    state={
+        'schema':ETHERNET_STATE_SCHEMA,
+        'ethernet_eee_mode':mode,
+        'ethernet_health_monitor_enabled':bool(options.get('ethernet_health_monitor_enabled',True)),
+        'ethernet_flap_window_minutes':window,
+        'ethernet_flap_degraded_threshold':threshold,
+        'source':source,
+        'explicit':bool(explicit),
+        'updated':time.strftime('%Y-%m-%d %H:%M:%S'),
+    }
+    _atomic_json_write(ETHERNET_STATE,state)
+    return state
+
 def read_options():
     try: cur=json.loads(OPTIONS.read_text()) if OPTIONS.exists() else {}
     except Exception: cur={}
@@ -312,6 +344,11 @@ def read_options():
             out['config_gpu']=copy.deepcopy(GPU_PROFILES[out['config_gpu_profile']])
         if out['section_gpu_enabled']:
             out.setdefault('config_txt_manager',{})['enabled']=True
+    # v3.1.18: persistent Ethernet/EEE state wins over a Supervisor-restored default snapshot.
+    est=read_ethernet_state()
+    if est:
+        for key in ETHERNET_KEYS:
+            if key in est: out[key]=copy.deepcopy(est[key])
     return out
 
 def atomic_write(data, notify=True):
@@ -541,6 +578,7 @@ class H(BaseHTTPRequestHandler):
                 atomic_write(o,notify=False)
                 persist_cpu_state(o,source='config_ui',explicit=True)
                 persist_gpu_state(o,source='config_ui',explicit=True)
+                persist_ethernet_state(o,source='config_ui',explicit=True)
                 RELOAD.write_text(str(int(time.time())))
                 self.send_json({'ok':True,'options':o,'cpu_profile_state':read_cpu_state(),'gpu_profile_state':read_gpu_state()}); return
             if self.path=='/api/reset_section':
@@ -555,6 +593,7 @@ class H(BaseHTTPRequestHandler):
                 atomic_write(o,notify=False)
                 if sec=='cpu': persist_cpu_state(o,source='config_ui_reset',explicit=True)
                 if sec=='gpu': persist_gpu_state(o,source='config_ui_reset',explicit=True)
+                if sec=='ethernet': persist_ethernet_state(o,source='config_ui_reset',explicit=True)
                 RELOAD.write_text(str(int(time.time())))
                 self.send_json({'ok':True,'options':o,'cpu_profile_state':read_cpu_state(),'gpu_profile_state':read_gpu_state()}); return
             if self.path=='/api/update_packages/cleanup':
