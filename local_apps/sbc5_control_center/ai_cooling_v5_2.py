@@ -3,7 +3,8 @@
 
 Thermal Predictor participates in the existing AI Cooling assist path instead of
 owning a second actuator path. Adaptive PWM and the proven AI assist guards remain
-authoritative.
+authoritative. Predictor diagnostics are appended to the existing evaluator TSV,
+so the shell can log them without extra polling or JSON parsing.
 """
 from __future__ import annotations
 
@@ -68,9 +69,10 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
     predictor = predictor if isinstance(predictor, dict) else {}
     guidance = status.get("thermal_predictor_guidance")
     guidance = guidance if isinstance(guidance, dict) else {}
+    active = str(status.get("mode")) == "assist"
     predictor["guided_assist"] = {
         "mode": "ai_guarded_assist",
-        "control_output_enabled": str(status.get("mode")) == "assist",
+        "control_output_enabled": active,
         "weighted_forecast_c": guidance.get("weighted_forecast_c"),
         "weighted_forecast_error_c": guidance.get("weighted_forecast_error_c"),
         "horizon_weights": guidance.get("horizon_weights", {}),
@@ -79,13 +81,34 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         "ai_correction_pwm_percent": status.get("correction_pwm_percent"),
         "guard_reason": status.get("reason"),
     }
-    predictor["mode"] = "guided_assist" if str(status.get("mode")) == "assist" else "observe_only"
+    predictor["mode"] = "guided_assist" if active else "observe_only"
+    predictor["control_output_enabled"] = active
     status["thermal_predictor"] = predictor
     if len(fields) >= 21:
         source = str(fields[20] or status.get("transfer_source") or "none").split("+thermal[", 1)[0]
         source += "+thermal[guided]"
         fields[20] = source
         status["transfer_source"] = source
+
+    weights = guidance.get("horizon_weights") if isinstance(guidance.get("horizon_weights"), dict) else {}
+    diagnostic_fields = [
+        str(predictor.get("mode") or "observe_only"),
+        str(_num(predictor.get("forecast_30s_c"), 0.0)),
+        str(_num(predictor.get("forecast_60s_c"), 0.0)),
+        str(_num(predictor.get("forecast_120s_c"), 0.0)),
+        str(int(round(_num(predictor.get("confidence_percent"), 0.0)))),
+        str(_num(predictor.get("average_mae_c"), 99.0)),
+        str(_num(guidance.get("weighted_forecast_c"), 0.0)),
+        str(_num(guidance.get("weighted_forecast_error_c"), 0.0)),
+        str(_num(guidance.get("candidate_gain"), 0.0)),
+        f"{_num(weights.get('30'),0.0):.3f},{_num(weights.get('60'),0.0):.3f},{_num(weights.get('120'),0.0):.3f}",
+        str(int(round(_num(predictor.get("accepted_samples_total"), 0.0)))),
+        str(int(round(_num(predictor.get("rejected_samples_total"), 0.0)))),
+    ]
+    if len(fields) < 34:
+        fields.extend(diagnostic_fields)
+    else:
+        fields[22:34] = diagnostic_fields
     return model, status, fields
 
 
