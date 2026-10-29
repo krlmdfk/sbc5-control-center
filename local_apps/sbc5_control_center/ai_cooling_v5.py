@@ -35,7 +35,7 @@ WORKLOAD_CENTERS = {"idle": 5.0, "low": 20.0, "medium": 45.0, "high": 75.0}
 
 
 def _legacy_path() -> Path:
-    runtime = Path("/ai_cooling_legacy.py")
+    runtime = Path("/ai_cooling_v4.py")
     if runtime.is_file():
         return runtime
     return Path(__file__).with_name("ai_cooling.py")
