@@ -9146,6 +9146,7 @@ adaptive_pwm_controller_loop() {
           # Log every ~60 s to keep diagnostics useful without adding polling or log spam.
           if [ -n "${tp_mode:-}" ] && [ $((ai_log_tick % 6)) -eq 0 ]; then
             log "Thermal Predictor: mode=${tp_mode}; F30=${tp_f30}C F60=${tp_f60}C F120=${tp_f120}C; confidence=${tp_conf}%; MAE_avg=${tp_mae}C; weighted=${tp_weighted}C error=${tp_error}C; weights=${tp_weights}; gain=${tp_gain}; accepted/rejected=${tp_accepted}/${tp_rejected}; AI_delta=${ai_correction}pp; guard=${ai_reason}."
+          fi
         fi
       fi
     elif [ "${AI_COOLING_EFFECTIVE_MODE:-disabled}" = "disabled" ]; then
