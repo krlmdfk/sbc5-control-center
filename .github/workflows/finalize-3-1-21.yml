@@ -1,0 +1,124 @@
+name: Finalize SBC5 3.1.21
+
+on:
+  push:
+    branches: ["feature/3.1.21-thermal-predictor-active-assist"]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message, 'chore: finalize 3.1.21 release surfaces') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/3.1.21-thermal-predictor-active-assist
+          fetch-depth: 0
+      - name: Finalize version surfaces and hashes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+
+          VERSION = "3.1.21"
+          OLD = "3.1.20"
+          active = [
+              "custom_components/sbc5_control_center/manifest.json",
+              "custom_components/sbc5_control_center/const.py",
+              "local_apps/sbc5_control_center/bridge/manifest.json",
+              "local_apps/sbc5_control_center/bridge/const.py",
+              "local_apps/sbc5_control_center/legacy_bridge/manifest.json",
+              "local_apps/sbc5_control_center/config.yaml",
+              "local_apps/sbc5_control_center/config_ui.py",
+              "local_apps/sbc5_control_center/dashboard_card.json",
+              "local_apps/sbc5_control_center/update_status_card.json",
+              "local_apps/sbc5_control_center/bridge-package.yaml",
+              "local_apps/sbc5_control_center/migration_assets/rpi5_control_center.yaml",
+              "local_apps/sbc5_control_center/migration_assets/sbc5_control_center.yaml",
+              "local_apps/sbc5_control_center/namespace_native_guard.sh",
+              "local_apps/sbc5_control_center/run.sh",
+              "packages/sbc5_control_center.yaml",
+              "dashboard/sbc5_control_center_diagnostics_card.yaml",
+              "dashboard/update_status_card.yaml",
+              "INFO.md",
+              "README.md",
+          ]
+          for raw in active:
+              p = Path(raw)
+              if p.exists():
+                  text = p.read_text(encoding="utf-8")
+                  if OLD in text:
+                      p.write_text(text.replace(OLD, VERSION), encoding="utf-8")
+
+          release_path = Path("local_apps/sbc5_control_center/release.json")
+          release = json.loads(release_path.read_text(encoding="utf-8"))
+          release.update({
+              "version": VERSION,
+              "package_version": VERSION,
+              "card_ui_version": VERSION,
+              "release_date": "2026-10-29",
+              "restart_required": "none",
+              "summary": "Thermal Predictor guided assist with MAE-aware horizon weighting and dedicated runtime diagnostics through the existing guarded AI Cooling path.",
+              "summary_pl": "Thermal Predictor guided assist z dynamicznym ważeniem horyzontów według MAE i osobną diagnostyką runtime przez istniejącą zabezpieczoną ścieżkę AI Cooling.",
+          })
+          release_path.write_text(json.dumps(release, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          section = """## 3.1.21 — 2026-10-29\n\n### English\n- Added Thermal Predictor guided assist through the existing guarded AI Cooling / Adaptive PWM path; no second actuator path is introduced.\n- Added MAE-aware dynamic weighting for +30/+60/+120 s forecasts so more accurate horizons contribute more strongly.\n- Predictor guidance automatically weakens with lower confidence or higher average MAE.\n- Added a dedicated `Thermal Predictor:` runtime diagnostic log with forecasts, confidence, MAE, weighted forecast, horizon weights, gain and accepted/rejected counters.\n- Extended the evaluator TSV without adding another polling loop and preserved the existing AI Cooling assist limits, deadband, sign guards and thermal safety paths.\n\n### Polski\n- Dodano Thermal Predictor guided assist przez istniejącą zabezpieczoną ścieżkę AI Cooling / Adaptive PWM — bez tworzenia drugiego toru sterowania.\n- Dodano dynamiczne ważenie prognoz +30/+60/+120 s według MAE, dzięki czemu dokładniejszy horyzont ma większy wpływ.\n- Wpływ Predictora automatycznie maleje przy niższym confidence lub wyższym średnim MAE.\n- Dodano osobny log `Thermal Predictor:` z prognozami, confidence, MAE, prognozą ważoną, wagami horyzontów, gain oraz licznikami accepted/rejected.\n- Rozszerzono istniejący wynik evaluatora bez nowej pętli odpytywania; zachowano limity AI Cooling, deadband, sign guard i termiczne ścieżki bezpieczeństwa.\n\n"""
+          for raw in ("CHANGELOG.md", "local_apps/sbc5_control_center/CHANGELOG.md"):
+              p = Path(raw)
+              text = p.read_text(encoding="utf-8")
+              if "## 3.1.21 — 2026-10-29" not in text:
+                  if text.startswith("# ") and "\n" in text:
+                      first, rest = text.split("\n", 1)
+                      text = first + "\n\n" + section + rest.lstrip("\n")
+                  else:
+                      text = section + text
+                  p.write_text(text, encoding="utf-8")
+
+          manifest_path = Path("update-manifest.json")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          manifest.update({
+              "version": VERSION,
+              "package_version": VERSION,
+              "card_ui_version": VERSION,
+              "release_date": "2026-10-29",
+              "restart_required": "none",
+              "summary": "Thermal Predictor guided assist with MAE-aware horizon weighting and dedicated runtime diagnostics through the existing guarded AI Cooling path.",
+          })
+          files = manifest.setdefault("files", {})
+          for raw in (
+              "local_apps/sbc5_control_center/ai_cooling_v5_2.py",
+              "local_apps/sbc5_control_center/thermal_active_policy.py",
+              "scripts/test_thermal_predictor_guided_3_1_21.py",
+              "RELEASE_NOTES_3.1.21.md",
+          ):
+              files.setdefault(raw, "")
+          # Temporary finalizer/patch helpers are development-only and must not
+          # become part of the distributed local update package.
+          for raw in (
+              ".github/workflows/apply-thermal-log-3-1-21.yml",
+              ".github/workflows/finalize-3-1-21.yml",
+              "scripts/patch_thermal_predictor_log_3_1_21.py",
+          ):
+              files.pop(raw, None)
+          for raw in list(files):
+              p = Path(raw)
+              if not p.is_file():
+                  raise SystemExit(f"manifest file missing: {raw}")
+              files[raw] = hashlib.sha256(p.read_bytes()).hexdigest()
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+          PY
+          python scripts/validate_release.py --strict-manifest-hashes
+      - name: Commit finalized release
+        run: |
+          if git diff --quiet; then
+            echo "No finalization changes required"
+            exit 0
+          fi
+          git config user.name "krlmdfk"
+          git config user.email "82178819+krlmdfk@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: finalize 3.1.21 release surfaces"
+          git push origin HEAD:feature/3.1.21-thermal-predictor-active-assist
