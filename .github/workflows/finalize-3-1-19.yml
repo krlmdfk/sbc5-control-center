@@ -1,0 +1,45 @@
+name: Finalize 3.1.19 feature branch
+
+on:
+  push:
+    branches:
+      - feature/3.1.19-thermal-predictor-v3-1
+    paths:
+      - scripts/finalize_3_1_19.py
+      - .github/workflows/finalize-3-1-19.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/3.1.19-thermal-predictor-v3-1
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Finalize release surfaces
+        run: python scripts/finalize_3_1_19.py
+
+      - name: Verify predictor regression tests
+        run: python scripts/test_thermal_predictor_accuracy.py
+
+      - name: Commit finalized 3.1.19 metadata
+        run: |
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "No release metadata changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: finalize SBC5 Control Center 3.1.19"
+          git push origin HEAD:feature/3.1.19-thermal-predictor-v3-1
