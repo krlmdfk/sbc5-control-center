@@ -1,14 +1,14 @@
 {
-  "version": "3.1.19",
+  "version": "3.1.20",
   "release_date": "2026-10-29",
   "restart_required": "none",
-  "summary": "Improve Thermal Predictor accuracy with exact due-time validation, path-aware context filtering and robust thermal trend estimation.",
-  "package_version": "3.1.19",
-  "card_ui_version": "3.1.19",
+  "summary": "Fix AI Cooling runtime layer wiring so Thermal Predictor remains live and add a combined 24-hour CPU/forecast history view.",
+  "package_version": "3.1.20",
+  "card_ui_version": "3.1.20",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Poprawiono dokładność Thermal Predictor przez walidację dokładnie w terminie prognozy, ścieżkową filtrację kontekstu i odporny estymator trendu termicznego."
+  "summary_pl": "Naprawiono łańcuch warstw runtime AI Cooling, aby Thermal Predictor pozostawał aktywny, oraz dodano wspólny 24-godzinny wykres temperatury CPU i prognoz."
 }

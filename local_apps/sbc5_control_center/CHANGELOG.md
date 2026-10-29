@@ -1,5 +1,29 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.20 — 2026-10-29
+
+### English
+
+#### Fixed
+- Fixed the packaged AI Cooling runtime chain: v5 now loads the v4 compatibility wrapper from `/ai_cooling_v4.py` instead of bypassing Thermal Predictor injection through the raw legacy module.
+- Packaged `thermal_predictor_v3.py` explicitly in the application image and added a CI regression guard for the full AI runtime path.
+
+#### Changed
+- Added a dedicated **Thermal Predictor · temperature and forecasts · 24 h** history graph combining actual CPU temperature with +30/+60/+120 second forecasts.
+- Kept Recorder load low: no forced duplicate-state writes were introduced; freshness remains observable through the existing Predictor data-age sensor.
+- No Raspberry Pi host reboot is required. The application restarts normally during update; restart Home Assistant Core after updating the HACS integration.
+
+### Polski
+
+#### Naprawiono
+- Naprawiono łańcuch warstw runtime AI Cooling w obrazie aplikacji: v5 ładuje teraz wrapper zgodności v4 z `/ai_cooling_v4.py`, zamiast omijać wstrzyknięcie Thermal Predictora przez surowy moduł legacy.
+- `thermal_predictor_v3.py` jest jawnie pakowany do obrazu aplikacji, a CI otrzymało test regresyjny całej ścieżki runtime AI.
+
+#### Zmieniono
+- Dodano osobny wykres **Thermal Predictor · temperatura i prognozy · 24 h**, łączący rzeczywistą temperaturę CPU z prognozami +30/+60/+120 s.
+- Nie wprowadzono wymuszonych duplikatów stanów do Recordera, aby nie zwiększać obciążenia HA; świeżość danych nadal pokazuje istniejący sensor wieku danych Predictora.
+- Pełny restart Raspberry Pi nie jest wymagany. Aplikacja jest standardowo restartowana podczas aktualizacji; po aktualizacji integracji HACS należy zrestartować Home Assistant Core.
+
 ## 3.1.19 — 2026-10-29
 
 ### English

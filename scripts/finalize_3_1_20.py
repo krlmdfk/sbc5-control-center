@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = "3.1.20"
-PREVIOUS = "3.1.19"
+PREVIOUS = "3.1.20"
 DATE = "2026-10-29"
 
 
