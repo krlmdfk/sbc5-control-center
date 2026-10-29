@@ -226,9 +226,19 @@ def update_boot_config(mode: str) -> dict:
         result["error"] = f"read failed: {exc}"
         return result
 
-    desired, external_off, external_on = desired_boot_text(current, mode)
+    external_off, external_on = external_eee_state(current)
     result["external_eee_off"] = external_off
     result["external_eee_on"] = external_on
+    if mode == "off" and external_on and not external_off:
+        result["error"] = "Conflicting external dtparam=eee=on; SBC5 left config.txt unchanged"
+        log(result["error"])
+        return result
+    if mode == "off" and external_on and external_off:
+        result["error"] = "Conflicting external dtparam=eee=on/off entries; SBC5 left config.txt unchanged"
+        log(result["error"])
+        return result
+
+    desired, external_off, external_on = desired_boot_text(current, mode)
 
     if desired != current:
         try:

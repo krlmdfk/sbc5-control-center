@@ -23,7 +23,7 @@ def _release_version():
             return version
     except Exception:
         pass
-    return '3.1.16'
+    return '3.1.17'
 
 APP_VERSION = _release_version()
 
@@ -54,7 +54,7 @@ def _runtime_versioned_card(card):
 
     Browser-session Lovelace sync uses these template endpoints directly.  Returning
     raw packaged JSON previously allowed an old Update Card marker (2.8.34) to be
-    written back even while the App and Card UI were already 3.1.16.
+    written back even while the App and Card UI were already 3.1.17.
     """
     version = current_card_ui_version()
     def walk(value):
@@ -90,6 +90,7 @@ DEFAULTS = {
   'adaptive_pwm_interval_seconds':10,'adaptive_pwm_down_confirm_cycles':2,
   'restart_policy':'ask','pre_restart_config_check':True,'restart_notice_on_start':True,
   'post_update_restart_prompt':True,'native_restart_repair':True,
+  'ethernet_eee_mode':'auto','ethernet_health_monitor_enabled':True,'ethernet_flap_window_minutes':60,'ethernet_flap_degraded_threshold':3,
   'actionable_mobile_notifications':True,'mobile_notify_service':'auto',
   'update_check_enabled':True,'update_check_interval_hours':6,'update_notify':True,
   'app_update_manifest_url':'https://raw.githubusercontent.com/krlmdfk/sbc5-control-center/main/local_apps/sbc5_control_center/release.json','local_package_updates_enabled':True,
@@ -121,6 +122,7 @@ DEFAULTS = {
 SECTION_KEYS = {
  'profile':['custom_curve_1_name','custom_target_temp_c','cooling_control_mode'],
  'safety':['restart_policy','pre_restart_config_check','restart_notice_on_start','post_update_restart_prompt','native_restart_repair'],
+ 'ethernet':['ethernet_eee_mode','ethernet_health_monitor_enabled','ethernet_flap_window_minutes','ethernet_flap_degraded_threshold'],
  'automatic':['cooling_auto_style'],
  'hybrid':['hybrid_correction_limit_percent','custom_min_pwm_percent','custom_target_pwm_percent','custom_max_pwm_percent','custom_hysteresis_dense_c','custom_hysteresis_outer_c'],
  'manual':['manual_hysteresis_c','custom_min_pwm_percent','custom_target_pwm_percent','custom_max_pwm_percent'],

@@ -1,5 +1,53 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.17 — 2026-10-29
+
+### English
+
+#### Added
+
+- Add opt-in Energy Efficient Ethernet control with auto and off modes; off writes dtparam=eee=off to a dedicated SBC5-managed boot block.
+- Add Ethernet Health, Ethernet Link Flaps and Ethernet EEE Status sensors through the native SBC5 integration.
+
+#### Changed
+
+- App Configuration now exposes Ethernet monitoring, flap window and DEGRADED threshold without changing EEE unless the user explicitly selects off.
+
+#### Fixed
+
+- Prevent duplicate SBC5 EEE entries, preserve user-managed EEE settings and refuse conflicting external dtparam=eee=on configuration.
+
+#### Performance
+
+- Ethernet health is sampled from host sysfs by the app guard and relayed through a small JSON state file, avoiding additional Home Assistant network polling.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Dodano opcjonalne sterowanie Energy Efficient Ethernet z trybami auto i off; tryb off zapisuje dtparam=eee=off w osobnym bloku zarządzanym przez SBC5.
+- Dodano sensory Ethernet Health, Ethernet Link Flaps oraz Ethernet EEE Status w natywnej integracji SBC5.
+
+#### Zmieniono
+
+- Konfiguracja aplikacji udostępnia monitorowanie Ethernet, okno flappingu i próg DEGRADED bez zmiany EEE, dopóki użytkownik jawnie nie wybierze off.
+
+#### Naprawiono
+
+- Zapobiegnięto duplikowaniu wpisów EEE, zachowano ręczne ustawienia użytkownika i dodano odmowę zapisu przy konflikcie z zewnętrznym dtparam=eee=on.
+
+#### Wydajność
+
+- Stan Ethernet jest próbkowany z hostowego sysfs przez lekki guard aplikacji i przekazywany małym plikiem JSON, bez dodatkowego odpytywania sieci przez Home Assistant.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.16 — 2026-10-29
 
 ### English
