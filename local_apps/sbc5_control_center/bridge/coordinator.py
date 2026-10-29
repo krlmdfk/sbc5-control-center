@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+from pathlib import Path
 from datetime import timedelta
 import logging
 import time
@@ -52,6 +54,16 @@ class SBC5CoordinatorData:
     telemetry: TelemetrySnapshot
     app_update: AppUpdateInfo
     thermal_predictor: dict[str, Any]
+    ethernet_health: dict[str, Any]
+
+
+def _read_ethernet_health(hass: HomeAssistant) -> dict[str, Any]:
+    path = Path(hass.config.path("sbc5_control_center/ethernet_health.json"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError):
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 def _telemetry_from_host_relay(hass: HomeAssistant) -> TelemetrySnapshot | None:
@@ -203,6 +215,8 @@ class SBC5Coordinator(DataUpdateCoordinator[SBC5CoordinatorData]):
         predictor = ai_cooling.get("thermal_predictor", {}) if isinstance(ai_cooling, dict) else {}
         thermal_predictor = dict(predictor) if isinstance(predictor, dict) else {}
 
+        ethernet_health = await self.hass.async_add_executor_job(_read_ethernet_health, self.hass)
+
         app_update = AppUpdateInfo(
             state=state,
             installed_version=installed,
@@ -223,7 +237,7 @@ class SBC5Coordinator(DataUpdateCoordinator[SBC5CoordinatorData]):
             card_ui_latest_version=str(attrs.get("card_ui_latest_version") or ""),
         )
         return SBC5CoordinatorData(
-            telemetry=telemetry, app_update=app_update, thermal_predictor=thermal_predictor
+            telemetry=telemetry, app_update=app_update, thermal_predictor=thermal_predictor, ethernet_health=ethernet_health
         )
 
 class SBC5RealtimeCoordinator(DataUpdateCoordinator[RealtimeCoolingSnapshot]):

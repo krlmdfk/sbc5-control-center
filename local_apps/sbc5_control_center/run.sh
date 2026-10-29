@@ -1,17 +1,19 @@
 #!/bin/bash
 set -u
 
-# SBC5 Control Center 3.1.16 native runtime bootstrap.
+# SBC5 Control Center 3.1.17 native runtime bootstrap.
 # These constants are intentionally retained in the package entrypoint because the
 # SBC5 package validator verifies them before accepting local/update packages.
-APP_VERSION="3.1.16"
-REQUIRED_PACKAGE_VERSION="3.1.16"
+APP_VERSION="3.1.17"
+REQUIRED_PACKAGE_VERSION="3.1.17"
+export SBC5CC_APP_VERSION="$APP_VERSION"
 
 # The Rust core owns lightweight host telemetry and health state. The proven 2.8.x
 # control plane remains the compatibility layer during the stable 3.0 migration.
 RUST_CORE="/usr/local/bin/sbc5-core"
 RUST_STATUS="/data/rust_core_status.json"
 RUST_MIRROR="/homeassistant/sbc5_control_center/rust_core_status.json"
+ETHERNET_GUARD="/ethernet_guard.py"
 
 mkdir -p /tmp /data /homeassistant/sbc5_control_center 2>/dev/null || true
 
@@ -26,6 +28,15 @@ else
   [ -s /tmp/sbc5_rust_core_self_test.err ] && cat /tmp/sbc5_rust_core_self_test.err || true
 fi
 
+# Ethernet Stability Guard is deliberately isolated from fan/thermal control. It is
+# read-only by default (EEE=auto); config.txt is touched only after the user selects
+# EEE=off in App Configuration. The guard also publishes lightweight end0 health.
+if [ -x "$ETHERNET_GUARD" ]; then
+  "$ETHERNET_GUARD" >/tmp/sbc5_ethernet_guard.log 2>&1 &
+  echo "[SBC5 ${APP_VERSION}] Ethernet Stability Guard: enabled (EEE default=auto)."
+else
+  echo "[SBC5 ${APP_VERSION}] Ethernet Stability Guard: unavailable; continuing fail-open."
+fi
 
 # Stable migration rule: fan safety/control remains authoritative in the proven
 # compatibility control plane until native controller parity tests are complete.

@@ -1,14 +1,14 @@
 {
-  "version": "3.1.16",
+  "version": "3.1.17",
   "release_date": "2026-10-29",
   "restart_required": "none",
-  "summary": "Introduce Thermal Predictor v3 with regime-aware dual-slope forecasting and context-safe online calibration.",
-  "package_version": "3.1.16",
-  "card_ui_version": "3.1.16",
+  "summary": "Add Raspberry Pi 5 Ethernet EEE stability control and end0 link-flap diagnostics.",
+  "package_version": "3.1.17",
+  "card_ui_version": "3.1.17",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Wprowadzono Thermal Predictor v3 z predykcją zależną od reżimu pracy, dwoma trendami temperatury i bezpieczną kalibracją kontekstową."
+  "summary_pl": "Dodano kontrolę stabilności Ethernet EEE dla Raspberry Pi 5 oraz diagnostykę zrywania linku end0."
 }
