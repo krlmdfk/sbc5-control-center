@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.16
+version: 3.1.17
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.16 — Introduce Thermal Predictor v3 with regime-aware dual-slope forecasting and context-safe online calibration."
+description: "SBC5 Control Center 3.1.17 — Add Raspberry Pi 5 Ethernet EEE stability control and end0 link-flap diagnostics."
 arch:
 - aarch64
 homeassistant: 2026.10.1
@@ -50,6 +50,10 @@ options:
   restart_notice_on_start: true
   post_update_restart_prompt: true
   native_restart_repair: true
+  ethernet_eee_mode: auto
+  ethernet_health_monitor_enabled: true
+  ethernet_flap_window_minutes: 60
+  ethernet_flap_degraded_threshold: 3
   section_notifications_enabled: true
   actionable_mobile_notifications: true
   mobile_notify_service: auto
@@ -162,6 +166,10 @@ schema:
   restart_notice_on_start: bool
   post_update_restart_prompt: bool
   native_restart_repair: bool
+  ethernet_eee_mode: list(auto|off)
+  ethernet_health_monitor_enabled: bool
+  ethernet_flap_window_minutes: int(1,1440)
+  ethernet_flap_degraded_threshold: int(1,50)
   section_notifications_enabled: bool
   actionable_mobile_notifications: bool
   mobile_notify_service: str
