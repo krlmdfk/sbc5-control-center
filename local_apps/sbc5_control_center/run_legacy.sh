@@ -4519,6 +4519,9 @@ report_active_profile() {
         activation_reason="one_percent_grid_inactive"
         message="custom1 jest żądany, ale cooling_device ma max_state=${max_state}; siatka 1% wymaga pełnego restartu hosta." ;;
     esac
+  elif [ "$requested_code" = "custom1" ] && [ "$code" = "custom" ] && [ "$max_state" = "100" ] && [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$ADAPTIVE_PWM_ENABLED" = "true" ]; then
+    pending=false; activation_state="active_runtime_managed"; activation_reason="adaptive_runtime_grid_active"
+    message="custom1 jest aktywny: kernel udostępnia siatkę 1%, a Adaptive PWM realizuje krzywą i korektę w user-space. Restart hosta nie jest wymagany."
   elif [ "$requested_code" != "$code" ]; then
     pending=true; activation_state="pending_host_reboot"; activation_reason="profile_mismatch"
     message="Profil żądany ${requested_label} nie jest jeszcze aktywny w kernelu. Wykonaj pełny restart hosta."

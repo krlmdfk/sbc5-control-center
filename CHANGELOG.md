@@ -1,5 +1,47 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.18 — 2026-10-29
+
+### English
+
+#### Changed
+
+- Persist Ethernet EEE choices across host reboots and correct userspace-managed custom1 fan profile status.
+
+#### Fixed
+
+- Persist Ethernet EEE settings in a dedicated /data state so Supervisor-restored defaults cannot revert EEE after host reboot.
+- Report custom1 + runtime custom + 1% grid + Adaptive PWM as active_runtime_managed instead of a false pending_host_reboot.
+- Report actual Ethernet guard startup state and relay guard logs to the main App log while retaining the dedicated guard log.
+
+#### Performance
+
+- Keep Ethernet monitoring file-based and event-light; no additional Home Assistant network polling is introduced.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Utrwalono wybór Ethernet EEE po restartach hosta i poprawiono status profilu custom1 zarządzanego przez Adaptive PWM.
+
+#### Naprawiono
+
+- Zapisano ustawienia Ethernet EEE w osobnym trwałym stanie /data, dzięki czemu domyślne opcje odtworzone przez Supervisor nie cofają EEE po restarcie hosta.
+- Dla custom1 + runtime custom + siatki 1% + Adaptive PWM raportowany jest active_runtime_managed zamiast fałszywego pending_host_reboot.
+- Start Ethernet Guard pokazuje faktyczny żądany stan, a log guardu trafia także do głównego logu aplikacji przy zachowaniu osobnego logu diagnostycznego.
+
+#### Wydajność
+
+- Diagnostyka Ethernet pozostaje lekka i plikowa; nie dodano dodatkowego odpytywania sieci przez Home Assistant.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.17 — 2026-10-29
 
 ### English

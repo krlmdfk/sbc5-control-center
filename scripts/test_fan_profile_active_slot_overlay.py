@@ -26,4 +26,9 @@ assert 'fallback=overlays/rpi5-custom1.dtbo' in body
 # defensive mirror.
 assert '"$BOOT_MP/slot-A/overlays"' in run
 assert '"$BOOT_MP/slot-B/overlays"' in run
+
+# 3.1.18: userspace-managed custom1 on an active 1% grid is already effective.
+# runtime=custom is the kernel's generic label and must not create a fake reboot request.
+assert 'activation_state="active_runtime_managed"; activation_reason="adaptive_runtime_grid_active"' in run
+assert '[ "$requested_code" = "custom1" ] && [ "$code" = "custom" ] && [ "$max_state" = "100" ]' in run
 print("Fan profile active-slot overlay validation: PASS")

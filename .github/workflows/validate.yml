@@ -43,6 +43,9 @@ jobs:
       - name: Test migration profile guard
         run: python scripts/test_migration_profile_guard.py
 
+      - name: Test Ethernet EEE stability and persistence
+        run: python scripts/test_ethernet_stability.py
+
       - name: Test canary migration handoff
         run: python scripts/test_canary_migration.py
 
