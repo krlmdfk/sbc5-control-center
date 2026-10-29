@@ -28,6 +28,9 @@ jobs:
       - name: Prepare Ethernet stability source surfaces
         run: python scripts/prepare_ethernet_stability_3_1_17.py
 
+      - name: Keep validation workflow unchanged for generated commit
+        run: git checkout HEAD -- .github/workflows/validate.yml
+
       - name: Prepare unified 3.1.17 release metadata and hashes
         run: |
           python scripts/release_prepare.py \
