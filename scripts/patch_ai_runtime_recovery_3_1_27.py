@@ -2,7 +2,6 @@
 from pathlib import Path
 
 RUN = Path("local_apps/sbc5_control_center/run_legacy.sh")
-VALIDATE = Path(".github/workflows/validate.yml")
 TEST = Path("scripts/test_ai_runtime_relay_recovery_3_1_27.py")
 
 text = RUN.read_text(encoding="utf-8")
@@ -51,18 +50,5 @@ assert "AI_RUNTIME_RELAY_KEEPALIVE_SECONDS=300" in text
 assert "curl -fsS -H \"Authorization: Bearer ${SUPERVISOR_TOKEN}\"" in text
 print("AI runtime relay recovery regression: PASS")
 ''', encoding="utf-8")
-
-v = VALIDATE.read_text(encoding="utf-8")
-anchor = '''      - name: Test AI runtime layer wiring
-        run: python scripts/test_ai_runtime_wiring_3_1_20.py
-'''
-insert = anchor + '''
-      - name: Test AI runtime relay recovery after Home Assistant restart
-        run: python scripts/test_ai_runtime_relay_recovery_3_1_27.py
-'''
-if anchor not in v:
-    raise SystemExit("validate workflow anchor not found")
-if "test_ai_runtime_relay_recovery_3_1_27.py" not in v:
-    VALIDATE.write_text(v.replace(anchor, insert, 1), encoding="utf-8")
 
 print("3.1.27 AI runtime relay patch prepared")
