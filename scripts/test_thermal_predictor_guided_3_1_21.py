@@ -79,4 +79,18 @@ assert "fields[0] = str(guided_output)" in v52
 assert "fields[6] = str(guided_output - baseline)" in v52
 assert "hierarchical_continuous_v5_2_thermal_guided_runtime" in v52
 
+legacy_text = (APP / "run_legacy.sh").read_text(encoding="utf-8")
+dashboard_text = (ROOT / "dashboard" / "sbc5_control_center_diagnostics_card.yaml").read_text(encoding="utf-8")
+assert 'TP_req=${tp_req}pp' in legacy_text
+assert 'TP_applied=${tp_applied}pp' in legacy_text
+assert 'AI_corr=${ai_correction}pp' in legacy_text
+assert 'tp_gate_mode tp_gate_reason tp_decision_reason' in legacy_text
+assert 'str(guidance.get("gate_mode") or "observe")' in v52
+assert 'str(guidance.get("gate_reason") or "unknown")' in v52
+assert 'str(guidance.get("decision_reason") or "near_target")' in v52
+assert "Sygnał predyktora" in dashboard_text
+assert "Wpływ na PWM" in dashboard_text
+assert "guided_assist" in dashboard_text
+assert "Prognoza temperatury CPU · tryb obserwacyjny · bez wpływu na PWM" not in dashboard_text
+
 print("Thermal Predictor guided runtime wiring: PASS")

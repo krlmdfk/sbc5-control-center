@@ -1,5 +1,47 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.24 — 2026-10-30
+
+### English
+
+#### Changed
+
+- Align Thermal Predictor diagnostics and dashboard with the active guided-assist runtime without changing cooling control policy.
+
+#### Fixed
+
+- Report Thermal Predictor requested/applied delta separately from the overall AI correction in runtime logs.
+- Replace stale observe-only dashboard copy with the real guided-assist gate and control-output state.
+- Expose weighted forecast, forecast error, horizon weights, gate reason and decision reason on the dashboard.
+
+#### Performance
+
+- No new polling loop or control calculation was added; the hotfix reuses data already produced by the existing AI cycle.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Ujednolicono diagnostykę i kartę Thermal Predictora z aktywnym runtime guided-assist bez zmiany polityki sterowania chłodzeniem.
+
+#### Naprawiono
+
+- Rozdzielono w logach korektę żądaną/zastosowaną przez Thermal Predictor od całkowitej korekty AI.
+- Zastąpiono nieaktualny tekst observe-only rzeczywistym stanem gate i wpływu guided-assist.
+- Dodano na karcie prognozę ważoną, błąd, wagi horyzontów, powód gate i powód decyzji.
+
+#### Wydajność
+
+- Nie dodano nowej pętli odpytywania ani obliczeń sterujących; hotfix wykorzystuje dane już generowane w istniejącym cyklu AI.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.23 — 2026-10-30
 
 ### English

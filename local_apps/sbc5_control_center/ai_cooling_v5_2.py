@@ -165,11 +165,16 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         f"{_num(weights.get('30'),0.0):.3f},{_num(weights.get('60'),0.0):.3f},{_num(weights.get('120'),0.0):.3f}",
         str(int(round(_num(predictor.get("accepted_samples_total"), 0.0)))),
         str(int(round(_num(predictor.get("rejected_samples_total"), 0.0)))),
+        str(int(_num(guidance.get("requested_delta_pp"), 0.0))),
+        str(int(_num(guidance.get("applied_delta_pp"), 0.0))),
+        str(guidance.get("gate_mode") or "observe"),
+        str(guidance.get("gate_reason") or "unknown"),
+        str(guidance.get("decision_reason") or "near_target"),
     ]
-    if len(fields) < 34:
+    if len(fields) < 39:
         fields.extend(diagnostic_fields)
     else:
-        fields[22:34] = diagnostic_fields
+        fields[22:39] = diagnostic_fields
     return model, status, fields
 
 

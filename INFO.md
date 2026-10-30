@@ -10,8 +10,8 @@
 
 | Parameter / Parametr | Value / Wartość |
 |---|---|
-| App version / Wersja aplikacji | **3.1.23** |
-| Card UI | **3.1.23** |
+| App version / Wersja aplikacji | **3.1.24** |
+| Card UI | **3.1.24** |
 | Status / Stan | **stable** |
 | Architecture / Architektura | `aarch64` |
 | Home Assistant OS | `>= 18.3` |
