@@ -1,0 +1,43 @@
+name: Prepare SBC5 3.1.28 release
+
+on:
+  push:
+    branches:
+      - fix/3.1.28-ai-runtime-packaging
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/3.1.28-ai-runtime-packaging
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install release validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Prepare professional bilingual release
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.1.28 \
+            --release-date 2026-10-30 \
+            --restart-required none \
+            --summary-en "Restore AI Cooling v5.2 and Thermal Predictor runtime evaluation by packaging the missing thermal_effectiveness dependency in the application image." \
+            --summary-pl "Przywraca działanie evaluatora AI Cooling v5.2 i Thermal Predictora przez dołączenie brakującej zależności thermal_effectiveness do obrazu aplikacji." \
+            --fixed-en "Package thermal_effectiveness.py alongside the v5.2 AI runtime and strengthen Docker runtime validation so project-local imports cannot be omitted from future images." \
+            --fixed-pl "Dołącza thermal_effectiveness.py do runtime AI v5.2 i wzmacnia walidację obrazu Docker, aby lokalne moduły importowane przez runtime nie mogły zostać pominięte w kolejnych wydaniach." \
+            --performance-en "No new polling loop and no cooling-policy change; Adaptive PWM and existing AI evaluator cadence remain unchanged." \
+            --performance-pl "Bez nowej pętli odpytywania i bez zmian polityki chłodzenia; Adaptive PWM oraz dotychczasowy cykl evaluatora AI pozostają bez zmian."
+      - name: Commit prepared release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A ':!.github/workflows/prepare-release-3.1.28.yml'
+          git commit -m "release: prepare SBC5 Control Center 3.1.28"
+          git push origin HEAD:fix/3.1.28-ai-runtime-packaging
