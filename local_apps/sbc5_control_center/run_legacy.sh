@@ -7873,7 +7873,20 @@ publish_telemetry_snapshot() {
       ai_runtime_payload="$(jq -cn --arg state "$ai_runtime_state" --argjson ai "$ai_cooling_json" \
         '{state:$state,attributes:{friendly_name:"SBC5 Control Center AI Runtime",icon:"mdi:brain",ai_cooling:$ai}}')"
       ai_runtime_signature="$(printf '%s' "$ai_runtime_payload" | sha256sum | awk '{print $1}')"
-      if [ -z "${AI_RUNTIME_LAST_SIGNATURE:-}" ] || [ "$ai_runtime_signature" != "$AI_RUNTIME_LAST_SIGNATURE" ]; then
+      # 3.1.27: REST-created states disappear on a Home Assistant Core restart.
+      # A short Core restart can happen entirely between UX availability polls, leaving
+      # the unchanged-payload signature cached and delaying recreation until keepalive.
+      # Probe only on the existing 30 s AI-relay cadence and force a publish when the
+      # canonical runtime entity is missing; this adds no new loop and no duplicate
+      # Recorder writes while the state exists.
+      local ai_runtime_entity_present=true
+      if ! curl -fsS -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
+        http://supervisor/core/api/states/sensor.sbc5_control_center_ai_runtime >/dev/null 2>&1; then
+        ai_runtime_entity_present=false
+      fi
+      if [ "$ai_runtime_entity_present" != "true" ]; then
+        ai_runtime_due=true
+      elif [ -z "${AI_RUNTIME_LAST_SIGNATURE:-}" ] || [ "$ai_runtime_signature" != "$AI_RUNTIME_LAST_SIGNATURE" ]; then
         ai_runtime_due=true
       elif [ "${TELEMETRY_LAST_AI_RELAY_PUBLISH:-0}" -eq 0 ] 2>/dev/null || [ $((relay_now - TELEMETRY_LAST_AI_RELAY_PUBLISH)) -ge "$AI_RUNTIME_RELAY_KEEPALIVE_SECONDS" ] 2>/dev/null; then
         ai_runtime_due=true
