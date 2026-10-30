@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import ast
 import re
 
-path = Path("local_apps/sbc5_control_center/Dockerfile")
+app = Path("local_apps/sbc5_control_center")
+path = app / "Dockerfile"
 text = path.read_text(encoding="utf-8")
 
 runtime_paths: set[str] = set()
@@ -35,13 +37,38 @@ if not chmod_block_match:
 body = chmod_block_match.group("body").replace("\\\n", " ")
 chmod_paths = [token for token in body.split() if token.startswith("/")]
 missing = [item for item in chmod_paths if item not in runtime_paths]
-
 if missing:
     raise SystemExit("Dockerfile chmod references missing runtime paths: " + ", ".join(missing))
 
-required = {"/ai_cooling.py", "/ai_cooling_v5_2.py", "/thermal_active_policy.py"}
+required = {"/ai_cooling.py", "/ai_cooling_v5_2.py", "/thermal_active_policy.py", "/thermal_effectiveness.py"}
 not_packaged = sorted(required - runtime_paths)
 if not_packaged:
     raise SystemExit("AI Cooling v5.2 runtime paths are not packaged: " + ", ".join(not_packaged))
+
+# Regression guard: inspect direct local imports of the public v5.2 entrypoint.
+# Any project-local module imported by ai_cooling_v5_2.py must be copied into
+# the image under /<module>.py, otherwise the evaluator fails at runtime even
+# though compileall on repository sources still passes.
+source = (app / "ai_cooling_v5_2.py").read_text(encoding="utf-8")
+tree = ast.parse(source)
+local_modules: set[str] = set()
+for node in ast.walk(tree):
+    if isinstance(node, ast.Import):
+        for alias in node.names:
+            local_modules.add(alias.name.split(".", 1)[0])
+    elif isinstance(node, ast.ImportFrom) and node.module:
+        local_modules.add(node.module.split(".", 1)[0])
+
+project_local = {
+    name for name in local_modules
+    if (app / f"{name}.py").is_file()
+}
+missing_imports = sorted(
+    f"/{name}.py" for name in project_local if f"/{name}.py" not in runtime_paths
+)
+if missing_imports:
+    raise SystemExit(
+        "AI Cooling v5.2 imports modules missing from image: " + ", ".join(missing_imports)
+    )
 
 print("Dockerfile runtime path validation PASS")
