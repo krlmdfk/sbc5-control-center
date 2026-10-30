@@ -1,14 +1,14 @@
 {
-  "version": "3.1.25",
+  "version": "3.1.26",
   "release_date": "2026-10-30",
   "restart_required": "none",
-  "summary": "Measure observed Thermal Predictor post-intervention effectiveness at 30/60/120 seconds without changing cooling policy.",
-  "package_version": "3.1.25",
-  "card_ui_version": "3.1.25",
+  "summary": "Persist Thermal Predictor effectiveness diagnostics across add-on and process restarts without changing cooling policy.",
+  "package_version": "3.1.26",
+  "card_ui_version": "3.1.26",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Dodano obserwacyjny pomiar skuteczności interwencji Thermal Predictora po 30/60/120 sekundach bez zmiany polityki chłodzenia."
+  "summary_pl": "Zachowano statystyki skuteczności Thermal Predictora między restartami aplikacji i procesu bez zmiany polityki chłodzenia."
 }
