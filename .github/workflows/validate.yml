@@ -70,6 +70,9 @@ jobs:
       - name: Test AI runtime layer wiring
         run: python scripts/test_ai_runtime_wiring_3_1_20.py
 
+      - name: Test AI runtime relay recovery after Home Assistant restart
+        run: python scripts/test_ai_runtime_relay_recovery_3_1_27.py
+
       - name: Test AI bucket-aware qualification and thermal fast path
         run: python scripts/test_ai_bucket_qualification_v4.py
 
