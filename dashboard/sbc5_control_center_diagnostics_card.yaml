@@ -1,4 +1,4 @@
-# SBC5 Control Center — Diagnostics Dashboard · Card UI v3.1.23
+# SBC5 Control Center — Diagnostics Dashboard · Card UI v3.1.24
 # Duży wykres 230 px: temperatura CPU + PWM oraz pełne informacje diagnostyczne na dole.
 # Bez zbędnego dublowania danych.
 # Wymagane: Mushroom, card-mod, ApexCharts Card, Browser Mod.
@@ -38,7 +38,7 @@ cards:
       {% if cm %}· {{ cm }}{% endif %}
       · v{{ state_attr('sensor.sbc5_control_center_update','installed_version')
             | default(states('sensor.sbc5_package_version'), true) }}
-      · Card UI v3.1.23
+      · Card UI v3.1.24
     icon: mdi:raspberry-pi
     icon_color: >-
       {% if is_state('binary_sensor.sbc5_cooling_problem','on')
@@ -74,7 +74,7 @@ cards:
           font-size: 11.5px !important;
           line-height: 1.18 !important;
         }
-        /* SBC5CC 3.1.23 screen-fit guard */
+        /* SBC5CC 3.1.24 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -171,7 +171,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.23 screen-fit guard */
+            /* SBC5CC 3.1.24 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -190,7 +190,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.23 equal-height responsive tile */
+            /* SBC5CC 3.1.24 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -252,7 +252,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.23 screen-fit guard */
+            /* SBC5CC 3.1.24 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -271,7 +271,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.23 equal-height responsive tile */
+            /* SBC5CC 3.1.24 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -334,7 +334,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.23 screen-fit guard */
+            /* SBC5CC 3.1.24 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -353,7 +353,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.23 equal-height responsive tile */
+            /* SBC5CC 3.1.24 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -414,7 +414,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.23 screen-fit guard */
+            /* SBC5CC 3.1.24 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -433,7 +433,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.23 equal-height responsive tile */
+            /* SBC5CC 3.1.24 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -499,7 +499,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.23 screen-fit guard */
+            /* SBC5CC 3.1.24 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -518,7 +518,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.23 equal-height responsive tile */
+            /* SBC5CC 3.1.24 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -582,7 +582,7 @@ cards:
                 padding-bottom: 7px !important;
               }
             }
-            /* SBC5CC 3.1.23 screen-fit guard */
+            /* SBC5CC 3.1.24 screen-fit guard */
             ha-card {
               width: 100% !important;
               max-width: 100% !important;
@@ -601,7 +601,7 @@ cards:
               overflow-wrap: anywhere !important;
               word-break: normal !important;
             }
-            /* SBC5CC 3.1.23 equal-height responsive tile */
+            /* SBC5CC 3.1.24 equal-height responsive tile */
             ha-card {
               height: 100% !important;
                     }
@@ -617,7 +617,7 @@ cards:
 
     card_mod:
       style: |
-        /* SBC5CC 3.1.23 responsive grid */
+        /* SBC5CC 3.1.24 responsive grid */
         #root {
           grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
           gap: clamp(6px, 1.8vw, 10px) !important;
@@ -753,7 +753,7 @@ cards:
           box-shadow: none;
           overflow: hidden;
         }
-        /* SBC5CC 3.1.23 chart screen-fit */
+        /* SBC5CC 3.1.24 chart screen-fit */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1334,7 +1334,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.23 screen-fit guard */
+        /* SBC5CC 3.1.24 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1426,7 +1426,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.23 screen-fit guard */
+        /* SBC5CC 3.1.24 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1525,7 +1525,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.23 screen-fit guard */
+        /* SBC5CC 3.1.24 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1547,12 +1547,12 @@ cards:
 
 
   # ============================================================
-  # AI ADAPTIVE COOLING — zweryfikowany panel głównej karty · Card UI v3.1.23
+  # AI ADAPTIVE COOLING — zweryfikowany panel głównej karty · Card UI v3.1.24
   # ============================================================
   - type: markdown
     content: |
       ## 🧠 AI Adaptive Cooling
-      Uczenie Active Coolera · Card UI v3.1.23
+      Uczenie Active Coolera · Card UI v3.1.24
     card_mod:
       style: |
         ha-card {
@@ -1624,7 +1624,7 @@ cards:
             padding-bottom: 8px !important;
           }
         }
-        /* SBC5CC 3.1.23 screen-fit guard */
+        /* SBC5CC 3.1.24 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -1694,7 +1694,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 3.1.23 screen-fit guard */
+                  /* SBC5CC 3.1.24 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -1713,7 +1713,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.23 equal-height responsive tile */
+                  /* SBC5CC 3.1.24 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -1767,7 +1767,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 3.1.23 screen-fit guard */
+                  /* SBC5CC 3.1.24 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -1786,7 +1786,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.23 equal-height responsive tile */
+                  /* SBC5CC 3.1.24 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -1837,7 +1837,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 3.1.23 screen-fit guard */
+                  /* SBC5CC 3.1.24 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -1856,7 +1856,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.23 equal-height responsive tile */
+                  /* SBC5CC 3.1.24 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -1924,7 +1924,7 @@ cards:
                       padding-bottom: 7px !important;
                     }
                   }
-                  /* SBC5CC 3.1.23 screen-fit guard */
+                  /* SBC5CC 3.1.24 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -1943,7 +1943,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.23 equal-height responsive tile */
+                  /* SBC5CC 3.1.24 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -1959,7 +1959,7 @@ cards:
 
           card_mod:
             style: |
-              /* SBC5CC 3.1.23 responsive grid */
+              /* SBC5CC 3.1.24 responsive grid */
               #root {
                 grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
                 gap: clamp(6px, 1.8vw, 10px) !important;
@@ -2018,12 +2018,23 @@ cards:
                 }
 
 
-        # AI Thermal Predictor 3.1.23 — observe-only telemetry on the YAML card.
+        # AI Thermal Predictor 3.1.24 — runtime guided-assist status on the YAML card.
         # Each parameter tile opens native Home Assistant history (More Info).
         - type: markdown
           content: |
             ### 🌡️ AI Thermal Predictor
-            Prognoza temperatury CPU · tryb obserwacyjny · bez wpływu na PWM
+            {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}
+            {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}
+            {% set g = p.get('guided_assist', {}) if p is mapping else {} %}
+            {% set gate = g.get('mode', 'observe') if g is mapping else 'observe' %}
+            {% set enabled = g.get('control_output_enabled', false) if g is mapping else false %}
+            {% if gate == 'active' and enabled %}
+            Guided Assist aktywny · korekta predykcyjna do ±2 pp · Adaptive PWM nadrzędny
+            {% elif gate == 'probation' and enabled %}
+            Guided Assist · probation · tylko bezpieczne korekty w górę · Adaptive PWM nadrzędny
+            {% else %}
+            Tryb obserwacyjny · {{ g.get('gate_reason', 'oczekiwanie na kwalifikację') if g is mapping else 'oczekiwanie na dane' }}
+            {% endif %}
           card_mod:
             style: |
               ha-card { background: transparent; box-shadow: none; padding: 4px 6px 0 6px; margin: 0; }
@@ -2090,14 +2101,14 @@ cards:
               entity: sensor.sbc5_ai_thermal_predictor_confidence
               primary: Pewność predyktora
               secondary: >-
+                {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}
+                {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}
+                {% set g = p.get('guided_assist', {}) if p is mapping else {} %}
                 {% set v = states('sensor.sbc5_ai_thermal_predictor_confidence') %}
-                {% if v not in ['unknown','unavailable','none',''] %}
-                  {{ v }}% · observe-only
-                {% else %}
-                  {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}
-                  {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}
-                  {{ p.get('confidence_percent', '—') }}% · observe-only
-                {% endif %}
+                {% set conf = v if v not in ['unknown','unavailable','none',''] else p.get('confidence_percent', '—') %}
+                {% set gate = g.get('mode', 'observe') if g is mapping else 'observe' %}
+                {% set enabled = g.get('control_output_enabled', false) if g is mapping else false %}
+                {{ conf }}% · {% if gate == 'active' and enabled %}Guided Assist aktywny{% elif gate == 'probation' and enabled %}Probation{% else %}Observe only{% endif %}
               icon: mdi:brain
               icon_color: >-
                 {% set c = states('sensor.sbc5_ai_thermal_predictor_confidence') | int(0) %}
@@ -2109,6 +2120,51 @@ cards:
               #root { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; gap: clamp(6px, 1.8vw, 10px) !important; align-items: stretch !important; }
               #root > * { min-width: 0 !important; height: 100% !important; }
               @media (max-width: 339px) { #root { grid-template-columns: 1fr !important; } }
+
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: custom:mushroom-template-card
+              entity: sensor.sbc5_ai_thermal_predictor_confidence
+              primary: Sygnał predyktora
+              multiline_secondary: true
+              secondary: >-
+                {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}
+                {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}
+                {% set g = p.get('guided_assist', {}) if p is mapping else {} %}
+                ważona {{ g.get('weighted_forecast_c', '—') }} °C · błąd {{ g.get('weighted_forecast_error_c', '—') }} °C
+                · wagi 30/60/120 {{ (g.get('horizon_weights', {}) or {}).get('30', '—') }}/{{ (g.get('horizon_weights', {}) or {}).get('60', '—') }}/{{ (g.get('horizon_weights', {}) or {}).get('120', '—') }}
+              icon: mdi:chart-bell-curve-cumulative
+              icon_color: cyan
+              layout: horizontal
+              tap_action: { action: more-info }
+
+            - type: custom:mushroom-template-card
+              entity: sensor.sbc5_ai_thermal_predictor_confidence
+              primary: Wpływ na PWM
+              multiline_secondary: true
+              secondary: >-
+                {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}
+                {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}
+                {% set g = p.get('guided_assist', {}) if p is mapping else {} %}
+                żądano {{ g.get('requested_delta_pp', 0) }} pp · zastosowano {{ g.get('applied_delta_pp', 0) }} pp
+                · gate {{ g.get('mode', 'observe') }}/{{ g.get('gate_reason', '—') }} · decyzja {{ g.get('decision_reason', '—') }}
+              icon: mdi:fan-chevron-up
+              icon_color: >-
+                {% set ai = state_attr('sensor.sbc5_control_center_ai_runtime','ai_cooling') %}
+                {% set p = ai.get('thermal_predictor', {}) if ai is mapping else {} %}
+                {% set g = p.get('guided_assist', {}) if p is mapping else {} %}
+                {% set d = g.get('applied_delta_pp', 0) | int(0) %}
+                {% if d > 0 %}orange{% elif d < 0 %}blue{% else %}green{% endif %}
+              layout: horizontal
+              tap_action: { action: more-info }
+          card_mod:
+            style: |
+              #root { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; gap: clamp(6px, 1.8vw, 10px) !important; align-items: stretch !important; }
+              #root > * { min-width: 0 !important; height: 100% !important; }
+              @media (max-width: 339px) { #root { grid-template-columns: 1fr !important; } }
+
         - type: history-graph
           title: Thermal Predictor · temperatura i prognozy · 24 h
           hours_to_show: 24
@@ -2290,7 +2346,7 @@ cards:
                   padding-bottom: 7px !important;
                 }
               }
-              /* SBC5CC 3.1.23 screen-fit guard */
+              /* SBC5CC 3.1.24 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -2364,7 +2420,7 @@ cards:
                   padding-bottom: 7px !important;
                 }
               }
-              /* SBC5CC 3.1.23 screen-fit guard */
+              /* SBC5CC 3.1.24 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -2444,7 +2500,7 @@ cards:
                   padding-bottom: 7px !important;
                 }
               }
-              /* SBC5CC 3.1.23 screen-fit guard */
+              /* SBC5CC 3.1.24 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -2546,7 +2602,7 @@ cards:
                   padding-bottom: 7px !important;
                 }
               }
-              /* SBC5CC 3.1.23 screen-fit guard */
+              /* SBC5CC 3.1.24 screen-fit guard */
               ha-card {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -2631,7 +2687,7 @@ cards:
                       padding-bottom: 8px !important;
                     }
                   }
-                  /* SBC5CC 3.1.23 screen-fit guard */
+                  /* SBC5CC 3.1.24 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -2650,7 +2706,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.23 equal-height responsive tile */
+                  /* SBC5CC 3.1.24 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -2723,7 +2779,7 @@ cards:
                       padding-bottom: 8px !important;
                     }
                   }
-                  /* SBC5CC 3.1.23 screen-fit guard */
+                  /* SBC5CC 3.1.24 screen-fit guard */
                   ha-card {
                     width: 100% !important;
                     max-width: 100% !important;
@@ -2742,7 +2798,7 @@ cards:
                     overflow-wrap: anywhere !important;
                     word-break: normal !important;
                   }
-                  /* SBC5CC 3.1.23 equal-height responsive tile */
+                  /* SBC5CC 3.1.24 equal-height responsive tile */
                   ha-card {
                     height: 100% !important;
                           }
@@ -2758,7 +2814,7 @@ cards:
 
           card_mod:
             style: |
-              /* SBC5CC 3.1.23 responsive grid */
+              /* SBC5CC 3.1.24 responsive grid */
               #root {
                 grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
                 gap: clamp(6px, 1.8vw, 10px) !important;
@@ -2845,7 +2901,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.23 screen-fit guard */
+        /* SBC5CC 3.1.24 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -2933,7 +2989,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.23 screen-fit guard */
+        /* SBC5CC 3.1.24 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -3028,7 +3084,7 @@ cards:
             padding-bottom: 7px !important;
           }
         }
-        /* SBC5CC 3.1.23 screen-fit guard */
+        /* SBC5CC 3.1.24 screen-fit guard */
         ha-card {
           width: 100% !important;
           max-width: 100% !important;
@@ -3084,7 +3140,7 @@ cards:
           .secondary {
             font-size: 10px !important;
           }
-          /* SBC5CC 3.1.23 screen-fit guard */
+          /* SBC5CC 3.1.24 screen-fit guard */
           ha-card {
             width: 100% !important;
             max-width: 100% !important;
