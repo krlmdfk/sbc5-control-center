@@ -30,14 +30,15 @@ COPY rpi5-stable50-10step-overlay.dts /
 COPY rpi5-stable50-15step-overlay.dts /
 COPY bridge /bridge
 COPY config_ui.py /config_ui.py
-# 3.1.21 AI stack: proven legacy learner -> v4 Thermal Predictor wrapper ->
-# hierarchical v5 -> transient v5.1 -> Thermal Predictor guided v5.2.
+# 3.1.22 AI stack: keep every layer on a distinct runtime path and expose
+# v5.2 as the public /ai_cooling.py entry point.
 COPY ai_cooling_legacy.py /ai_cooling_legacy.py
 COPY thermal_predictor_v3.py /thermal_predictor_v3.py
 COPY thermal_active_policy.py /thermal_active_policy.py
 COPY ai_cooling.py /ai_cooling_v4.py
 COPY ai_cooling_v5.py /ai_cooling_v5.py
 COPY ai_cooling_v5_1.py /ai_cooling_v5_1.py
+COPY ai_cooling_v5_2.py /ai_cooling_v5_2.py
 COPY ai_cooling_v5_2.py /ai_cooling.py
 COPY dashboard_sync.py /dashboard_sync.py
 COPY dashboard_card.json /dashboard_card.json
