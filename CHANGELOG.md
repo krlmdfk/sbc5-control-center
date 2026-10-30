@@ -1,5 +1,43 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.28 — 2026-10-30
+
+### English
+
+#### Changed
+
+- Restore AI Cooling v5.2 and Thermal Predictor runtime evaluation by packaging the missing thermal_effectiveness dependency in the application image.
+
+#### Fixed
+
+- Package thermal_effectiveness.py alongside the v5.2 AI runtime and strengthen Docker runtime validation so project-local imports cannot be omitted from future images.
+
+#### Performance
+
+- No new polling loop and no cooling-policy change; Adaptive PWM and existing AI evaluator cadence remain unchanged.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Przywraca działanie evaluatora AI Cooling v5.2 i Thermal Predictora przez dołączenie brakującej zależności thermal_effectiveness do obrazu aplikacji.
+
+#### Naprawiono
+
+- Dołącza thermal_effectiveness.py do runtime AI v5.2 i wzmacnia walidację obrazu Docker, aby lokalne moduły importowane przez runtime nie mogły zostać pominięte w kolejnych wydaniach.
+
+#### Wydajność
+
+- Bez nowej pętli odpytywania i bez zmian polityki chłodzenia; Adaptive PWM oraz dotychczasowy cykl evaluatora AI pozostają bez zmian.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.27 — 2026-10-30
 
 ### English
