@@ -1,0 +1,55 @@
+name: Prepare 3.1.24 hotfix
+
+on:
+  push:
+    branches:
+      - fix/thermal-diagnostics-ui-3.1.24
+    paths:
+      - scripts/prepare_3_1_24_hotfix.py
+      - .github/workflows/prepare-3.1.24.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/thermal-diagnostics-ui-3.1.24
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install preparer dependency
+        run: python -m pip install pyyaml
+      - name: Apply diagnostics/UI hotfix
+        run: python scripts/prepare_3_1_24_hotfix.py
+      - name: Prepare unified release
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.1.24 \
+            --release-date 2026-10-30 \
+            --restart-required none \
+            --summary-en "Align Thermal Predictor diagnostics and dashboard with the active guided-assist runtime without changing cooling control policy." \
+            --summary-pl "Ujednolicono diagnostykę i kartę Thermal Predictora z aktywnym runtime guided-assist bez zmiany polityki sterowania chłodzeniem." \
+            --fixed-en "Report Thermal Predictor requested/applied delta separately from the overall AI correction in runtime logs." \
+            --fixed-en "Replace stale observe-only dashboard copy with the real guided-assist gate and control-output state." \
+            --fixed-en "Expose weighted forecast, forecast error, horizon weights, gate reason and decision reason on the dashboard." \
+            --fixed-pl "Rozdzielono w logach korektę żądaną/zastosowaną przez Thermal Predictor od całkowitej korekty AI." \
+            --fixed-pl "Zastąpiono nieaktualny tekst observe-only rzeczywistym stanem gate i wpływu guided-assist." \
+            --fixed-pl "Dodano na karcie prognozę ważoną, błąd, wagi horyzontów, powód gate i powód decyzji." \
+            --performance-en "No new polling loop or control calculation was added; the hotfix reuses data already produced by the existing AI cycle." \
+            --performance-pl "Nie dodano nowej pętli odpytywania ani obliczeń sterujących; hotfix wykorzystuje dane już generowane w istniejącym cyklu AI."
+      - name: Run targeted regression
+        run: python scripts/test_thermal_predictor_guided_3_1_21.py
+      - name: Remove one-shot preparer
+        run: rm -f .github/workflows/prepare-3.1.24.yml scripts/prepare_3_1_24_hotfix.py
+      - name: Commit prepared release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Prepare SBC5 Control Center 3.1.24 diagnostics hotfix"
+          git push origin HEAD:fix/thermal-diagnostics-ui-3.1.24
