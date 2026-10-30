@@ -1,0 +1,126 @@
+name: Finalize SBC5 3.1.22
+
+on:
+  push:
+    branches: ["hotfix/3.1.22-docker-build"]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/3.1.22-docker-build
+          fetch-depth: 0
+
+      - name: Finalize version surfaces and hashes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json, re
+
+          VERSION = "3.1.22"
+          OLD = "3.1.21"
+          active = [
+              "custom_components/sbc5_control_center/manifest.json",
+              "custom_components/sbc5_control_center/const.py",
+              "local_apps/sbc5_control_center/bridge/manifest.json",
+              "local_apps/sbc5_control_center/bridge/const.py",
+              "local_apps/sbc5_control_center/legacy_bridge/manifest.json",
+              "local_apps/sbc5_control_center/config_ui.py",
+              "local_apps/sbc5_control_center/dashboard_card.json",
+              "local_apps/sbc5_control_center/update_status_card.json",
+              "local_apps/sbc5_control_center/bridge-package.yaml",
+              "local_apps/sbc5_control_center/migration_assets/rpi5_control_center.yaml",
+              "local_apps/sbc5_control_center/migration_assets/sbc5_control_center.yaml",
+              "local_apps/sbc5_control_center/namespace_native_guard.sh",
+              "local_apps/sbc5_control_center/run.sh",
+              "packages/sbc5_control_center.yaml",
+              "dashboard/sbc5_control_center_diagnostics_card.yaml",
+              "dashboard/update_status_card.yaml",
+              "INFO.md",
+              "README.md",
+          ]
+          for raw in active:
+              p = Path(raw)
+              if p.exists():
+                  text = p.read_text(encoding="utf-8")
+                  if OLD in text:
+                      p.write_text(text.replace(OLD, VERSION), encoding="utf-8")
+
+          config_path = Path("local_apps/sbc5_control_center/config.yaml")
+          config = config_path.read_text(encoding="utf-8")
+          config = re.sub(r"^version: .*?$", f"version: {VERSION}", config, count=1, flags=re.M)
+          config = re.sub(
+              r'^description: ".*"$',
+              f'description: "SBC5 Control Center {VERSION} — Hotfix container image build path for AI Cooling v5.2 and add Dockerfile runtime-path CI validation."',
+              config,
+              count=1,
+              flags=re.M,
+          )
+          config_path.write_text(config, encoding="utf-8")
+
+          release_path = Path("local_apps/sbc5_control_center/release.json")
+          release = json.loads(release_path.read_text(encoding="utf-8"))
+          release.update({
+              "version": VERSION,
+              "package_version": VERSION,
+              "card_ui_version": VERSION,
+              "release_date": "2026-10-30",
+              "restart_required": "none",
+              "summary": "Hotfix the 3.1.21 container image build path for AI Cooling v5.2 and add Dockerfile runtime-path CI validation.",
+              "summary_pl": "Hotfix błędu budowania obrazu kontenera 3.1.21 dla AI Cooling v5.2 oraz test CI ścieżek runtime Dockerfile.",
+          })
+          release_path.write_text(json.dumps(release, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          section = """## 3.1.22 — 2026-10-30\n\n### English\n- Fixed the container image build failure introduced in 3.1.21: `ai_cooling_v5_2.py` is now copied to `/ai_cooling_v5_2.py` before the Dockerfile `chmod` step references that path.\n- Preserved `/ai_cooling.py` as the public v5.2 runtime entry point.\n- Added CI validation for Dockerfile runtime paths so missing chmod targets are detected before release.\n- Thermal Predictor guided assist behavior is unchanged.\n\n### Polski\n- Naprawiono błąd budowania obrazu kontenera wprowadzony w 3.1.21: `ai_cooling_v5_2.py` jest teraz kopiowany do `/ai_cooling_v5_2.py` zanim Dockerfile wykona `chmod` na tej ścieżce.\n- Zachowano `/ai_cooling.py` jako publiczny punkt wejścia runtime v5.2.\n- Dodano test CI ścieżek runtime Dockerfile, aby brakujące cele `chmod` były wykrywane przed wydaniem.\n- Działanie Thermal Predictor guided assist pozostaje bez zmian.\n\n"""
+          for raw in ("CHANGELOG.md", "local_apps/sbc5_control_center/CHANGELOG.md"):
+              p = Path(raw)
+              text = p.read_text(encoding="utf-8")
+              if "## 3.1.22 — 2026-10-30" not in text:
+                  first, rest = text.split("\n", 1)
+                  p.write_text(first + "\n\n" + section + rest.lstrip("\n"), encoding="utf-8")
+
+          manifest_path = Path("update-manifest.json")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          manifest.update({
+              "version": VERSION,
+              "package_version": VERSION,
+              "card_ui_version": VERSION,
+              "release_date": "2026-10-30",
+              "restart_required": "none",
+              "summary": "Hotfix the 3.1.21 container image build path for AI Cooling v5.2 and add Dockerfile runtime-path CI validation.",
+          })
+          files = manifest.setdefault("files", {})
+          for raw in (
+              "scripts/test_dockerfile_runtime_paths.py",
+              "RELEASE_NOTES_3.1.22.md",
+          ):
+              files.setdefault(raw, "")
+          for raw in (
+              ".github/workflows/finalize-3-1-22.yml",
+          ):
+              files.pop(raw, None)
+          for raw in list(files):
+              p = Path(raw)
+              if not p.is_file():
+                  raise SystemExit(f"manifest file missing: {raw}")
+              files[raw] = hashlib.sha256(p.read_bytes()).hexdigest()
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          python scripts/validate_release.py --strict-manifest-hashes
+
+      - name: Commit finalized release
+        run: |
+          if git diff --quiet; then
+            echo "No finalization changes required"
+            exit 0
+          fi
+          git config user.name "krlmdfk"
+          git config user.email "82178819+krlmdfk@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: finalize 3.1.22 release surfaces"
+          git push origin HEAD:hotfix/3.1.22-docker-build
