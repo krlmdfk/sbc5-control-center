@@ -1,5 +1,45 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.26 — 2026-10-30
+
+### English
+
+#### Changed
+
+- Persist Thermal Predictor effectiveness diagnostics across add-on and process restarts without changing cooling policy.
+
+#### Fixed
+
+- Persist Thermal Predictor effectiveness counters, pending observations and 30/60/120-second horizon results in a dedicated atomic checkpoint.
+- Migrate the 3.1.25 schema-1 effectiveness state without losing collected diagnostic evidence.
+
+#### Performance
+
+- No additional polling loop or background worker; persistence runs only when effectiveness state changes.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Zachowano statystyki skuteczności Thermal Predictora między restartami aplikacji i procesu bez zmiany polityki chłodzenia.
+
+#### Naprawiono
+
+- Dodano trwały atomowy checkpoint dla liczników skuteczności Thermal Predictora, oczekujących obserwacji oraz wyników 30/60/120 s.
+- Dodano migrację stanu skuteczności schema 1 z wersji 3.1.25 bez utraty zebranych danych diagnostycznych.
+
+#### Wydajność
+
+- Bez dodatkowej pętli odpytywania i procesu w tle; zapis trwały wykonywany jest tylko po zmianie stanu skuteczności.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.25 — 2026-10-30
 
 ### English
