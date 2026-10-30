@@ -92,5 +92,17 @@ assert "Sygnał predyktora" in dashboard_text
 assert "Wpływ na PWM" in dashboard_text
 assert "guided_assist" in dashboard_text
 assert "Prognoza temperatury CPU · tryb obserwacyjny · bez wpływu na PWM" not in dashboard_text
+assert "Skuteczność interwencji Thermal Predictora" in dashboard_text
+assert "Effectiveness score" in dashboard_text
+assert "thermal_effectiveness as effectiveness" in v52
+assert 'predictor["effectiveness"] = effectiveness_summary' in v52
+assert 'status["thermal_predictor_effectiveness"] = effectiveness_summary' in v52
+assert 'status["thermal_outcome_samples"]' not in v52
+assert 'status["thermal_outcome_success_percent"]' not in v52
+
+eff_text = (APP / "thermal_effectiveness.py").read_text(encoding="utf-8")
+assert 'HORIZONS = (30, 60, 120)' in eff_text
+assert 'EVENT_COOLDOWN_SECONDS = 25' in eff_text
+assert '"mode": "observe_only"' in eff_text
 
 print("Thermal Predictor guided runtime wiring: PASS")

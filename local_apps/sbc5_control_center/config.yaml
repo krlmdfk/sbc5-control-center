@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.24
+version: 3.1.25
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.24 — Align Thermal Predictor diagnostics and dashboard with the active guided-assist runtime without changing cooling control policy."
+description: "SBC5 Control Center 3.1.25 — Measure observed Thermal Predictor post-intervention effectiveness at 30/60/120 seconds without changing cooling policy."
 arch:
 - aarch64
 homeassistant: 2026.10.1

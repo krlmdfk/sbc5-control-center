@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.25 — 2026-10-30
+
+### English
+
+#### Changed
+
+- Measure observed Thermal Predictor post-intervention effectiveness at 30/60/120 seconds without changing cooling policy.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Dodano obserwacyjny pomiar skuteczności interwencji Thermal Predictora po 30/60/120 sekundach bez zmiany polityki chłodzenia.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.24 — 2026-10-30
 
 ### English

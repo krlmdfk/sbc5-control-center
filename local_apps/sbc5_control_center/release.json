@@ -1,14 +1,14 @@
 {
-  "version": "3.1.24",
+  "version": "3.1.25",
   "release_date": "2026-10-30",
   "restart_required": "none",
-  "summary": "Align Thermal Predictor diagnostics and dashboard with the active guided-assist runtime without changing cooling control policy.",
-  "package_version": "3.1.24",
-  "card_ui_version": "3.1.24",
+  "summary": "Measure observed Thermal Predictor post-intervention effectiveness at 30/60/120 seconds without changing cooling policy.",
+  "package_version": "3.1.25",
+  "card_ui_version": "3.1.25",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Ujednolicono diagnostykę i kartę Thermal Predictora z aktywnym runtime guided-assist bez zmiany polityki sterowania chłodzeniem."
+  "summary_pl": "Dodano obserwacyjny pomiar skuteczności interwencji Thermal Predictora po 30/60/120 sekundach bez zmiany polityki chłodzenia."
 }
