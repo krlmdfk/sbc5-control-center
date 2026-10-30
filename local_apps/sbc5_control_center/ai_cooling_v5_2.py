@@ -14,6 +14,7 @@ import time
 from typing import Any
 
 import thermal_active_policy as policy
+import thermal_effectiveness as effectiveness
 
 
 def _base_path() -> Path:
@@ -125,6 +126,18 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
     guidance["guard_reason"] = status.get("reason")
     status["thermal_predictor_guidance"] = guidance
 
+    # 3.1.25: observe post-intervention outcomes using the existing AI cycle.
+    # This diagnostic score intentionally does NOT feed thermal_outcome_* gate
+    # inputs yet, so it cannot alter Thermal Predictor eligibility or PWM policy.
+    effectiveness_summary = effectiveness.update(
+        model=model,
+        now=time.time(),
+        temperature_c=_num(status.get("temperature_c"), _num(status.get("target_temp_c"), 49.0)),
+        target_c=_num(status.get("target_temp_c"), 49.0),
+        applied_delta_pp=applied_delta,
+        decision_reason=str(guidance.get("decision_reason") or ""),
+    )
+
     active = str(status.get("mode")) == "assist"
     predictor["guided_assist"] = {
         "mode": guidance.get("gate_mode", "observe"),
@@ -141,9 +154,11 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         "ai_correction_pwm_percent": status.get("correction_pwm_percent"),
         "guard_reason": status.get("reason"),
     }
+    predictor["effectiveness"] = effectiveness_summary
     predictor["mode"] = "guided_assist" if active else "observe_only"
     predictor["control_output_enabled"] = bool(predictor["guided_assist"]["control_output_enabled"])
     status["thermal_predictor"] = predictor
+    status["thermal_predictor_effectiveness"] = effectiveness_summary
 
     if len(fields) >= 21:
         source = str(fields[20] or status.get("transfer_source") or "none").split("+thermal[", 1)[0]
@@ -179,7 +194,7 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
 
 
 base._apply_hierarchical_step = _apply_guided_step
-base.V5_POLICY = "hierarchical_continuous_v5_2_thermal_guided_runtime"
+base.V5_POLICY = "hierarchical_continuous_v5_2_thermal_guided_runtime_effectiveness"
 
 
 def main() -> int:
