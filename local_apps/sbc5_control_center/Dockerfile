@@ -30,11 +30,12 @@ COPY rpi5-stable50-10step-overlay.dts /
 COPY rpi5-stable50-15step-overlay.dts /
 COPY bridge /bridge
 COPY config_ui.py /config_ui.py
-# 3.1.22 AI stack: keep every layer on a distinct runtime path and expose
-# v5.2 as the public /ai_cooling.py entry point.
+# 3.1.28 AI stack: every module imported by the public v5.2 runtime must be
+# present in the container image. Keep each layer on a distinct runtime path.
 COPY ai_cooling_legacy.py /ai_cooling_legacy.py
 COPY thermal_predictor_v3.py /thermal_predictor_v3.py
 COPY thermal_active_policy.py /thermal_active_policy.py
+COPY thermal_effectiveness.py /thermal_effectiveness.py
 COPY ai_cooling.py /ai_cooling_v4.py
 COPY ai_cooling_v5.py /ai_cooling_v5.py
 COPY ai_cooling_v5_1.py /ai_cooling_v5_1.py
@@ -66,7 +67,7 @@ COPY TRADEMARKS.md /usr/share/licenses/sbc5-control-center/TRADEMARKS.md
 COPY LEGAL.md /usr/share/licenses/sbc5-control-center/LEGAL.md
 COPY LICENSE_AUDIT.md /usr/share/licenses/sbc5-control-center/LICENSE_AUDIT.md
 
-RUN chmod a+x /run.sh /run_legacy.sh /ethernet_guard.py /usr/local/bin/sbc5-core /config_ui.py /ai_cooling.py /ai_cooling_v4.py /ai_cooling_v5.py /ai_cooling_v5_1.py /ai_cooling_v5_2.py /ai_cooling_legacy.py /thermal_predictor_v3.py /thermal_active_policy.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
+RUN chmod a+x /run.sh /run_legacy.sh /ethernet_guard.py /usr/local/bin/sbc5-core /config_ui.py /ai_cooling.py /ai_cooling_v4.py /ai_cooling_v5.py /ai_cooling_v5_1.py /ai_cooling_v5_2.py /ai_cooling_legacy.py /thermal_predictor_v3.py /thermal_active_policy.py /thermal_effectiveness.py /dashboard_sync.py /namespace_native_guard.sh /migration_manager.py /migration_manager_v2.py
 
 ENTRYPOINT ["/run.sh"]
 CMD []
