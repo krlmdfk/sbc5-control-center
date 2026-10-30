@@ -1,14 +1,14 @@
 {
-  "version": "3.1.27",
+  "version": "3.1.28",
   "release_date": "2026-10-30",
   "restart_required": "none",
-  "summary": "Recover the REST-backed AI Runtime relay immediately after Home Assistant Core restarts, preventing temporary unavailable AI and Thermal Predictor sensors.",
-  "package_version": "3.1.27",
-  "card_ui_version": "3.1.27",
+  "summary": "Restore AI Cooling v5.2 and Thermal Predictor runtime evaluation by packaging the missing thermal_effectiveness dependency in the application image.",
+  "package_version": "3.1.28",
+  "card_ui_version": "3.1.28",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Natychmiast odtwarza relay AI Runtime oparty o REST po restarcie Home Assistant Core, eliminując czasową niedostępność sensorów AI i Thermal Predictora."
+  "summary_pl": "Przywraca działanie evaluatora AI Cooling v5.2 i Thermal Predictora przez dołączenie brakującej zależności thermal_effectiveness do obrazu aplikacji."
 }
