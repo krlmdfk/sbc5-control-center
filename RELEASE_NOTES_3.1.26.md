@@ -28,6 +28,7 @@ No security-specific changes.
 ### Upgrade notes
 
 - No restart is required.
+- No AI model reset is required; existing learned state is preserved.
 - Existing configuration and durable SBC5 state should be preserved unless a release-specific migration note says otherwise.
 
 ### Compatibility
@@ -80,6 +81,7 @@ Brak zmian dotyczących bezpieczeństwa.
 ### Informacje o aktualizacji
 
 - Restart nie jest wymagany.
+- Reset modelu AI nie jest wymagany; istniejący wyuczony stan zostaje zachowany.
 - Istniejąca konfiguracja i trwały stan SBC5 powinny zostać zachowane, o ile dana wersja nie zawiera osobnej informacji migracyjnej.
 
 ### Zgodność
