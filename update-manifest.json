@@ -155,7 +155,7 @@
     "local_apps/sbc5_control_center/thermal_active_policy.py": "b5bfd0cb27d5ef5684e7b4fcd1493bfc9124df6a780189779d282b3ee6669b52",
     "scripts/test_thermal_predictor_guided_3_1_21.py": "33fd750c857bfef610fa21ab22271be3eef7c67b0ac83ce33dd17b2b6dd2b66d",
     "RELEASE_NOTES_3.1.21.md": "9c5e454b20a924998f685762d372dc0fb35088f782db09a275b0da09b96acec8",
-    "scripts/test_dockerfile_runtime_paths.py": "cfce57835ec5dcb7f9bb81f435d43ffc1ee7d1bd3091ed4f42df12b4ce079188",
+    "scripts/test_dockerfile_runtime_paths.py": "76e3bbd41f58bc1fe1060af200965027e9359a6dd5df33e9dc93e2a5b40ffdf6",
     "RELEASE_NOTES_3.1.22.md": "657b50b0111b1643e1190c115e526e97f2c1b75d4281f9edc7bf60e78f6293f0"
   },
   "installation_channels": [
