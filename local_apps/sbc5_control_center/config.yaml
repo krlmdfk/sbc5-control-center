@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.22
+version: 3.1.23
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.22 — Hotfix container image build path for AI Cooling v5.2 and add Dockerfile runtime-path CI validation."
+description: "SBC5 Control Center 3.1.23 — Fix Thermal Predictor guided-assist runtime wiring so forecast guidance is evaluated on every AI control cycle."
 arch:
 - aarch64
 homeassistant: 2026.10.1

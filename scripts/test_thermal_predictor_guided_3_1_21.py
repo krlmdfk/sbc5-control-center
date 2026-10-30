@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for SBC5 3.1.21 Thermal Predictor guided assist."""
+"""Regression tests for SBC5 Thermal Predictor guided assist runtime wiring."""
 from __future__ import annotations
 
 import importlib.util
@@ -26,6 +26,8 @@ predictor = {
 weighted, weights = policy.dynamic_forecast(predictor, 49.0)
 assert weights["30"] > weights["60"] > weights["120"], weights
 assert weighted > 50.0, weighted
+assert all(value > 0 for value in weights.values()), weights
+assert 0.99 <= sum(weights.values()) <= 1.01, weights
 
 mode, reason, limit = policy.gate(
     predictor=predictor, now=1010, ai_mode="assist", control_mode="automatic",
@@ -34,7 +36,7 @@ mode, reason, limit = policy.gate(
 assert (mode, reason, limit) == ("active", "eligible", 2), (mode, reason, limit)
 
 decision = policy.decide(predictor=predictor, target=49.0, temp=49.2, slope=0.4, mode=mode, max_delta=limit)
-assert decision["requested_delta_pp"] > 0, decision
+assert 0 < decision["requested_delta_pp"] <= 2, decision
 
 weak = dict(predictor)
 weak.update({"confidence_percent": 60, "average_mae_c": 3.2})
@@ -55,7 +57,26 @@ v52 = (APP / "ai_cooling_v5_2.py").read_text(encoding="utf-8")
 assert "COPY ai_cooling_v5_1.py /ai_cooling_v5_1.py" in docker
 assert "COPY ai_cooling_v5_2.py /ai_cooling.py" in docker
 assert "COPY thermal_active_policy.py /thermal_active_policy.py" in docker
-assert "base._candidate_pwm = _predictive_candidate_pwm" in v52
+
+# 3.1.23 regression: guidance must be evaluated from _apply_guided_step on every
+# AI cycle, not only as a side effect of the model-learning candidate path.
+assert "def _guided_runtime(" in v52
+assert "guidance = _guided_runtime(status)" in v52
+assert "policy.dynamic_forecast(predictor, target)" in v52
+assert "policy.gate(" in v52
+assert "policy.decide(" in v52
+assert "base._candidate_pwm = _predictive_candidate_pwm" not in v52
 assert "base._apply_hierarchical_step = _apply_guided_step" in v52
-assert "fields[0] =" not in v52, "v5.2 must not create a second direct PWM output path"
-print("Thermal Predictor guided assist 3.1.21: PASS")
+
+# The predictor is allowed one bounded nudge inside the existing AI assist
+# envelope. It must update the existing output contract rather than create a
+# separate actuator loop.
+assert "requested_delta_pp" in v52
+assert "applied_delta_pp" in v52
+assert "baseline - assist_limit" in v52
+assert "baseline + assist_limit" in v52
+assert "fields[0] = str(guided_output)" in v52
+assert "fields[6] = str(guided_output - baseline)" in v52
+assert "hierarchical_continuous_v5_2_thermal_guided_runtime" in v52
+
+print("Thermal Predictor guided runtime wiring: PASS")

@@ -1,5 +1,47 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.23 — 2026-10-30
+
+### English
+
+#### Changed
+
+- Fix Thermal Predictor guided-assist runtime wiring so forecast guidance is evaluated on every AI control cycle.
+
+#### Fixed
+
+- Evaluate Thermal Predictor dynamic forecast, gate and decision on every AI assist cycle instead of only during model-learning candidate updates.
+- Keep predictor correction bounded to ±2 pp and inside the existing AI assist-limit, min-safe and maximum envelope.
+- Expose real weighted forecast, horizon weights and requested/applied predictor delta instead of zero fallback diagnostics.
+
+#### Performance
+
+- No additional polling loop or background process is added; the predictor reuses the existing AI cycle.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Naprawiono podłączenie Thermal Predictor guided assist w runtime, aby wskazówki prognozy były oceniane w każdym cyklu sterowania AI.
+
+#### Naprawiono
+
+- Thermal Predictor dynamic forecast, gate i decyzja są teraz oceniane w każdym cyklu AI assist, a nie tylko podczas aktualizacji kandydata modelu uczącego.
+- Korekta predictora pozostaje ograniczona do ±2 pp oraz do istniejącego zakresu assist-limit, min-safe i maximum.
+- Diagnostyka pokazuje rzeczywistą prognozę ważoną, wagi horyzontów i żądaną/zastosowaną korektę zamiast wartości zerowych z fallbacku.
+
+#### Wydajność
+
+- Nie dodano nowej pętli odpytywania ani procesu w tle; predictor wykorzystuje istniejący cykl AI.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.22 — 2026-10-30
 
 ### English
