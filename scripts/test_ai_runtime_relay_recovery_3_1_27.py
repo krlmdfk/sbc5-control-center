@@ -11,5 +11,5 @@ assert force in text
 assert text.index(probe) < text.index(force) < text.index(sig)
 assert "AI_RUNTIME_RELAY_INTERVAL_SECONDS=30" in text
 assert "AI_RUNTIME_RELAY_KEEPALIVE_SECONDS=300" in text
-assert "curl -fsS -H "Authorization: Bearer ${SUPERVISOR_TOKEN}"" in text
+assert 'curl -fsS -H "Authorization: Bearer ${SUPERVISOR_TOKEN}"' in text
 print("AI runtime relay recovery regression: PASS")
