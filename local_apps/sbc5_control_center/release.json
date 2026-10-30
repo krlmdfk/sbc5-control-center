@@ -1,14 +1,14 @@
 {
-  "version": "3.1.22",
+  "version": "3.1.23",
   "release_date": "2026-10-30",
   "restart_required": "none",
-  "summary": "Hotfix the 3.1.21 container image build path for AI Cooling v5.2 and add Dockerfile runtime-path CI validation.",
-  "package_version": "3.1.22",
-  "card_ui_version": "3.1.22",
+  "summary": "Fix Thermal Predictor guided-assist runtime wiring so forecast guidance is evaluated on every AI control cycle.",
+  "package_version": "3.1.23",
+  "card_ui_version": "3.1.23",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Hotfix błędu budowania obrazu kontenera 3.1.21 dla AI Cooling v5.2 oraz test CI ścieżek runtime Dockerfile."
+  "summary_pl": "Naprawiono podłączenie Thermal Predictor guided assist w runtime, aby wskazówki prognozy były oceniane w każdym cyklu sterowania AI."
 }
