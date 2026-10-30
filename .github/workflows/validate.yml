@@ -40,6 +40,9 @@ jobs:
       - name: Validate repository consistency
         run: python scripts/validate_release.py
 
+      - name: Validate Dockerfile runtime paths
+        run: python scripts/test_dockerfile_runtime_paths.py
+
       - name: Test migration profile guard
         run: python scripts/test_migration_profile_guard.py
 
