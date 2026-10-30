@@ -1,0 +1,47 @@
+name: Prepare SBC5 3.1.23 once
+
+on:
+  push:
+    branches:
+      - fix/thermal-guided-runtime-3.1.23
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: ${{ github.event.head_commit.message != 'release: prepare SBC5 3.1.23' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/thermal-guided-runtime-3.1.23
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Prepare unified release metadata
+        run: >-
+          python scripts/release_prepare.py
+          --version 3.1.23
+          --release-date 2026-10-30
+          --restart-required none
+          --summary-en "Fix Thermal Predictor guided-assist runtime wiring so forecast guidance is evaluated on every AI control cycle."
+          --summary-pl "Naprawiono podłączenie Thermal Predictor guided assist w runtime, aby wskazówki prognozy były oceniane w każdym cyklu sterowania AI."
+          --fixed-en "Evaluate Thermal Predictor dynamic forecast, gate and decision on every AI assist cycle instead of only during model-learning candidate updates."
+          --fixed-en "Keep predictor correction bounded to ±2 pp and inside the existing AI assist-limit, min-safe and maximum envelope."
+          --fixed-en "Expose real weighted forecast, horizon weights and requested/applied predictor delta instead of zero fallback diagnostics."
+          --fixed-pl "Thermal Predictor dynamic forecast, gate i decyzja są teraz oceniane w każdym cyklu AI assist, a nie tylko podczas aktualizacji kandydata modelu uczącego."
+          --fixed-pl "Korekta predictora pozostaje ograniczona do ±2 pp oraz do istniejącego zakresu assist-limit, min-safe i maximum."
+          --fixed-pl "Diagnostyka pokazuje rzeczywistą prognozę ważoną, wagi horyzontów i żądaną/zastosowaną korektę zamiast wartości zerowych z fallbacku."
+          --performance-en "No additional polling loop or background process is added; the predictor reuses the existing AI cycle."
+          --performance-pl "Nie dodano nowej pętli odpytywania ani procesu w tle; predictor wykorzystuje istniejący cykl AI."
+      - name: Commit prepared release surfaces
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "release: prepare SBC5 3.1.23"
+          git push origin HEAD:fix/thermal-guided-runtime-3.1.23
