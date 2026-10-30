@@ -1,5 +1,43 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.27 — 2026-10-30
+
+### English
+
+#### Changed
+
+- Recover the REST-backed AI Runtime relay immediately after Home Assistant Core restarts, preventing temporary unavailable AI and Thermal Predictor sensors.
+
+#### Fixed
+
+- Detect a missing sensor.sbc5_control_center_ai_runtime on the existing 30-second relay cadence and republish it without waiting for the 5-minute keepalive.
+
+#### Performance
+
+- No additional background loop; the existence probe reuses the existing AI relay cadence and does not change cooling control.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Natychmiast odtwarza relay AI Runtime oparty o REST po restarcie Home Assistant Core, eliminując czasową niedostępność sensorów AI i Thermal Predictora.
+
+#### Naprawiono
+
+- Wykrywa brak sensor.sbc5_control_center_ai_runtime w istniejącym 30-sekundowym cyklu relay i publikuje go ponownie bez oczekiwania na 5-minutowy keepalive.
+
+#### Wydajność
+
+- Bez dodatkowej pętli w tle; sprawdzenie istnienia encji wykorzystuje istniejący cykl AI relay i nie zmienia sterowania chłodzeniem.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.26 — 2026-10-30
 
 ### English
