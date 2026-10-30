@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   patch:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +24,6 @@ jobs:
         run: python scripts/patch_ai_runtime_recovery_3_1_27.py
       - name: Commit prepared patch
         run: |
-          rm -f .github/workflows/prepare-ai-runtime-3.1.27.yml
           rm -f scripts/patch_ai_runtime_recovery_3_1_27.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
