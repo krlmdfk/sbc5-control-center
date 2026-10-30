@@ -1,5 +1,19 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.22 — 2026-10-30
+
+### English
+- Fixed the container image build failure introduced in 3.1.21: `ai_cooling_v5_2.py` is now copied to `/ai_cooling_v5_2.py` before the Dockerfile `chmod` step references that path.
+- Preserved `/ai_cooling.py` as the public v5.2 runtime entry point.
+- Added CI validation for Dockerfile runtime paths so missing chmod targets are detected before release.
+- Thermal Predictor guided assist behavior is unchanged.
+
+### Polski
+- Naprawiono błąd budowania obrazu kontenera wprowadzony w 3.1.21: `ai_cooling_v5_2.py` jest teraz kopiowany do `/ai_cooling_v5_2.py` zanim Dockerfile wykona `chmod` na tej ścieżce.
+- Zachowano `/ai_cooling.py` jako publiczny punkt wejścia runtime v5.2.
+- Dodano test CI ścieżek runtime Dockerfile, aby brakujące cele `chmod` były wykrywane przed wydaniem.
+- Działanie Thermal Predictor guided assist pozostaje bez zmian.
+
 ## 3.1.21 — 2026-10-29
 
 ### English
