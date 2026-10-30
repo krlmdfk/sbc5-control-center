@@ -23,7 +23,7 @@ def _release_version():
             return version
     except Exception:
         pass
-    return '3.1.26'
+    return '3.1.27'
 
 APP_VERSION = _release_version()
 
@@ -54,7 +54,7 @@ def _runtime_versioned_card(card):
 
     Browser-session Lovelace sync uses these template endpoints directly.  Returning
     raw packaged JSON previously allowed an old Update Card marker (2.8.34) to be
-    written back even while the App and Card UI were already 3.1.26.
+    written back even while the App and Card UI were already 3.1.27.
     """
     version = current_card_ui_version()
     def walk(value):
@@ -344,7 +344,7 @@ def read_options():
             out['config_gpu']=copy.deepcopy(GPU_PROFILES[out['config_gpu_profile']])
         if out['section_gpu_enabled']:
             out.setdefault('config_txt_manager',{})['enabled']=True
-    # v3.1.26: persistent Ethernet/EEE state wins over a Supervisor-restored default snapshot.
+    # v3.1.27: persistent Ethernet/EEE state wins over a Supervisor-restored default snapshot.
     est=read_ethernet_state()
     if est:
         for key in ETHERNET_KEYS:

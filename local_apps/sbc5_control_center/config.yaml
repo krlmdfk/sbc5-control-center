@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.26
+version: 3.1.27
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.26 — Persist Thermal Predictor effectiveness diagnostics across add-on and process restarts without changing cooling policy."
+description: "SBC5 Control Center 3.1.27 — Recover the REST-backed AI Runtime relay immediately after Home Assistant Core restarts, preventing temporary unavailable AI and Thermal Predictor sensors."
 arch:
 - aarch64
 homeassistant: 2026.10.1
