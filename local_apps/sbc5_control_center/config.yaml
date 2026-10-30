@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.21
+version: 3.1.22
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.21 — Improve Thermal Predictor accuracy with exact due-time validation, path-aware context filtering and robust thermal trend estimation."
+description: "SBC5 Control Center 3.1.22 — Hotfix container image build path for AI Cooling v5.2 and add Dockerfile runtime-path CI validation."
 arch:
 - aarch64
 homeassistant: 2026.10.1
