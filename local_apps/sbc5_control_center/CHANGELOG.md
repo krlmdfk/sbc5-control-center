@@ -1,5 +1,53 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.29 — 2026-10-31
+
+### English
+
+#### Added
+
+- Add T_raw/T_control diagnostics, 30/120-second thermal trends, signal quality, spike rejection and confirmed thermal direction to Adaptive PWM runtime state.
+
+#### Changed
+
+- Use median-of-3 plus asymmetric EWMA for normal Adaptive PWM control while preserving raw CPU temperature as the authoritative safety and emergency signal.
+- Require Thermal Predictor forecast direction to agree with robust short/long temperature trends before a guided PWM correction is allowed.
+
+#### Fixed
+
+- Prevent isolated temperature spikes and short cooling dips from causing rapid PWM direction reversals or unnecessary fan hunting near the target.
+
+#### Performance
+
+- Reuse the existing 10-second Adaptive PWM cycle; no additional background polling loop is introduced.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Dodaje diagnostykę T_raw/T_control, trendy termiczne 30/120 s, jakość sygnału, odrzucanie pików i potwierdzony kierunek termiczny do stanu runtime Adaptive PWM.
+
+#### Zmieniono
+
+- W zwykłym sterowaniu Adaptive PWM używa mediany z 3 próbek i asymetrycznego EWMA, zachowując surową temperaturę CPU jako nadrzędny sygnał bezpieczeństwa i awaryjnego handoffu.
+- Wymaga zgodności kierunku prognozy Thermal Predictora z odpornymi trendami krótkim i długim przed dopuszczeniem korekty PWM.
+
+#### Naprawiono
+
+- Ogranicza wpływ pojedynczych pików temperatury i krótkich spadków na szybkie odwracanie kierunku PWM oraz oscylacje wentylatora w pobliżu temperatury docelowej.
+
+#### Wydajność
+
+- Wykorzystuje istniejący 10-sekundowy cykl Adaptive PWM; nie dodaje nowej pętli odpytywania w tle.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.28 — 2026-10-30
 
 ### English

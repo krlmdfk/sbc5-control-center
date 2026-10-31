@@ -1,14 +1,14 @@
 {
-  "version": "3.1.28",
-  "release_date": "2026-10-30",
+  "version": "3.1.29",
+  "release_date": "2026-10-31",
   "restart_required": "none",
-  "summary": "Restore AI Cooling v5.2 and Thermal Predictor runtime evaluation by packaging the missing thermal_effectiveness dependency in the application image.",
-  "package_version": "3.1.28",
-  "card_ui_version": "3.1.28",
+  "summary": "Stabilize Adaptive PWM and Thermal Predictor decisions with a raw-versus-control temperature path, spike filtering, asymmetric smoothing, 30/120-second trend confirmation and direction hysteresis.",
+  "package_version": "3.1.29",
+  "card_ui_version": "3.1.29",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Przywraca działanie evaluatora AI Cooling v5.2 i Thermal Predictora przez dołączenie brakującej zależności thermal_effectiveness do obrazu aplikacji."
+  "summary_pl": "Stabilizuje decyzje Adaptive PWM i Thermal Predictora przez rozdzielenie temperatury surowej i sterującej, filtr pików, asymetryczne wygładzanie, potwierdzanie trendu 30/120 s oraz bezwładność zmiany kierunku."
 }
