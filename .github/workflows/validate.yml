@@ -67,6 +67,9 @@ jobs:
       - name: Test Thermal Predictor effectiveness persistence
         run: python scripts/test_thermal_effectiveness_persistence_3_1_26.py
 
+      - name: Test thermal control stability and predictor confirmation
+        run: python scripts/test_thermal_stability_3_1_29.py
+
       - name: Test AI runtime layer wiring
         run: python scripts/test_ai_runtime_wiring_3_1_20.py
 
