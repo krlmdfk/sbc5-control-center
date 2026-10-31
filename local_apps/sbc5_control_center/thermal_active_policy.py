@@ -16,6 +16,10 @@ PROBATION_MIN_VALIDATED_PER_HORIZON = 8
 MAX_PREDICTOR_AGE_SECONDS = 35
 BASE_HORIZON_WEIGHTS = {30: 0.50, 60: 0.35, 120: 0.15}
 ACCURACY_TARGETS = {30: 1.0, 60: 1.5, 120: 2.5}
+HOT_FAST_CONFIRM_C_PER_MIN = 0.10
+HOT_SLOW_CONFIRM_C_PER_MIN = 0.04
+COOL_FAST_CONFIRM_C_PER_MIN = -0.10
+COOL_SLOW_CONFIRM_C_PER_MIN = -0.04
 
 
 def num(value: Any, default: float = 0.0) -> float:
@@ -91,30 +95,85 @@ def gate(
     return "observe", "mae_above_threshold", 0
 
 
+def forecast_confirmation(
+    *, predictor: dict[str, Any], temp: float, target: float, slope: float, direction: str
+) -> tuple[bool, str, dict[str, float]]:
+    """Confirm forecast direction against short/long thermal trends.
+
+    The predictor already exposes robust Theil-Sen fast/slow slopes.  Older model
+    snapshots may not have them, so the current measured slope remains a safe
+    fallback.  Hot guidance may also confirm when the measured temperature is
+    already materially above target; cool guidance never gets that shortcut.
+    """
+    fast = num(predictor.get("fast_slope_c_per_min"), slope)
+    slow = num(predictor.get("slow_slope_c_per_min"), slope)
+    details = {"fast_c_per_min": round(fast, 3), "slow_c_per_min": round(slow, 3)}
+    if direction == "hot":
+        if temp >= target + 0.85:
+            return True, "measured_hot", details
+        if fast >= HOT_FAST_CONFIRM_C_PER_MIN and slow >= HOT_SLOW_CONFIRM_C_PER_MIN:
+            return True, "trend_hot_confirmed", details
+        return False, "hot_forecast_unconfirmed", details
+    if direction == "cool":
+        if fast <= COOL_FAST_CONFIRM_C_PER_MIN and slow <= COOL_SLOW_CONFIRM_C_PER_MIN:
+            return True, "trend_cool_confirmed", details
+        return False, "cool_forecast_unconfirmed", details
+    return True, "near_target", details
+
+
 def decide(*, predictor: dict[str, Any], target: float, temp: float, slope: float, mode: str, max_delta: int) -> dict[str, Any]:
     weighted, weights = dynamic_forecast(predictor, target)
     error = weighted - target
     delta = 0
     reason = "near_target"
+    requested_direction = "neutral"
     if max_delta > 0:
         if error >= 1.20:
-            delta, reason = max_delta, "forecast_hot_strong"
+            delta, reason, requested_direction = max_delta, "forecast_hot_strong", "hot"
         elif error >= 0.45:
-            delta, reason = 1, "forecast_hot"
+            delta, reason, requested_direction = 1, "forecast_hot", "hot"
         elif mode == "active" and error <= -1.35 and slope <= -0.20:
-            delta, reason = -max_delta, "forecast_cool_strong"
+            delta, reason, requested_direction = -max_delta, "forecast_cool_strong", "cool"
         elif mode == "active" and error <= -0.70 and slope <= 0.0:
-            delta, reason = -1, "forecast_cool"
+            delta, reason, requested_direction = -1, "forecast_cool", "cool"
         elif error < -0.70:
-            reason = "cool_forecast_but_not_falling"
+            reason, requested_direction = "cool_forecast_but_not_falling", "cool"
+
+    confirmed, confirmation_reason, trends = forecast_confirmation(
+        predictor=predictor,
+        temp=temp,
+        target=target,
+        slope=slope,
+        direction=requested_direction,
+    )
+    if delta != 0 and not confirmed:
+        delta = 0
+        reason = confirmation_reason
     if delta < 0 and (temp > target + 0.10 or slope > 0.0):
         delta, reason = 0, "downward_sign_guard"
+        confirmed = False
+        confirmation_reason = "downward_sign_guard"
     if mode == "probation" and delta < 0:
         delta, reason = 0, "probation_upward_only"
+        confirmed = False
+        confirmation_reason = "probation_upward_only"
+
     return {
         "requested_delta_pp": int(clamp(delta, -max_delta, max_delta)) if max_delta else 0,
         "decision_reason": reason,
         "weighted_forecast_c": round(weighted, 2),
         "weighted_forecast_error_c": round(error, 2),
         "horizon_weights": weights,
+        "forecast_direction": requested_direction,
+        "forecast_confirmed": bool(confirmed),
+        "forecast_confirmation_reason": confirmation_reason,
+        "quality_gate": {
+            "mode": mode,
+            "max_delta_pp": int(max_delta),
+            "forecast_direction": requested_direction,
+            "forecast_confirmed": bool(confirmed),
+            "confirmation_reason": confirmation_reason,
+            "trend_30s_c_per_min": trends["fast_c_per_min"],
+            "trend_120s_c_per_min": trends["slow_c_per_min"],
+        },
     }
