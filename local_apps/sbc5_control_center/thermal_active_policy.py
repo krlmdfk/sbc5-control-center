@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from statistics import median
 from typing import Any
 
 ACTIVE_MAX_DELTA_PP = 2
@@ -20,6 +21,17 @@ HOT_FAST_CONFIRM_C_PER_MIN = 0.10
 HOT_SLOW_CONFIRM_C_PER_MIN = 0.04
 COOL_FAST_CONFIRM_C_PER_MIN = -0.10
 COOL_SLOW_CONFIRM_C_PER_MIN = -0.04
+
+# 3.1.30 — Thermal Predictor Stability v2.
+FORECAST_HISTORY_SIZE = 3
+FORECAST_EMA_ALPHA = 0.35
+FORECAST_CONFIRM_CYCLES = 2
+FORECAST_FAST_PATH_ERROR_C = 2.50
+FORECAST_FAST_PATH_MIN_CONFIDENCE = 82
+FORECAST_FAST_PATH_MAX_MAE_C = 1.30
+TREND_GUARD_C_PER_MIN = 0.80
+TREND_OVERRIDE_ERROR_C = 1.50
+TREND_OVERRIDE_MIN_CONFIDENCE = 82
 
 
 def num(value: Any, default: float = 0.0) -> float:
@@ -63,6 +75,84 @@ def dynamic_forecast(predictor: dict[str, Any], target: float) -> tuple[float, d
     return round(weighted, 3), weights
 
 
+def stabilize_forecast(
+    state: dict[str, Any], *, raw_forecast: float, target: float,
+    confidence: float, average_mae: float,
+) -> dict[str, Any]:
+    """Median-of-3 + EMA forecast conditioner with persistent confirmation state.
+
+    The caller stores ``state`` in the durable AI model.  No extra timer/polling loop
+    is required; the existing AI cycle advances the conditioner once per sample.
+    """
+    history_raw = state.get("forecast_history_c")
+    history = []
+    if isinstance(history_raw, list):
+        for value in history_raw[-(FORECAST_HISTORY_SIZE - 1):]:
+            v = num(value, float("nan"))
+            if math.isfinite(v):
+                history.append(v)
+    history.append(float(raw_forecast))
+    history = history[-FORECAST_HISTORY_SIZE:]
+
+    median_forecast = float(median(history))
+    previous = num(state.get("stable_forecast_c"), median_forecast)
+    stable_forecast = previous + FORECAST_EMA_ALPHA * (median_forecast - previous)
+    stable_error = stable_forecast - target
+
+    direction = "neutral"
+    if stable_error >= 0.45:
+        direction = "hot"
+    elif stable_error <= -0.70:
+        direction = "cool"
+
+    hot_confirm = max(0, int(round(num(state.get("hot_confirm_cycles"), 0.0))))
+    cool_confirm = max(0, int(round(num(state.get("cool_confirm_cycles"), 0.0))))
+    if direction == "hot":
+        hot_confirm = min(99, hot_confirm + 1)
+        cool_confirm = 0
+    elif direction == "cool":
+        cool_confirm = min(99, cool_confirm + 1)
+        hot_confirm = 0
+    else:
+        hot_confirm = 0
+        cool_confirm = 0
+
+    fast_path = (
+        abs(stable_error) >= FORECAST_FAST_PATH_ERROR_C
+        and confidence >= FORECAST_FAST_PATH_MIN_CONFIDENCE
+        and average_mae <= FORECAST_FAST_PATH_MAX_MAE_C
+    )
+
+    state.update({
+        "forecast_history_c": [round(v, 3) for v in history],
+        "median_forecast_c": round(median_forecast, 3),
+        "stable_forecast_c": round(stable_forecast, 3),
+        "raw_forecast_c": round(raw_forecast, 3),
+        "stable_error_c": round(stable_error, 3),
+        "direction": direction,
+        "hot_confirm_cycles": hot_confirm,
+        "cool_confirm_cycles": cool_confirm,
+        "fast_path": bool(fast_path),
+    })
+    return dict(state)
+
+
+def thermal_state(*, temp: float, target: float, trend: float) -> str:
+    if temp > target + 0.35:
+        position = "above_target"
+    elif temp < target - 0.35:
+        position = "below_target"
+    else:
+        position = "near_target"
+    if trend > 0.15:
+        movement = "heating"
+    elif trend < -0.15:
+        movement = "cooling"
+    else:
+        movement = "stable"
+    return f"{position}_{movement}"
+
+
 def gate(
     *, predictor: dict[str, Any], now: float, ai_mode: str, control_mode: str,
     controller_action: str, outcome_samples: int = 0, outcome_success_percent: float = 100.0,
@@ -98,13 +188,7 @@ def gate(
 def forecast_confirmation(
     *, predictor: dict[str, Any], temp: float, target: float, slope: float, direction: str
 ) -> tuple[bool, str, dict[str, float]]:
-    """Confirm forecast direction against short/long thermal trends.
-
-    The predictor already exposes robust Theil-Sen fast/slow slopes.  Older model
-    snapshots may not have them, so the current measured slope remains a safe
-    fallback.  Hot guidance may also confirm when the measured temperature is
-    already materially above target; cool guidance never gets that shortcut.
-    """
+    """Confirm forecast direction against short/long thermal trends."""
     fast = num(predictor.get("fast_slope_c_per_min"), slope)
     slow = num(predictor.get("slow_slope_c_per_min"), slope)
     details = {"fast_c_per_min": round(fast, 3), "slow_c_per_min": round(slow, 3)}
@@ -121,8 +205,13 @@ def forecast_confirmation(
     return True, "near_target", details
 
 
-def decide(*, predictor: dict[str, Any], target: float, temp: float, slope: float, mode: str, max_delta: int) -> dict[str, Any]:
-    weighted, weights = dynamic_forecast(predictor, target)
+def decide(
+    *, predictor: dict[str, Any], target: float, temp: float, slope: float,
+    mode: str, max_delta: int, stability: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    raw_weighted, weights = dynamic_forecast(predictor, target)
+    stability = stability if isinstance(stability, dict) else {}
+    weighted = num(stability.get("stable_forecast_c"), raw_weighted)
     error = weighted - target
     delta = 0
     reason = "near_target"
@@ -149,6 +238,43 @@ def decide(*, predictor: dict[str, Any], target: float, temp: float, slope: floa
     if delta != 0 and not confirmed:
         delta = 0
         reason = confirmation_reason
+
+    # Stability v2 requires two consecutive conditioned forecasts in the same
+    # direction. A high-quality >=2.5 C forecast may use the bounded fast path.
+    fast_path = bool(stability.get("fast_path"))
+    if delta > 0 and not fast_path:
+        cycles = int(round(num(stability.get("hot_confirm_cycles"), FORECAST_CONFIRM_CYCLES)))
+        if cycles < FORECAST_CONFIRM_CYCLES:
+            delta, reason = 0, "hot_forecast_waiting_confirmation"
+            confirmed = False
+            confirmation_reason = reason
+    elif delta < 0 and not fast_path:
+        cycles = int(round(num(stability.get("cool_confirm_cycles"), FORECAST_CONFIRM_CYCLES)))
+        if cycles < FORECAST_CONFIRM_CYCLES:
+            delta, reason = 0, "cool_forecast_waiting_confirmation"
+            confirmed = False
+            confirmation_reason = reason
+
+    confidence = num(predictor.get("confidence_percent"), 0.0)
+    fast_trend = trends["fast_c_per_min"]
+    override = (
+        abs(error) >= TREND_OVERRIDE_ERROR_C
+        and confidence >= TREND_OVERRIDE_MIN_CONFIDENCE
+        and (
+            fast_path
+            or (requested_direction == "hot" and int(num(stability.get("hot_confirm_cycles"), 0)) >= FORECAST_CONFIRM_CYCLES)
+            or (requested_direction == "cool" and int(num(stability.get("cool_confirm_cycles"), 0)) >= FORECAST_CONFIRM_CYCLES)
+        )
+    )
+    if delta > 0 and fast_trend <= -TREND_GUARD_C_PER_MIN and not override:
+        delta, reason = 0, "trend_guard_cooling"
+        confirmed = False
+        confirmation_reason = reason
+    elif delta < 0 and fast_trend >= TREND_GUARD_C_PER_MIN and not override:
+        delta, reason = 0, "trend_guard_heating"
+        confirmed = False
+        confirmation_reason = reason
+
     if delta < 0 and (temp > target + 0.10 or slope > 0.0):
         delta, reason = 0, "downward_sign_guard"
         confirmed = False
@@ -162,11 +288,13 @@ def decide(*, predictor: dict[str, Any], target: float, temp: float, slope: floa
         "requested_delta_pp": int(clamp(delta, -max_delta, max_delta)) if max_delta else 0,
         "decision_reason": reason,
         "weighted_forecast_c": round(weighted, 2),
+        "weighted_forecast_raw_c": round(raw_weighted, 2),
         "weighted_forecast_error_c": round(error, 2),
         "horizon_weights": weights,
         "forecast_direction": requested_direction,
         "forecast_confirmed": bool(confirmed),
         "forecast_confirmation_reason": confirmation_reason,
+        "stability": stability,
         "quality_gate": {
             "mode": mode,
             "max_delta_pp": int(max_delta),
@@ -175,5 +303,6 @@ def decide(*, predictor: dict[str, Any], target: float, temp: float, slope: floa
             "confirmation_reason": confirmation_reason,
             "trend_30s_c_per_min": trends["fast_c_per_min"],
             "trend_120s_c_per_min": trends["slow_c_per_min"],
+            "fast_path": fast_path,
         },
     }

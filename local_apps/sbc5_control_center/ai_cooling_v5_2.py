@@ -5,6 +5,9 @@ Thermal Predictor participates in the existing AI Cooling assist path instead of
 owning a second actuator loop. Adaptive PWM and the proven AI assist guards remain
 authoritative. Predictor guidance is evaluated on every AI cycle; no extra polling
 or background process is created.
+
+3.1.30 adds Thermal Predictor Stability v2: median-of-3 forecast conditioning,
+EMA smoothing, two-cycle directional confirmation and trend guards.
 """
 from __future__ import annotations
 
@@ -43,18 +46,30 @@ def _num(value: Any, default: float = 0.0) -> float:
     return policy.num(value, default)
 
 
-def _guided_runtime(status: dict[str, Any]) -> dict[str, Any]:
-    """Evaluate bounded Thermal Predictor guidance for the current AI cycle."""
+def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, Any]:
+    """Evaluate bounded, conditioned Thermal Predictor guidance for one AI cycle."""
     predictor = status.get("thermal_predictor")
     predictor = predictor if isinstance(predictor, dict) else {}
     target = _num(status.get("target_temp_c"), 49.0)
-    weighted, weights = policy.dynamic_forecast(predictor, target)
+    raw_weighted, weights = policy.dynamic_forecast(predictor, target)
 
     confidence = _num(predictor.get("confidence_percent"), 0.0)
     avg_mae = _num(predictor.get("average_mae_c"), 99.0)
     maturity = policy.clamp((confidence - 55.0) / 40.0, 0.0, 1.0)
     accuracy = policy.clamp((3.0 - avg_mae) / 2.0, 0.0, 1.0)
     gain = 0.22 * maturity * accuracy
+
+    stability_state = model.get("thermal_guidance_stability")
+    if not isinstance(stability_state, dict):
+        stability_state = {}
+        model["thermal_guidance_stability"] = stability_state
+    stability = policy.stabilize_forecast(
+        stability_state,
+        raw_forecast=raw_weighted,
+        target=target,
+        confidence=confidence,
+        average_mae=avg_mae,
+    )
 
     ai_mode = str(status.get("mode") or "observe")
     control_mode = str(base._argv_value("--control-mode", "automatic") or "automatic")
@@ -71,23 +86,44 @@ def _guided_runtime(status: dict[str, Any]) -> dict[str, Any]:
         outcome_samples=outcome_samples,
         outcome_success_percent=outcome_success,
     )
+
+    control_temp = _num(
+        status.get("temperature_control_c"),
+        _num(status.get("temperature_c"), target),
+    )
+    control_trend = _num(
+        status.get("temperature_trend_30s_c_per_min"),
+        _num(status.get("temperature_slope_c_per_min"), 0.0),
+    )
     decision = policy.decide(
         predictor=predictor,
         target=target,
-        temp=_num(status.get("temperature_c"), target),
-        slope=_num(status.get("temperature_slope_c_per_min"), 0.0),
+        temp=control_temp,
+        slope=control_trend,
         mode=gate_mode,
         max_delta=max_delta,
+        stability=stability,
     )
     return {
-        "weighted_forecast_c": round(weighted, 2),
-        "weighted_forecast_error_c": round(weighted - target, 2),
+        "weighted_forecast_raw_c": round(raw_weighted, 2),
+        "weighted_forecast_median_c": round(_num(stability.get("median_forecast_c"), raw_weighted), 2),
+        "weighted_forecast_c": round(_num(stability.get("stable_forecast_c"), raw_weighted), 2),
+        "weighted_forecast_error_c": round(_num(stability.get("stable_forecast_c"), raw_weighted) - target, 2),
         "horizon_weights": weights,
         "candidate_gain": round(gain, 3),
         "gate_mode": gate_mode,
         "gate_reason": gate_reason,
         "decision_reason": str(decision.get("decision_reason") or "near_target"),
         "requested_delta_pp": int(_num(decision.get("requested_delta_pp"), 0.0)),
+        "forecast_direction": str(decision.get("forecast_direction") or "neutral"),
+        "forecast_confirmed": bool(decision.get("forecast_confirmed")),
+        "confirmation_reason": str(decision.get("forecast_confirmation_reason") or "near_target"),
+        "hot_confirm_cycles": int(_num(stability.get("hot_confirm_cycles"), 0.0)),
+        "cool_confirm_cycles": int(_num(stability.get("cool_confirm_cycles"), 0.0)),
+        "fast_path": bool(stability.get("fast_path")),
+        "thermal_state": policy.thermal_state(temp=control_temp, target=target, trend=control_trend),
+        "control_temperature_c": round(control_temp, 2),
+        "control_trend_c_per_min": round(control_trend, 3),
     }
 
 
@@ -96,7 +132,7 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
     predictor = status.get("thermal_predictor")
     predictor = predictor if isinstance(predictor, dict) else {}
 
-    guidance = _guided_runtime(status)
+    guidance = _guided_runtime(model, status)
     requested_delta = int(guidance["requested_delta_pp"])
     applied_delta = 0
 
@@ -126,13 +162,14 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
     guidance["guard_reason"] = status.get("reason")
     status["thermal_predictor_guidance"] = guidance
 
-    # 3.1.25: observe post-intervention outcomes using the existing AI cycle.
-    # This diagnostic score intentionally does NOT feed thermal_outcome_* gate
-    # inputs yet, so it cannot alter Thermal Predictor eligibility or PWM policy.
+    # 3.1.25+: observe post-intervention outcomes using the existing AI cycle.
     effectiveness_summary = effectiveness.update(
         model=model,
         now=time.time(),
-        temperature_c=_num(status.get("temperature_c"), _num(status.get("target_temp_c"), 49.0)),
+        temperature_c=_num(
+            status.get("temperature_control_c"),
+            _num(status.get("temperature_c"), _num(status.get("target_temp_c"), 49.0)),
+        ),
         target_c=_num(status.get("target_temp_c"), 49.0),
         applied_delta_pp=applied_delta,
         decision_reason=str(guidance.get("decision_reason") or ""),
@@ -142,6 +179,8 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
     predictor["guided_assist"] = {
         "mode": guidance.get("gate_mode", "observe"),
         "control_output_enabled": active and guidance.get("gate_mode") in {"active", "probation"},
+        "weighted_forecast_raw_c": guidance.get("weighted_forecast_raw_c"),
+        "weighted_forecast_median_c": guidance.get("weighted_forecast_median_c"),
         "weighted_forecast_c": guidance.get("weighted_forecast_c"),
         "weighted_forecast_error_c": guidance.get("weighted_forecast_error_c"),
         "horizon_weights": guidance.get("horizon_weights", {}),
@@ -150,6 +189,15 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         "applied_delta_pp": applied_delta,
         "gate_reason": guidance.get("gate_reason"),
         "decision_reason": guidance.get("decision_reason"),
+        "forecast_direction": guidance.get("forecast_direction"),
+        "forecast_confirmed": guidance.get("forecast_confirmed"),
+        "confirmation_reason": guidance.get("confirmation_reason"),
+        "hot_confirm_cycles": guidance.get("hot_confirm_cycles", 0),
+        "cool_confirm_cycles": guidance.get("cool_confirm_cycles", 0),
+        "fast_path": guidance.get("fast_path", False),
+        "thermal_state": guidance.get("thermal_state"),
+        "control_temperature_c": guidance.get("control_temperature_c"),
+        "control_trend_c_per_min": guidance.get("control_trend_c_per_min"),
         "ai_output_pwm_percent": status.get("output_pwm_percent"),
         "ai_correction_pwm_percent": status.get("correction_pwm_percent"),
         "guard_reason": status.get("reason"),
@@ -194,7 +242,7 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
 
 
 base._apply_hierarchical_step = _apply_guided_step
-base.V5_POLICY = "hierarchical_continuous_v5_2_thermal_guided_runtime_effectiveness"
+base.V5_POLICY = "hierarchical_continuous_v5_2_thermal_guided_stability_v2"
 
 
 def main() -> int:
