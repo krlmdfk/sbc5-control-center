@@ -1,5 +1,49 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.30 — 2026-11-01
+
+### English
+
+#### Added
+
+- Thermal Predictor Stability v2 with median-of-3 weighted-forecast conditioning and EMA smoothing.
+- Persistent two-cycle hot/cool forecast confirmation with a bounded high-quality fast path.
+- Detailed thermal-state diagnostics including raw, median and stable forecasts plus confirmation state.
+
+#### Changed
+
+- Thermal Predictor now uses the filtered control temperature and the 30-second control trend when available.
+- Positive predictor corrections are suppressed during rapid cooling and negative corrections during rapid heating unless a strong confirmed forecast qualifies for override.
+
+#### Performance
+
+- No new polling loop or background process is added; Stability v2 advances inside the existing AI Cooling cycle.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Thermal Predictor Stability v2 z kondycjonowaniem ważonej prognozy medianą z 3 próbek i wygładzaniem EMA.
+- Trwałe dwucyklowe potwierdzanie prognoz hot/cool z ograniczoną szybką ścieżką dla prognoz wysokiej jakości.
+- Szczegółowa diagnostyka stanu termicznego obejmująca prognozę surową, medianę, prognozę stabilną i stan potwierdzenia.
+
+#### Zmieniono
+
+- Thermal Predictor korzysta teraz z filtrowanej temperatury sterującej i 30-sekundowego trendu sterującego, gdy są dostępne.
+- Dodatnie korekty predyktora są blokowane podczas szybkiego chłodzenia, a ujemne podczas szybkiego grzania, chyba że silna potwierdzona prognoza spełnia warunki wyjątku.
+
+#### Wydajność
+
+- Nie dodano nowej pętli odpytywania ani procesu w tle; Stability v2 działa w istniejącym cyklu AI Cooling.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.29 — 2026-10-31
 
 ### English
