@@ -1,0 +1,74 @@
+name: Prepare SBC5 3.1.31 release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Prepare release metadata and hashes
+        run: |
+          current=$(python -c 'import json; print(json.load(open("local_apps/sbc5_control_center/release.json"))["version"])')
+          if [ "$current" = "3.1.31" ]; then
+            echo "3.1.31 already prepared; no changes needed."
+            exit 0
+          fi
+          python scripts/release_prepare.py \
+            --version 3.1.31 \
+            --release-date 2026-11-01 \
+            --restart-required none \
+            --summary-en "Reduce Adaptive PWM positive-trim persistence with fused thermal trends and bounded near-target anti-windup recovery while preserving AI Cooling and Thermal Predictor authority." \
+            --summary-pl "Ogranicza bezwładność dodatniego trimu Adaptive PWM przez łączony trend termiczny i ograniczony anti-windup w pobliżu celu, bez zmiany wpływu AI Cooling ani Thermal Predictora." \
+            --added-en "Fused thermal trend for Adaptive PWM using 65% of the robust 30-second trend and 35% of the robust 120-second trend." \
+            --added-en "Adaptive Trim Recovery states for blocked trim growth, cooling recovery and fast near-target trim release." \
+            --added-en "Regression coverage for Trend Fusion, anti-windup behavior and unchanged AI/Thermal Predictor authority limits." \
+            --added-pl "Łączony trend termiczny Adaptive PWM wykorzystujący 65% odpornego trendu 30-sekundowego i 35% trendu 120-sekundowego." \
+            --added-pl "Stany Adaptive Trim Recovery dla blokowania narastania trimu, odzyskiwania podczas chłodzenia i szybkiego wygaszania trimu przy celu." \
+            --added-pl "Testy regresyjne Trend Fusion, anti-windup oraz niezmienionych limitów wpływu AI/Thermal Predictora." \
+            --changed-en "Positive trim accumulation is blocked when the fused thermal trend already indicates meaningful cooling." \
+            --changed-en "Near the target, stale positive trim can decay by up to 2 pp per control cycle when thermal direction is neutral or cooling." \
+            --changed-en "Adaptive PWM logs now expose trendF alongside trend30 and trend120 for runtime diagnosis." \
+            --changed-pl "Narastanie dodatniego trimu jest blokowane, gdy łączony trend termiczny wskazuje już wyraźne chłodzenie." \
+            --changed-pl "W pobliżu celu nieaktualny dodatni trim może maleć do 2 pp na cykl sterowania, gdy kierunek termiczny jest neutralny lub chłodzący." \
+            --changed-pl "Logi Adaptive PWM pokazują teraz trendF obok trend30 i trend120 dla diagnostyki runtime." \
+            --performance-en "No new polling loop or background process is added; Trend Fusion reuses the existing conditioned-temperature history and Adaptive PWM cycle." \
+            --performance-pl "Nie dodano nowej pętli odpytywania ani procesu w tle; Trend Fusion wykorzystuje istniejącą historię filtrowanej temperatury i cykl Adaptive PWM."
+
+      - name: Validate release candidate
+        run: |
+          python scripts/test_thermal_stability_3_1_29.py
+          python scripts/test_thermal_predictor_stability_3_1_30.py
+          python scripts/test_adaptive_trim_recovery_3_1_31.py
+          python scripts/validate_release.py --strict-manifest-hashes
+
+      - name: Commit prepared release
+        run: |
+          if git diff --quiet; then
+            echo "No release-preparation changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: prepare SBC5 Control Center 3.1.31"
+          git push origin HEAD:main

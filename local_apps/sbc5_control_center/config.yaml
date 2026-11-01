@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.30
+version: 3.1.31
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.30 — Stabilize Thermal Predictor control decisions with conditioned forecasts, confirmation guards and richer diagnostics while preserving the existing AI authority limits."
+description: "SBC5 Control Center 3.1.31 — Reduce Adaptive PWM positive-trim persistence with fused thermal trends and bounded near-target anti-windup recovery while preserving AI Cooling and Thermal Predictor authority."
 arch:
 - aarch64
 homeassistant: 2026.10.1

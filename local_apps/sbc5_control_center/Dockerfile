@@ -34,6 +34,9 @@ COPY config_ui.py /config_ui.py
 # temperature signal; raw CPU temperature remains authoritative for safety.
 COPY thermal_control_filter.py /thermal_control_filter.py
 COPY patch_thermal_stability_3_1_29.py /patch_thermal_stability_3_1_29.py
+# 3.1.31 Adaptive Trim Recovery: fused 30/120 s trend plus trend-aware
+# anti-windup and faster near-target trim release. AI/TP authority is unchanged.
+COPY patch_adaptive_trim_3_1_31.py /patch_adaptive_trim_3_1_31.py
 # 3.1.28 AI stack: every module imported by the public v5.2 runtime must be
 # present in the container image. Keep each layer on a distinct runtime path.
 COPY ai_cooling_legacy.py /ai_cooling_legacy.py
@@ -58,13 +61,14 @@ COPY migration_manager_v2.py /migration_manager_v2.py
 
 # The compatibility control plane still contains internal version constants.
 # Align them at image-build time with the Supervisor App version, then apply the
-# audited 3.1.29 thermal-stability patch to the image copy only.
+# audited thermal-control patches to the image copy only.
 RUN sed -i \
   -e "s/^APP_VERSION=\"[^\"]*\"$/APP_VERSION=\"${BUILD_VERSION}\"/" \
   -e "s/^REQUIRED_PACKAGE_VERSION=\"[^\"]*\"$/REQUIRED_PACKAGE_VERSION=\"${BUILD_VERSION}\"/" \
   /run_legacy.sh \
   && python3 /patch_thermal_stability_3_1_29.py /run_legacy.sh \
-  && rm -f /patch_thermal_stability_3_1_29.py
+  && python3 /patch_adaptive_trim_3_1_31.py /run_legacy.sh \
+  && rm -f /patch_thermal_stability_3_1_29.py /patch_adaptive_trim_3_1_31.py
 
 RUN mkdir -p /usr/share/licenses/sbc5-control-center
 COPY LICENSE /usr/share/licenses/sbc5-control-center/LICENSE

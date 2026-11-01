@@ -1,5 +1,51 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.31 — 2026-11-01
+
+### English
+
+#### Added
+
+- Fused thermal trend for Adaptive PWM using 65% of the robust 30-second trend and 35% of the robust 120-second trend.
+- Adaptive Trim Recovery states for blocked trim growth, cooling recovery and fast near-target trim release.
+- Regression coverage for Trend Fusion, anti-windup behavior and unchanged AI/Thermal Predictor authority limits.
+
+#### Changed
+
+- Positive trim accumulation is blocked when the fused thermal trend already indicates meaningful cooling.
+- Near the target, stale positive trim can decay by up to 2 pp per control cycle when thermal direction is neutral or cooling.
+- Adaptive PWM logs now expose trendF alongside trend30 and trend120 for runtime diagnosis.
+
+#### Performance
+
+- No new polling loop or background process is added; Trend Fusion reuses the existing conditioned-temperature history and Adaptive PWM cycle.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Łączony trend termiczny Adaptive PWM wykorzystujący 65% odpornego trendu 30-sekundowego i 35% trendu 120-sekundowego.
+- Stany Adaptive Trim Recovery dla blokowania narastania trimu, odzyskiwania podczas chłodzenia i szybkiego wygaszania trimu przy celu.
+- Testy regresyjne Trend Fusion, anti-windup oraz niezmienionych limitów wpływu AI/Thermal Predictora.
+
+#### Zmieniono
+
+- Narastanie dodatniego trimu jest blokowane, gdy łączony trend termiczny wskazuje już wyraźne chłodzenie.
+- W pobliżu celu nieaktualny dodatni trim może maleć do 2 pp na cykl sterowania, gdy kierunek termiczny jest neutralny lub chłodzący.
+- Logi Adaptive PWM pokazują teraz trendF obok trend30 i trend120 dla diagnostyki runtime.
+
+#### Wydajność
+
+- Nie dodano nowej pętli odpytywania ani procesu w tle; Trend Fusion wykorzystuje istniejącą historię filtrowanej temperatury i cykl Adaptive PWM.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.30 — 2026-11-01
 
 ### English
