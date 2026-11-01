@@ -17,7 +17,7 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
-SCHEMA = 1
+SCHEMA = 2
 HISTORY_SECONDS = 180.0
 MAX_HISTORY = 96
 ALPHA_RISE = 0.56
@@ -27,6 +27,8 @@ TREND_FAST_WINDOW = 30.0
 TREND_SLOW_WINDOW = 120.0
 TREND_CONFIRM_FAST_C_PER_MIN = 0.12
 TREND_CONFIRM_SLOW_C_PER_MIN = 0.05
+TREND_FUSED_FAST_WEIGHT = 0.65
+TREND_FUSED_SLOW_WEIGHT = 0.35
 REVERSAL_HOLD_CYCLES = 2
 DIRECTION_CONFIRM_CYCLES = 2
 
@@ -116,6 +118,15 @@ def update_signal(state: dict[str, Any], *, raw_c: float, target_c: float, now: 
     history = history[-MAX_HISTORY:]
     trend30 = _robust_slope(history, now, TREND_FAST_WINDOW)
     trend120 = _robust_slope(history, now, TREND_SLOW_WINDOW)
+    trend_fused = round(
+        _clamp(
+            TREND_FUSED_FAST_WEIGHT * trend30 + TREND_FUSED_SLOW_WEIGHT * trend120,
+            -6.0,
+            6.0,
+        ),
+        3,
+    )
+    trend_fused_milli = int(round(trend_fused * 1000.0))
 
     candidate = "neutral"
     if (
@@ -169,6 +180,10 @@ def update_signal(state: dict[str, Any], *, raw_c: float, target_c: float, now: 
         "target_c": round(target_c, 3),
         "trend_30s_c_per_min": trend30,
         "trend_120s_c_per_min": trend120,
+        "trend_fused_c_per_min": trend_fused,
+        "trend_fused_milli_c_per_min": trend_fused_milli,
+        "trend_fused_fast_weight": TREND_FUSED_FAST_WEIGHT,
+        "trend_fused_slow_weight": TREND_FUSED_SLOW_WEIGHT,
         "candidate_direction": candidate,
         "candidate_streak": streak,
         "confirmed_direction": confirmed,
@@ -210,6 +225,8 @@ def main() -> int:
                 str(int(round(result["control_c"] * 1000.0))),
                 str(result["trend_30s_c_per_min"]),
                 str(result["trend_120s_c_per_min"]),
+                str(result["trend_fused_c_per_min"]),
+                str(result["trend_fused_milli_c_per_min"]),
                 str(result["confirmed_direction"]),
                 "1" if result["spike_rejected"] else "0",
                 str(result["candidate_streak"]),
