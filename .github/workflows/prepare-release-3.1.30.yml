@@ -1,0 +1,70 @@
+name: Prepare SBC5 3.1.30 release
+
+on:
+  push:
+    branches:
+      - release/3.1.30
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/3.1.30
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Prepare release metadata and hashes
+        run: |
+          current=$(python -c 'import json; print(json.load(open("local_apps/sbc5_control_center/release.json"))["version"])')
+          if [ "$current" = "3.1.30" ]; then
+            echo "3.1.30 already prepared; no changes needed."
+            exit 0
+          fi
+          python scripts/release_prepare.py \
+            --version 3.1.30 \
+            --release-date 2026-11-01 \
+            --restart-required none \
+            --summary-en "Stabilize Thermal Predictor control decisions with conditioned forecasts, confirmation guards and richer diagnostics while preserving the existing AI authority limits." \
+            --summary-pl "Stabilizacja decyzji Thermal Predictora przez kondycjonowanie prognoz, guardy potwierdzeń i bogatszą diagnostykę przy zachowaniu dotychczasowych limitów wpływu AI." \
+            --added-en "Thermal Predictor Stability v2 with median-of-3 weighted-forecast conditioning and EMA smoothing." \
+            --added-en "Persistent two-cycle hot/cool forecast confirmation with a bounded high-quality fast path." \
+            --added-en "Detailed thermal-state diagnostics including raw, median and stable forecasts plus confirmation state." \
+            --added-pl "Thermal Predictor Stability v2 z kondycjonowaniem ważonej prognozy medianą z 3 próbek i wygładzaniem EMA." \
+            --added-pl "Trwałe dwucyklowe potwierdzanie prognoz hot/cool z ograniczoną szybką ścieżką dla prognoz wysokiej jakości." \
+            --added-pl "Szczegółowa diagnostyka stanu termicznego obejmująca prognozę surową, medianę, prognozę stabilną i stan potwierdzenia." \
+            --changed-en "Thermal Predictor now uses the filtered control temperature and the 30-second control trend when available." \
+            --changed-en "Positive predictor corrections are suppressed during rapid cooling and negative corrections during rapid heating unless a strong confirmed forecast qualifies for override." \
+            --changed-pl "Thermal Predictor korzysta teraz z filtrowanej temperatury sterującej i 30-sekundowego trendu sterującego, gdy są dostępne." \
+            --changed-pl "Dodatnie korekty predyktora są blokowane podczas szybkiego chłodzenia, a ujemne podczas szybkiego grzania, chyba że silna potwierdzona prognoza spełnia warunki wyjątku." \
+            --performance-en "No new polling loop or background process is added; Stability v2 advances inside the existing AI Cooling cycle." \
+            --performance-pl "Nie dodano nowej pętli odpytywania ani procesu w tle; Stability v2 działa w istniejącym cyklu AI Cooling."
+
+      - name: Validate release candidate
+        run: |
+          python scripts/test_thermal_predictor_stability_3_1_30.py
+          python scripts/validate_release.py --strict-manifest-hashes
+
+      - name: Commit prepared release
+        run: |
+          if git diff --quiet; then
+            echo "No release-preparation changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: prepare SBC5 Control Center 3.1.30"
+          git push origin HEAD:release/3.1.30
