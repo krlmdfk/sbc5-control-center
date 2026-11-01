@@ -73,6 +73,9 @@ jobs:
       - name: Test Thermal Predictor Stability v2
         run: python scripts/test_thermal_predictor_stability_3_1_30.py
 
+      - name: Test Adaptive Trim Recovery and Trend Fusion
+        run: python scripts/test_adaptive_trim_recovery_3_1_31.py
+
       - name: Test AI runtime layer wiring
         run: python scripts/test_ai_runtime_wiring_3_1_20.py
 
