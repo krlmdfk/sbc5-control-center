@@ -58,11 +58,14 @@ assert "COPY ai_cooling_v5_1.py /ai_cooling_v5_1.py" in docker
 assert "COPY ai_cooling_v5_2.py /ai_cooling.py" in docker
 assert "COPY thermal_active_policy.py /thermal_active_policy.py" in docker
 
-# 3.1.23 regression: guidance must be evaluated from _apply_guided_step on every
-# AI cycle, not only as a side effect of the model-learning candidate path.
+# 3.1.23/3.1.30 regression: guidance must be evaluated from _apply_guided_step on
+# every AI cycle. Stability v2 also receives the durable model so forecast history
+# and confirmation counters survive between existing 10-second AI cycles.
 assert "def _guided_runtime(" in v52
-assert "guidance = _guided_runtime(status)" in v52
+assert "guidance = _guided_runtime(model, status)" in v52
 assert "policy.dynamic_forecast(predictor, target)" in v52
+assert "policy.stabilize_forecast(" in v52
+assert 'model.get("thermal_guidance_stability")' in v52
 assert "policy.gate(" in v52
 assert "policy.decide(" in v52
 assert "base._candidate_pwm = _predictive_candidate_pwm" not in v52
@@ -77,7 +80,7 @@ assert "baseline - assist_limit" in v52
 assert "baseline + assist_limit" in v52
 assert "fields[0] = str(guided_output)" in v52
 assert "fields[6] = str(guided_output - baseline)" in v52
-assert "hierarchical_continuous_v5_2_thermal_guided_runtime" in v52
+assert "hierarchical_continuous_v5_2_thermal_guided_stability_v2" in v52
 
 legacy_text = (APP / "run_legacy.sh").read_text(encoding="utf-8")
 dashboard_text = (ROOT / "dashboard" / "sbc5_control_center_diagnostics_card.yaml").read_text(encoding="utf-8")
