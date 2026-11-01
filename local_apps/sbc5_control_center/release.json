@@ -1,14 +1,14 @@
 {
-  "version": "3.1.29",
-  "release_date": "2026-10-31",
+  "version": "3.1.30",
+  "release_date": "2026-11-01",
   "restart_required": "none",
-  "summary": "Stabilize Adaptive PWM and Thermal Predictor decisions with a raw-versus-control temperature path, spike filtering, asymmetric smoothing, 30/120-second trend confirmation and direction hysteresis.",
-  "package_version": "3.1.29",
-  "card_ui_version": "3.1.29",
+  "summary": "Stabilize Thermal Predictor control decisions with conditioned forecasts, confirmation guards and richer diagnostics while preserving the existing AI authority limits.",
+  "package_version": "3.1.30",
+  "card_ui_version": "3.1.30",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Stabilizuje decyzje Adaptive PWM i Thermal Predictora przez rozdzielenie temperatury surowej i sterującej, filtr pików, asymetryczne wygładzanie, potwierdzanie trendu 30/120 s oraz bezwładność zmiany kierunku."
+  "summary_pl": "Stabilizacja decyzji Thermal Predictora przez kondycjonowanie prognoz, guardy potwierdzeń i bogatszą diagnostykę przy zachowaniu dotychczasowych limitów wpływu AI."
 }
