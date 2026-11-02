@@ -37,6 +37,9 @@ COPY patch_thermal_stability_3_1_29.py /patch_thermal_stability_3_1_29.py
 # 3.1.31 Adaptive Trim Recovery: fused 30/120 s trend plus trend-aware
 # anti-windup and faster near-target trim release. AI/TP authority is unchanged.
 COPY patch_adaptive_trim_3_1_31.py /patch_adaptive_trim_3_1_31.py
+# 3.1.32 Setpoint Stability: graded near-target trim recovery, a bounded
+# reversal guard and explicit physical/requested PWM diagnostics.
+COPY patch_setpoint_stability_3_1_32.py /patch_setpoint_stability_3_1_32.py
 # 3.1.28 AI stack: every module imported by the public v5.2 runtime must be
 # present in the container image. Keep each layer on a distinct runtime path.
 COPY ai_cooling_legacy.py /ai_cooling_legacy.py
@@ -68,7 +71,8 @@ RUN sed -i \
   /run_legacy.sh \
   && python3 /patch_thermal_stability_3_1_29.py /run_legacy.sh \
   && python3 /patch_adaptive_trim_3_1_31.py /run_legacy.sh \
-  && rm -f /patch_thermal_stability_3_1_29.py /patch_adaptive_trim_3_1_31.py
+  && python3 /patch_setpoint_stability_3_1_32.py /run_legacy.sh \
+  && rm -f /patch_thermal_stability_3_1_29.py /patch_adaptive_trim_3_1_31.py /patch_setpoint_stability_3_1_32.py
 
 RUN mkdir -p /usr/share/licenses/sbc5-control-center
 COPY LICENSE /usr/share/licenses/sbc5-control-center/LICENSE

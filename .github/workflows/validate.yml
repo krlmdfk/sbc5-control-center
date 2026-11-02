@@ -76,6 +76,9 @@ jobs:
       - name: Test Adaptive Trim Recovery and Trend Fusion
         run: python scripts/test_adaptive_trim_recovery_3_1_31.py
 
+      - name: Test Setpoint Stability and actuator reversal guard
+        run: python scripts/test_setpoint_stability_3_1_32.py
+
       - name: Test AI runtime layer wiring
         run: python scripts/test_ai_runtime_wiring_3_1_20.py
 

@@ -1,0 +1,75 @@
+name: Prepare SBC5 3.1.32 release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Prepare release metadata and hashes
+        run: |
+          current=$(python -c 'import json; print(json.load(open("local_apps/sbc5_control_center/release.json"))["version"])')
+          if [ "$current" = "3.1.32" ]; then
+            echo "3.1.32 already prepared; no changes needed."
+            exit 0
+          fi
+          python scripts/release_prepare.py \
+            --version 3.1.32 \
+            --release-date 2026-11-02 \
+            --restart-required none \
+            --summary-en "Improve Adaptive PWM stability around the configured setpoint with graded trim recovery, bounded actuator reversal handling and clearer physical PWM diagnostics while preserving AI Cooling and Thermal Predictor authority." \
+            --summary-pl "Poprawia stabilność Adaptive PWM wokół temperatury docelowej dzięki stopniowanemu wygaszaniu trimu, ograniczeniu szybkich odwróceń aktuatora i czytelniejszej diagnostyce fizycznego PWM, bez zmiany wpływu AI Cooling ani Thermal Predictora." \
+            --added-en "Two-cycle actuator reversal guard that limits near-target opposite-direction PWM movement to 1 pp while preserving immediate safety response." \
+            --added-en "Explicit physical PWM, pre-actuator request and applied PWM fields in Adaptive PWM runtime logs." \
+            --added-en "Regression coverage for graded trim recovery, reversal handling, Bash syntax and unchanged Thermal Predictor authority limits." \
+            --added-pl "Dwucyklowy guard odwrócenia aktuatora ograniczający przy celu ruch PWM w przeciwnym kierunku do 1 pp, z zachowaniem natychmiastowej reakcji bezpieczeństwa." \
+            --added-pl "Jawne pola fizycznego PWM, żądania przed ograniczeniami aktuatora oraz zastosowanego PWM w logach Adaptive PWM." \
+            --added-pl "Testy regresyjne stopniowanego wygaszania trimu, odwróceń aktuatora, składni Bash i niezmienionych limitów Thermal Predictora." \
+            --changed-en "The 2 pp fast positive-trim release is now reserved for errors up to +0.30 C; between +0.30 and +0.80 C a confirmed cooling trend releases at most 1 pp per cycle." \
+            --changed-en "Opposite-direction PWM changes are damped for two control cycles near target, but a genuine >=2 C thermal error bypasses the guard." \
+            --changed-en "Thermal Predictor unconfirmed forecast diagnostics now explicitly report confirmation rejection without changing prediction policy." \
+            --changed-pl "Szybkie wygaszanie dodatniego trimu o 2 pp działa teraz tylko do błędu +0,30 C; pomiędzy +0,30 a +0,80 C potwierdzony trend chłodzenia wygasza maksymalnie 1 pp na cykl." \
+            --changed-pl "Zmiany PWM w przeciwnym kierunku są tłumione przez dwa cykle przy celu, ale rzeczywisty błąd termiczny >=2 C omija guard." \
+            --changed-pl "Diagnostyka niepotwierdzonych prognoz Thermal Predictora jawnie wskazuje odrzucenie przez guard potwierdzenia bez zmiany polityki predykcji." \
+            --performance-en "No new polling loop or background process is added; the guard reuses the existing 10-second Adaptive PWM controller cycle." \
+            --performance-pl "Nie dodano nowej pętli odpytywania ani procesu w tle; guard wykorzystuje istniejący 10-sekundowy cykl regulatora Adaptive PWM."
+
+      - name: Validate release candidate
+        run: |
+          python scripts/test_thermal_stability_3_1_29.py
+          python scripts/test_thermal_predictor_stability_3_1_30.py
+          python scripts/test_adaptive_trim_recovery_3_1_31.py
+          python scripts/test_setpoint_stability_3_1_32.py
+          python scripts/validate_release.py --strict-manifest-hashes
+
+      - name: Commit prepared release
+        run: |
+          if git diff --quiet; then
+            echo "No release-preparation changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: prepare SBC5 Control Center 3.1.32"
+          git push origin HEAD:main
