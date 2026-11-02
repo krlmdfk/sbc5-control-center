@@ -1,5 +1,51 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.32 — 2026-11-02
+
+### English
+
+#### Added
+
+- Two-cycle actuator reversal guard that limits near-target opposite-direction PWM movement to 1 pp while preserving immediate safety response.
+- Explicit physical PWM, pre-actuator request and applied PWM fields in Adaptive PWM runtime logs.
+- Regression coverage for graded trim recovery, reversal handling, Bash syntax and unchanged Thermal Predictor authority limits.
+
+#### Changed
+
+- The 2 pp fast positive-trim release is now reserved for errors up to +0.30 C; between +0.30 and +0.80 C a confirmed cooling trend releases at most 1 pp per cycle.
+- Opposite-direction PWM changes are damped for two control cycles near target, but a genuine >=2 C thermal error bypasses the guard.
+- Thermal Predictor unconfirmed forecast diagnostics now explicitly report confirmation rejection without changing prediction policy.
+
+#### Performance
+
+- No new polling loop or background process is added; the guard reuses the existing 10-second Adaptive PWM controller cycle.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Dwucyklowy guard odwrócenia aktuatora ograniczający przy celu ruch PWM w przeciwnym kierunku do 1 pp, z zachowaniem natychmiastowej reakcji bezpieczeństwa.
+- Jawne pola fizycznego PWM, żądania przed ograniczeniami aktuatora oraz zastosowanego PWM w logach Adaptive PWM.
+- Testy regresyjne stopniowanego wygaszania trimu, odwróceń aktuatora, składni Bash i niezmienionych limitów Thermal Predictora.
+
+#### Zmieniono
+
+- Szybkie wygaszanie dodatniego trimu o 2 pp działa teraz tylko do błędu +0,30 C; pomiędzy +0,30 a +0,80 C potwierdzony trend chłodzenia wygasza maksymalnie 1 pp na cykl.
+- Zmiany PWM w przeciwnym kierunku są tłumione przez dwa cykle przy celu, ale rzeczywisty błąd termiczny >=2 C omija guard.
+- Diagnostyka niepotwierdzonych prognoz Thermal Predictora jawnie wskazuje odrzucenie przez guard potwierdzenia bez zmiany polityki predykcji.
+
+#### Wydajność
+
+- Nie dodano nowej pętli odpytywania ani procesu w tle; guard wykorzystuje istniejący 10-sekundowy cykl regulatora Adaptive PWM.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.31 — 2026-11-01
 
 ### English

@@ -1,14 +1,14 @@
 {
-  "version": "3.1.31",
-  "release_date": "2026-11-01",
+  "version": "3.1.32",
+  "release_date": "2026-11-02",
   "restart_required": "none",
-  "summary": "Reduce Adaptive PWM positive-trim persistence with fused thermal trends and bounded near-target anti-windup recovery while preserving AI Cooling and Thermal Predictor authority.",
-  "package_version": "3.1.31",
-  "card_ui_version": "3.1.31",
+  "summary": "Improve Adaptive PWM stability around the configured setpoint with graded trim recovery, bounded actuator reversal handling and clearer physical PWM diagnostics while preserving AI Cooling and Thermal Predictor authority.",
+  "package_version": "3.1.32",
+  "card_ui_version": "3.1.32",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Ogranicza bezwładność dodatniego trimu Adaptive PWM przez łączony trend termiczny i ograniczony anti-windup w pobliżu celu, bez zmiany wpływu AI Cooling ani Thermal Predictora."
+  "summary_pl": "Poprawia stabilność Adaptive PWM wokół temperatury docelowej dzięki stopniowanemu wygaszaniu trimu, ograniczeniu szybkich odwróceń aktuatora i czytelniejszej diagnostyce fizycznego PWM, bez zmiany wpływu AI Cooling ani Thermal Predictora."
 }

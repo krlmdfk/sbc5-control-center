@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.31
+version: 3.1.32
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.31 — Reduce Adaptive PWM positive-trim persistence with fused thermal trends and bounded near-target anti-windup recovery while preserving AI Cooling and Thermal Predictor authority."
+description: "SBC5 Control Center 3.1.32 — Improve Adaptive PWM stability around the configured setpoint with graded trim recovery, bounded actuator reversal handling and clearer physical PWM diagnostics while preserving AI Cooling and Thermal Predictor authority."
 arch:
 - aarch64
 homeassistant: 2026.10.1
