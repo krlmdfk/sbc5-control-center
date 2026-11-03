@@ -1,0 +1,32 @@
+name: Companion parity audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'custom_components/sbc5_control_center/**'
+      - 'local_apps/sbc5_control_center/bridge/**'
+      - 'local_apps/sbc5_control_center/release.json'
+      - 'scripts/check_companion_parity.py'
+      - '.github/workflows/companion-parity.yml'
+  pull_request:
+  schedule:
+    - cron: '19 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    name: App / HACS integration parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare native code, embedded bridge and version markers
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ] || [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            python scripts/check_companion_parity.py --role app --advisory
+          else
+            python scripts/check_companion_parity.py --role app
+          fi
