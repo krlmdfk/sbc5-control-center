@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.32
+version: 3.1.33
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.1.32 — Improve Adaptive PWM stability around the configured setpoint with graded trim recovery, bounded actuator reversal handling and clearer physical PWM diagnostics while preserving AI Cooling and Thermal Predictor authority."
+description: "SBC5 Control Center 3.1.33 — Synchronize the App release with the companion HACS integration 3.1.33; no runtime behavior changes."
 arch:
 - aarch64
 homeassistant: 2026.10.1
@@ -235,14 +235,14 @@ schema:
     display_auto_detect: list(auto|0|1)
   section_uart_debug_enabled: bool
   config_uart_debug:
-    enable_uart: list(auto|0|1)
-    enable_rp1_uart: list(auto|0|1)
-    uart_2ndstage: list(auto|0|1)
+    enable_uart: auto
+    enable_rp1_uart: auto
+    uart_2ndstage: auto
   section_video_enabled: bool
   config_video:
-    enable_tvout: list(auto|0|1)
-    disable_overscan: list(auto|0|1)
-    disable_fw_kms_setup: list(auto|0|1)
+    enable_tvout: auto
+    disable_overscan: auto
+    disable_fw_kms_setup: auto
     max_framebuffers: str
     hdmi_enable_4kp60: list(auto|0|1)
   section_device_tree_enabled: bool
