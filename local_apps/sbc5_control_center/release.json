@@ -1,14 +1,14 @@
 {
-  "version": "3.1.32",
-  "release_date": "2026-11-02",
+  "version": "3.1.33",
+  "release_date": "2026-11-03",
   "restart_required": "none",
-  "summary": "Improve Adaptive PWM stability around the configured setpoint with graded trim recovery, bounded actuator reversal handling and clearer physical PWM diagnostics while preserving AI Cooling and Thermal Predictor authority.",
-  "package_version": "3.1.32",
-  "card_ui_version": "3.1.32",
+  "summary": "Synchronize the SBC5 Control Center App release with the companion HACS integration 3.1.33; no runtime behavior changes.",
+  "package_version": "3.1.33",
+  "card_ui_version": "3.1.33",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Poprawia stabilność Adaptive PWM wokół temperatury docelowej dzięki stopniowanemu wygaszaniu trimu, ograniczeniu szybkich odwróceń aktuatora i czytelniejszej diagnostyce fizycznego PWM, bez zmiany wpływu AI Cooling ani Thermal Predictora."
+  "summary_pl": "Synchronizacja wydania aplikacji SBC5 Control Center z integracją HACS 3.1.33; bez zmian w działaniu runtime."
 }
