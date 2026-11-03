@@ -235,14 +235,14 @@ schema:
     display_auto_detect: list(auto|0|1)
   section_uart_debug_enabled: bool
   config_uart_debug:
-    enable_uart: auto
-    enable_rp1_uart: auto
-    uart_2ndstage: auto
+    enable_uart: list(auto|0|1)
+    enable_rp1_uart: list(auto|0|1)
+    uart_2ndstage: list(auto|0|1)
   section_video_enabled: bool
   config_video:
-    enable_tvout: auto
-    disable_overscan: auto
-    disable_fw_kms_setup: auto
+    enable_tvout: list(auto|0|1)
+    disable_overscan: list(auto|0|1)
+    disable_fw_kms_setup: list(auto|0|1)
     max_framebuffers: str
     hdmi_enable_4kp60: list(auto|0|1)
   section_device_tree_enabled: bool
