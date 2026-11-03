@@ -1,14 +1,14 @@
 {
-  "version": "3.1.33",
+  "version": "3.1.34",
   "release_date": "2026-11-03",
   "restart_required": "none",
-  "summary": "Synchronize the SBC5 Control Center App release with the companion HACS integration 3.1.33; no runtime behavior changes.",
-  "package_version": "3.1.33",
-  "card_ui_version": "3.1.33",
+  "summary": "Synchronize the SBC5 App and bundled integration with reviewed HACS Integration 3.1.34; protect other integrations from AI predictor migration cleanup.",
+  "package_version": "3.1.34",
+  "card_ui_version": "3.1.34",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Synchronizacja wydania aplikacji SBC5 Control Center z integracją HACS 3.1.33; bez zmian w działaniu runtime."
+  "summary_pl": "Synchronizacja aplikacji SBC5 i dołączonej integracji z HACS 3.1.34; ochrona encji innych integracji podczas migracji AI Predictora."
 }

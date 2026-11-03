@@ -1,5 +1,35 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.34 — 2026-11-03
+
+### English
+
+#### Changed
+
+- Align App runtime metadata, package, Card UI, embedded integration, release notes and update-manifest hashes with HACS 3.1.34.
+
+#### Fixed
+
+- Restrict AI Thermal Predictor migration to exact unique IDs owned by the legacy template platform; never remove unrelated integrations.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Ujednolicono metadane runtime, pakiet, Card UI, zintegrowany kod, notatki wydania i sumy kontrolne z HACS 3.1.34.
+
+#### Naprawiono
+
+- Ograniczono migrację AI Thermal Predictora do identyfikatorów legacy platformy template; bez usuwania encji innych integracji.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.32 — 2026-11-02
 
 ### English

@@ -279,32 +279,62 @@ def _canonicalize_native_entity_registry(hass: HomeAssistant) -> None:
                 registry.async_remove(entry.entity_id)
 
 
-PREDICTOR_NATIVE_IDS = {"sbc5_ai_thermal_forecast_30s", "sbc5_ai_thermal_forecast_60s", "sbc5_ai_thermal_forecast_120s", "sbc5_ai_thermal_predictor_confidence"}
+PREDICTOR_NATIVE_IDS = {
+    "sbc5_ai_thermal_forecast_30s",
+    "sbc5_ai_thermal_forecast_60s",
+    "sbc5_ai_thermal_forecast_120s",
+    "sbc5_ai_thermal_predictor_confidence",
+}
+
 
 def _migrate_predictor_template_entities(hass: HomeAssistant) -> None:
+    """Migrate only legacy template sensor IDs before native sensors register.
+
+    Recorder history is keyed by entity_id, so native sensors can reclaim the
+    canonical IDs. Never remove entities owned by unrelated integrations.
+    """
     registry = er.async_get(hass)
-    overrides = hass.data.setdefault(DOMAIN, {}).setdefault("entity_id_overrides", {})
+    data = hass.data.setdefault(DOMAIN, {})
+    overrides: dict[str, str] = data.setdefault("entity_id_overrides", {})
     for unique_id in PREDICTOR_NATIVE_IDS:
         canonical = f"sensor.{unique_id}"
         for entry in list(registry.entities.values()):
-            if entry.unique_id == unique_id and entry.entity_id.startswith("sensor.") and entry.platform != DOMAIN:
-                overrides[unique_id] = canonical
-                registry.async_remove(entry.entity_id)
+            if (
+                entry.platform != "template"
+                or entry.unique_id != unique_id
+                or not entry.entity_id.startswith("sensor.")
+            ):
+                continue
+            overrides[unique_id] = canonical
+            _LOGGER.info("Migrating AI Thermal Predictor entity %s to native SBC5 integration", entry.entity_id)
+            registry.async_remove(entry.entity_id)
+
 
 def _valid_mac(value: str) -> bool:
-    parts=(value or "").strip().lower().split(":")
-    return len(parts)==6 and all(len(p)==2 and all(c in "0123456789abcdef" for c in p) for p in parts) and value.lower()!="00:00:00:00:00:00"
+    parts = (value or "").strip().lower().split(":")
+    return len(parts) == 6 and all(
+        len(part) == 2 and all(ch in "0123456789abcdef" for ch in part) for part in parts
+    ) and value.lower() != "00:00:00:00:00:00"
+
 
 def _reconcile_device_connections(hass: HomeAssistant, coordinator: SBC5Coordinator) -> None:
-    telemetry=getattr(getattr(coordinator,"data",None),"telemetry",None)
-    mac=(getattr(telemetry,"network_mac","") or "").strip().lower()
-    if not _valid_mac(mac): return
-    registry=dr.async_get(hass)
-    device=next((d for d in registry.devices.values() if (DOMAIN, DEVICE_IDENTIFIER) in d.identifiers),None)
-    if device is None: return
-    desired={(dr.CONNECTION_NETWORK_MAC,mac)}
+    """Replace accumulated container MACs with the single physical host MAC."""
+    telemetry = getattr(getattr(coordinator, "data", None), "telemetry", None)
+    mac = (getattr(telemetry, "network_mac", "") or "").strip().lower()
+    if not _valid_mac(mac):
+        return
+    registry = dr.async_get(hass)
+    device = next(
+        (d for d in registry.devices.values() if (DOMAIN, DEVICE_IDENTIFIER) in d.identifiers),
+        None,
+    )
+    if device is None:
+        return
+    desired = {(dr.CONNECTION_NETWORK_MAC, mac)}
     if device.connections != desired:
-        registry.async_update_device(device.id,new_connections=desired)
+        registry.async_update_device(device.id, new_connections=desired)
+        _LOGGER.info("Reconciled SBC5 device network identity to physical host MAC %s", mac)
+
 
 def _remove_deprecated_native_update_entity(hass: HomeAssistant) -> None:
     """Remove the duplicate custom Update entity introduced in 1.6.x/1.7.0.
