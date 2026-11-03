@@ -33,6 +33,7 @@ No security-specific changes.
 - Home Assistant OS >= 18.3
 - Home Assistant Core >= 2026.10.1
 - Architecture: aarch64
+- Companion HACS integration: 3.1.33
 
 ---
 
@@ -60,3 +61,4 @@ Brak zmian dotyczących bezpieczeństwa.
 
 - Restart nie jest wymagany.
 - Istniejąca konfiguracja i trwały stan SBC5 powinny zostać zachowane.
+- Integracja HACS: 3.1.33
