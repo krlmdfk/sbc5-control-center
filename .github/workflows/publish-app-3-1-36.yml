@@ -1,0 +1,144 @@
+name: Publish SBC5 App 3.1.36
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-app-3-1-36.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Get published HACS 3.1.36
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/krlmdfk/sbc5-control-center-integration/releases/tags/3.1.36 > /dev/null
+          git clone --quiet --depth 1 --single-branch --branch 3.1.36 https://github.com/krlmdfk/sbc5-control-center-integration.git /tmp/sbc5-hacs-3.1.36
+          python - <<'PY'
+          import shutil,json
+          from pathlib import Path
+          src=Path('/tmp/sbc5-hacs-3.1.36/custom_components/sbc5_control_center')
+          data=json.loads((src/'manifest.json').read_text())
+          assert data['version']=='3.1.36'
+          assert 'canonical_owner.platform == DOMAIN' in (src/'__init__.py').read_text()
+          dst=Path('custom_components/sbc5_control_center')
+          shutil.rmtree(dst)
+          shutil.copytree(src,dst,ignore=shutil.ignore_patterns('.hacs_managed'))
+          PY
+      - name: Prepare App metadata and bundled integration
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.1.36 \
+            --release-date 2026-11-03 \
+            --restart-required none \
+            --summary-en 'Unify App and HACS 3.1.36: safe registry migrations, reviewer fixes, and refreshed user-facing documentation.' \
+            --summary-pl 'Ujednolicenie aplikacji i HACS 3.1.36: bezpieczna migracja encji, poprawki Frencka i odświeżona dokumentacja.' \
+            --fixed-en 'Protect SBC5 entity records on canonical ID collisions with unrelated integrations.' \
+            --fixed-pl 'Ochrona encji SBC5 przed kolizjami identyfikatorów z obcymi integracjami.' \
+            --changed-en 'Synchronize the embedded bridge, package, Card UI and update metadata.' \
+            --changed-pl 'Synchronizacja bridge, pakietu, Card UI i metadanych aktualizacji.'
+      - name: Update in-App Info, translations and regressions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil,re
+          root=Path.cwd();app=root/'local_apps/sbc5_control_center'
+          src=Path('/tmp/sbc5-hacs-3.1.36/tests/test_migrations.py')
+          (root/'tests').mkdir(exist_ok=True)
+          shutil.copyfile(src,root/'tests/test_migrations.py')
+          info="""# SBC5 Control Center
+
+          **Wersja 3.1.36 | Raspberry Pi 5 | HA OS 18.3+ | Core 2026.10.1+**
+
+          SBC5 monitoruje Raspberry Pi 5, steruje Active Cooler i obsługuje Adaptive PWM, AI Cooling, Thermal Predictor, profile CPU/GPU oraz diagnostykę zasilania i firmware.
+
+          ## Polski
+
+          ### Instalacja
+          Dodaj [repozytorium SBC5](https://github.com/krlmdfk/sbc5-control-center) w Home Assistant Apps i zainstaluj aplikację. Następnie osobno zainstaluj [integrację przez HACS](https://github.com/krlmdfk/sbc5-control-center-integration) i dodaj ją w Ustawienia → Urządzenia i usługi.
+
+          ### Panel Lovelace
+          Pełny panel wymaga Mushroom, card-mod i ApexCharts Card z HACS. Same natywne czujniki działają bez tych kart.
+
+          ### Aktualizacje
+          Home Assistant Apps obsługuje aktualizacje całej aplikacji ze sklepu. Zweryfikowane paczki ZIP obsługują dostępne scenariusze aktualizacji lokalnych. Mechanizm przejścia Local → Store z SHA-256 i możliwością wycofania zmian istnieje od wersji 2.8.34.
+
+          ### Dostęp do hosta
+          Konfiguracja rozruchu, PMIC i diagnostyka firmware mogą wymagać wyłączenia Protection Mode. Gdy dostęp jest ograniczony, SBC5 wstrzymuje zapisy konfiguracji rozruchowej i raportuje ograniczenia.
+
+          ## English
+
+          SBC5 monitors Raspberry Pi 5 and provides Active Cooler, Adaptive PWM, AI Cooling, Thermal Predictor, CPU/GPU profiles and power/firmware diagnostics.
+
+          ### Installation
+          Add the [SBC5 App repository](https://github.com/krlmdfk/sbc5-control-center) to Home Assistant Apps and install the App. Then install the separate [HACS integration](https://github.com/krlmdfk/sbc5-control-center-integration) and add it under Settings → Devices & services.
+
+          ### Lovelace dashboard
+          The full dashboard additionally needs Mushroom, card-mod and ApexCharts Card from HACS. Native integration sensors do not require these frontend cards.
+
+          ### Updates and host access
+          Store-managed full runtime updates use Home Assistant Apps. Verified local ZIPs support local update scenarios. The SHA-256 protected Local → Store handoff with rollback was introduced in version 2.8.34. Boot configuration, PMIC and firmware diagnostics may require Protection Mode disabled.
+
+          [Documentation](https://github.com/krlmdfk/sbc5-control-center) | [HACS](https://github.com/krlmdfk/sbc5-control-center-integration) | [Issues](https://github.com/krlmdfk/sbc5-control-center/issues)
+          """
+          info='\n'.join(x[10:] if x.startswith('          ') else x for x in info.splitlines()).strip()+'\n'
+          (app/'README.md').write_text(info)
+          for file in ['README.pl.md','README.en.md']:
+              path=app/file
+              t=path.read_text()
+              t=t.replace('Stable · v2.8.34 · Card UI 2.8.34','Stable · v3.1.36 · Card UI 3.1.36')
+              t=t.replace('**App release:** 2.8.34 · **Card UI:** 2.8.34','**App release:** 3.1.36 · **Card UI:** 3.1.36')
+              t=re.sub(r'(?m)^## Hybrid update channel / Hybrydowy kanał aktualizacji\n[\s\S]*$','',t).rstrip()+'\n'
+              path.write_text(t)
+          path=app/'DOCS.en.md';t=path.read_text()
+          t=t.replace('**Documentation version:** 2.8.34','**Documentation version:** 3.1.36').replace('**Card UI:** 2.8.34','**Card UI:** 3.1.36').replace('Card UI 2.8.34 exposes','Card UI 3.1.36 exposes')
+          path.write_text(t)
+          path=root/'INFO.md';t=path.read_text().replace('| App version / Wersja aplikacji | **3.1.32** |','| App version / Wersja aplikacji | **3.1.36** |').replace('| Card UI | **3.1.32** |','| Card UI | **3.1.36** |');path.write_text(t)
+          path=root/'README.md';t=path.read_text().replace('Stable · v3.1.32 · Card UI 3.1.32','Stable · v3.1.36 · Card UI 3.1.36');path.write_text(t)
+          path=app/'config.yaml';t=path.read_text();t,n=re.subn(r'(?m)^description:.*$', 'description: "Raspberry Pi 5: AI Cooling, Adaptive PWM, CPU/GPU, monitoring and diagnostics / chłodzenie AI, profile i diagnostyka."',t,count=1);assert n==1;path.write_text(t)
+          assert '## Polski' in (app/'README.md').read_text()
+          assert '## English' in (app/'README.md').read_text()
+          PY
+          python scripts/update_manifest_hashes.py
+          python scripts/validate_release.py --strict-manifest-hashes
+      - name: Regression tests and source parity
+        run: |
+          python -m unittest discover -s tests -p 'test_*.py' -v
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/namespace_native_guard.sh
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          python -m compileall -q custom_components/sbc5_control_center local_apps/sbc5_control_center scripts tests
+          for file in scripts/test_*.py; do python "$file"; done
+          python scripts/check_companion_parity.py --role app --hacs-ref 3.1.36
+      - name: Create and verify local update ZIP
+        run: |
+          python scripts/validate_release.py --strict-manifest-hashes
+          python scripts/build_local_update.py --output SBC5_UPDATE_3.1.36.zip
+      - name: Publish successful App 3.1.36
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view 3.1.36 >/dev/null 2>&1; then exit 1; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git reset -q -- SBC5_UPDATE_3.1.36.zip 2>/dev/null || true
+          git diff --cached --check
+          git commit -m 'Release SBC5 Control Center App 3.1.36 synced with HACS'
+          git push origin HEAD:main
+          git tag -a 3.1.36 -m 'SBC5 Control Center 3.1.36'
+          git push origin 3.1.36
+          gh release create 3.1.36 --verify-tag --title 'SBC5 Control Center 3.1.36' --notes-file RELEASE_NOTES_3.1.36.md SBC5_UPDATE_3.1.36.zip
