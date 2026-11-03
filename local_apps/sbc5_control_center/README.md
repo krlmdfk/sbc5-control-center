@@ -1,41 +1,34 @@
-<p align="center">
-  <a href="https://github.com/krlmdfk/sbc5-control-center">
-    <img src="logo.png" alt="SBC5 Control Center" width="160">
-  </a>
-</p>
+# SBC5 Control Center
 
-# SBC5 Control Center App/runtime
+**Wersja 3.1.36 | Raspberry Pi 5 | HA OS 18.3+ | Core 2026.10.1+**
 
-**[English](README.en.md)** · **[Polski](README.pl.md)** · **[Main project](https://github.com/krlmdfk/sbc5-control-center)** · **[HACS integration](https://github.com/krlmdfk/sbc5-control-center-integration)**
+SBC5 monitoruje Raspberry Pi 5, steruje Active Cooler i obsługuje Adaptive PWM, AI Cooling, Thermal Predictor, profile CPU/GPU oraz diagnostykę zasilania i firmware.
 
-The SBC5 Control Center App/runtime is the host-side component of the SBC5 project for Raspberry Pi 5 and Home Assistant OS. It provides cooling control, hardware telemetry, AI Cooling, hardware profiles, managed boot configuration, update handling and Restart Manager services consumed by the native Home Assistant integration.
+## Polski
 
-Aplikacja/runtime SBC5 Control Center jest hostową częścią projektu SBC5 dla Raspberry Pi 5 i Home Assistant OS. Zapewnia sterowanie chłodzeniem, telemetrię sprzętową, AI Cooling, profile sprzętowe, zarządzanie konfiguracją boot, aktualizacje oraz Restart Manager wykorzystywany przez natywną integrację Home Assistant.
+### Instalacja
+Dodaj [repozytorium SBC5](https://github.com/krlmdfk/sbc5-control-center) w Home Assistant Apps i zainstaluj aplikację. Następnie osobno zainstaluj [integrację przez HACS](https://github.com/krlmdfk/sbc5-control-center-integration) i dodaj ją w Ustawienia → Urządzenia i usługi.
 
-> The HACS integration is a companion component and requires this App/runtime to be installed and running.
->
-> Integracja HACS jest komponentem towarzyszącym i wymaga zainstalowanej oraz uruchomionej tej aplikacji/runtime.
+### Panel Lovelace
+Pełny panel wymaga Mushroom, card-mod i ApexCharts Card z HACS. Same natywne czujniki działają bez tych kart.
 
-## Install from Home Assistant Apps / Instalacja ze sklepu Apps
+### Aktualizacje
+Home Assistant Apps obsługuje aktualizacje całej aplikacji ze sklepu. Zweryfikowane paczki ZIP obsługują dostępne scenariusze aktualizacji lokalnych. Mechanizm przejścia Local → Store z SHA-256 i możliwością wycofania zmian istnieje od wersji 2.8.34.
 
-**English:** Home Assistant → **Settings → Apps → Install app → ⋮ → Repositories** → add `https://github.com/krlmdfk/sbc5-control-center` → refresh the store → install **SBC5 Control Center**.
+### Dostęp do hosta
+Konfiguracja rozruchu, PMIC i diagnostyka firmware mogą wymagać wyłączenia Protection Mode. Gdy dostęp jest ograniczony, SBC5 wstrzymuje zapisy konfiguracji rozruchowej i raportuje ograniczenia.
 
-**Polski:** Home Assistant → **Ustawienia → Apps → Install app / Zainstaluj aplikację → ⋮ → Repositories / Repozytoria** → dodaj `https://github.com/krlmdfk/sbc5-control-center` → odśwież sklep → zainstaluj **SBC5 Control Center**.
+## English
 
-The HACS integration is installed separately from `https://github.com/krlmdfk/sbc5-control-center-integration`. / Integrację HACS instaluje się osobno z `https://github.com/krlmdfk/sbc5-control-center-integration`.
+SBC5 monitors Raspberry Pi 5 and provides Active Cooler, Adaptive PWM, AI Cooling, Thermal Predictor, CPU/GPU profiles and power/firmware diagnostics.
 
-For full project documentation, use the main repository: **https://github.com/krlmdfk/sbc5-control-center**.
+### Installation
+Add the [SBC5 App repository](https://github.com/krlmdfk/sbc5-control-center) to Home Assistant Apps and install the App. Then install the separate [HACS integration](https://github.com/krlmdfk/sbc5-control-center-integration) and add it under Settings → Devices & services.
 
+### Lovelace dashboard
+The full dashboard additionally needs Mushroom, card-mod and ApexCharts Card from HACS. Native integration sensors do not require these frontend cards.
 
-## Lovelace / dashboard dependencies
+### Updates and host access
+Store-managed full runtime updates use Home Assistant Apps. Verified local ZIPs support local update scenarios. The SHA-256 protected Local → Store handoff with rollback was introduced in version 2.8.34. Boot configuration, PMIC and firmware diagnostics may require Protection Mode disabled.
 
-For the complete dashboard install through HACS: **Mushroom**, **card-mod**, and **ApexCharts Card**. / Dla kompletnego dashboardu zainstaluj przez HACS: **Mushroom**, **card-mod** i **ApexCharts Card**.
-
-
-## Hybrid update channel / Hybrydowy kanał aktualizacji
-
-Store-managed SBC5 uses Home Assistant Apps as the canonical full-runtime update channel. Verified local ZIPs remain supported for UI-only updates and, for a Store installation, may trigger the native Apps update when the exact same version is published. Historical local installations retain direct full-ZIP rebuilds. The 2.8.34 Migration Manager provides a SHA-256-protected Local → Store handoff with rollback.
-
-**Host access:** keep **Protection Mode disabled** for SBC5. Host PID/full access is required for `config.txt`, PMIC and firmware diagnostics; when unavailable SBC5 suspends boot writes and reports the protection/Host PID state explicitly.
-
-Instalacja sklepowa SBC5 używa Home Assistant Apps jako kanonicznego kanału pełnych aktualizacji runtime. Zweryfikowane lokalne ZIP-y pozostają obsługiwane dla UI-only, a w instalacji sklepowej mogą wyzwolić natywną aktualizację Apps, gdy identyczna wersja jest opublikowana. Historyczna instalacja lokalna zachowuje bezpośrednie pełne przebudowy ZIP. Migration Manager 2.8.34 zapewnia handoff Local → Store zabezpieczony SHA-256 i rollback.
+[Documentation](https://github.com/krlmdfk/sbc5-control-center) | [HACS](https://github.com/krlmdfk/sbc5-control-center-integration) | [Issues](https://github.com/krlmdfk/sbc5-control-center/issues)

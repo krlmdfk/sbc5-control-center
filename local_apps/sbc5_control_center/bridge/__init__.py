@@ -269,7 +269,16 @@ def _canonicalize_native_entity_registry(hass: HomeAssistant) -> None:
                 target,
             )
 
-        keep_id = target if registry.async_get(target) is not None and registry.async_get(target).unique_id == unique_id else primary.entity_id
+        # A matching unique_id is not sufficient: another integration may own
+        # the canonical entity_id. Never delete SBC5's own entry on a collision.
+        canonical_owner = registry.async_get(target)
+        keep_id = (
+            target
+            if canonical_owner is not None
+            and canonical_owner.platform == DOMAIN
+            and canonical_owner.unique_id == unique_id
+            else primary.entity_id
+        )
         for entry in list(matches):
             if entry.entity_id == keep_id:
                 continue

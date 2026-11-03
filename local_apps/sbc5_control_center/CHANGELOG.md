@@ -1,5 +1,35 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.36 — 2026-11-03
+
+### English
+
+#### Changed
+
+- Synchronize the embedded bridge, package, Card UI and update metadata.
+
+#### Fixed
+
+- Protect SBC5 entity records on canonical ID collisions with unrelated integrations.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Synchronizacja bridge, pakietu, Card UI i metadanych aktualizacji.
+
+#### Naprawiono
+
+- Ochrona encji SBC5 przed kolizjami identyfikatorów z obcymi integracjami.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.34 — 2026-11-03
 
 ### English
