@@ -34,15 +34,14 @@ class RestartRepairFlow(RepairsFlow):
         except (OSError, json.JSONDecodeError):
             return {"type": "home_assistant", "reason": "SBC5 Control Center wymaga ponownego uruchomienia."}
 
-    def _clear(self) -> None:
-        ir.async_delete_issue(self.hass, DOMAIN, ISSUE_ID)
+    def _clear_marker(self) -> None:
         try:
             self._marker_path().unlink()
         except FileNotFoundError:
             pass
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> dict:
-        marker = self._read_marker()
+        marker = await self.hass.async_add_executor_job(self._read_marker)
         restart_type = marker.get("type", "home_assistant")
         target = "Home Assistant" if restart_type == "home_assistant" else "Raspberry Pi 5"
         reason = str(marker.get("reason") or "SBC5 Control Center wymaga ponownego uruchomienia.")
@@ -56,7 +55,8 @@ class RestartRepairFlow(RepairsFlow):
                     description_placeholders={"target": target, "reason": reason},
                 )
 
-            self._clear()
+            await self.hass.async_add_executor_job(self._clear_marker)
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_ID)
             if restart_type == "host":
                 self.hass.async_create_task(
                     self.hass.services.async_call("hassio", "host_reboot", {}, blocking=False)
