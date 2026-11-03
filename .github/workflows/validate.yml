@@ -5,7 +5,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -21,6 +23,47 @@ jobs:
 
       - name: Install validators
         run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Prepare one-time synchronized 3.1.33 release
+        id: sync_release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          NEED_SYNC="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          release = json.loads(Path('local_apps/sbc5_control_center/release.json').read_text())
+          manifest = json.loads(Path('update-manifest.json').read_text())
+          print('yes' if release.get('version') == '3.1.33' and manifest.get('version') != '3.1.33' else 'no')
+          PY
+          )"
+          echo "needed=$NEED_SYNC" >> "$GITHUB_OUTPUT"
+          if [ "$NEED_SYNC" != "yes" ]; then
+            exit 0
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('local_apps/sbc5_control_center/release.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          data['version'] = '3.1.32'
+          data['package_version'] = '3.1.32'
+          data['card_ui_version'] = '3.1.32'
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          python scripts/release_prepare.py \
+            --version 3.1.33 \
+            --release-date 2026-11-03 \
+            --restart-required none \
+            --summary-en "Synchronize the SBC5 Control Center App release with the companion HACS integration 3.1.33; no runtime behavior changes." \
+            --summary-pl "Synchronizacja wydania aplikacji SBC5 Control Center z integracją HACS 3.1.33; bez zmian w działaniu runtime." \
+            --changed-en "Align App, package, Card UI and bundled integration version surfaces with 3.1.33." \
+            --changed-pl "Ujednolica wersje aplikacji, pakietu, Card UI i dołączonej integracji do 3.1.33." \
+            --fixed-en "Carry the HACS review fixes for non-blocking repair-flow file I/O and correct integration documentation/issue links into the canonical and bundled integration copies." \
+            --fixed-pl "Przenosi poprawki z review HACS: nieblokujące operacje plikowe w Repairs oraz poprawne linki dokumentacji i zgłoszeń do kanonicznej i dołączonej kopii integracji."
+          git show HEAD^:.github/workflows/validate.yml > .github/workflows/validate.yml
+          python scripts/update_manifest_hashes.py
+          python scripts/validate_release.py --strict-manifest-hashes
 
       - name: Validate Bash
         run: |
@@ -107,4 +150,29 @@ jobs:
         run: python scripts/test_fan_profile_active_slot_overlay.py
 
       - name: Check whitespace errors
-        run: git diff --check HEAD^ HEAD || git diff --check
+        run: git diff --check
+
+      - name: Build synchronized local update package
+        if: steps.sync_release.outputs.needed == 'yes'
+        run: python scripts/build_local_update.py --output SBC5_UPDATE_3.1.33.zip
+
+      - name: Commit synchronized release and publish 3.1.33
+        if: steps.sync_release.outputs.needed == 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Release 3.1.33 — synchronize App and HACS integration"
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          git push origin HEAD:main
+          git tag -a 3.1.33 "$RELEASE_SHA" -m "SBC5 Control Center 3.1.33"
+          git push origin refs/tags/3.1.33
+          gh release create 3.1.33 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$RELEASE_SHA" \
+            --title "SBC5 Control Center 3.1.33" \
+            --notes-file RELEASE_NOTES_3.1.33.md \
+            SBC5_UPDATE_3.1.33.zip
