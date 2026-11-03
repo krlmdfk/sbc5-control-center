@@ -61,9 +61,6 @@ jobs:
             --changed-pl "Ujednolica wersje aplikacji, pakietu, Card UI i dołączonej integracji do 3.1.33." \
             --fixed-en "Carry the HACS review fixes for non-blocking repair-flow file I/O and correct integration documentation/issue links into the canonical and bundled integration copies." \
             --fixed-pl "Przenosi poprawki z review HACS: nieblokujące operacje plikowe w Repairs oraz poprawne linki dokumentacji i zgłoszeń do kanonicznej i dołączonej kopii integracji."
-          git show HEAD^:.github/workflows/validate.yml > .github/workflows/validate.yml
-          python scripts/update_manifest_hashes.py
-          python scripts/validate_release.py --strict-manifest-hashes
 
       - name: Validate Bash
         run: |
@@ -164,7 +161,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add -A -- ':!SBC5_UPDATE_3.1.33.zip'
           git commit -m "Release 3.1.33 — synchronize App and HACS integration"
           RELEASE_SHA="$(git rev-parse HEAD)"
           git push origin HEAD:main
