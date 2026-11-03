@@ -57,6 +57,15 @@ jobs:
             --changed-en 'Align App runtime metadata, package, Card UI, embedded integration, release notes and update-manifest hashes with HACS 3.1.34.' \
             --changed-pl 'Ujednolicono metadane runtime, pakiet, Card UI, zintegrowany kod, notatki wydania i sumy kontrolne z HACS 3.1.34.'
 
+      - name: Validate synchronized release and runtime regressions
+        run: |
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/namespace_native_guard.sh
+          python -m compileall -q custom_components/sbc5_control_center local_apps/sbc5_control_center scripts
+          python scripts/validate_release.py --strict-manifest-hashes
+          python scripts/test_restart_manager_hacs_handoff.py
+          python scripts/test_setpoint_stability_3_1_32.py
+
       - name: Commit synchronized release
         run: |
           git config user.name 'github-actions[bot]'
@@ -69,3 +78,21 @@ jobs:
             git commit -m 'Release SBC5 Control Center 3.1.34 synced with HACS migration fix'
             git push origin HEAD:main
           fi
+
+      - name: Publish synchronized App release and local update ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: 3.1.34
+        run: |
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists."
+            exit 0
+          fi
+          python scripts/validate_release.py --strict-manifest-hashes
+          python scripts/build_local_update.py --output "SBC5_UPDATE_${VERSION}.zip"
+          git tag -a "$VERSION" -m "SBC5 Control Center $VERSION"
+          git push origin "$VERSION"
+          gh release create "$VERSION" --verify-tag \
+            --title "SBC5 Control Center $VERSION" \
+            --notes-file "RELEASE_NOTES_${VERSION}.md" \
+            "SBC5_UPDATE_${VERSION}.zip"
