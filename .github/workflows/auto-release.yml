@@ -68,6 +68,14 @@ jobs:
           print(f'HACS parity PASS — manifest and release are both {version}')
           PY
 
+      - name: Enforce exact companion integration code parity
+        if: steps.version.outputs.exists != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python scripts/check_companion_parity.py --role app
+          python scripts/check_companion_parity.py --role app --hacs-ref "$VERSION"
+
       - name: Strict release validation
         if: steps.version.outputs.exists != 'true'
         run: python scripts/validate_release.py --strict-manifest-hashes
