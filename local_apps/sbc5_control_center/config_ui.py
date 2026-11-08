@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import json, os, tempfile, time, copy, re
+import json, os, tempfile, time, copy, re, math
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError
@@ -74,6 +74,11 @@ OPTIONS = Path('/data/options.json')
 RELOAD = Path('/data/config_ui_reload.request')
 HTML = Path('/config_ui/index.html')
 PORT = int(os.environ.get('RPI5CC_CONFIG_UI_PORT', '8099'))
+# Browser dashboard backups can be larger than option saves; reject unbounded uploads.
+MAX_POST_BYTES = 8 * 1024 * 1024
+# Home Assistant Supervisor is the sole trusted Ingress reverse proxy.
+# https://contributors.home-assistant.io/apps/guides/ingress/
+INGRESS_PROXY_ADDRESS = '172.30.32.2'
 CPU_STATE = Path('/data/cpu_profile_state.json')
 CPU_STATE_SCHEMA = 2
 GPU_STATE = Path('/data/gpu_profile_state.json')
@@ -388,7 +393,8 @@ def runtime_summary():
 
 def clamp_num(v,lo,hi,float_ok=True):
     try: x=float(v)
-    except Exception: raise ValueError('Nieprawidłowa liczba')
+    except (TypeError, ValueError, OverflowError): raise ValueError('Nieprawidłowa liczba')
+    if not math.isfinite(x): raise ValueError('Nieprawidłowa liczba: NaN i nieskończoność są niedozwolone')
     if x<lo or x>hi: raise ValueError(f'Zakres {lo}–{hi}')
     return x if float_ok else int(x)
 
@@ -546,11 +552,57 @@ def cleanup_update_packages():
     out=update_package_cleanup_status(); out.update({'deleted':len(deleted),'freed_bytes':freed,'deleted_files':deleted})
     return out
 
+class JsonRequestError(Exception):
+    def __init__(self, message, status=400):
+        super().__init__(message)
+        self.status = status
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
+    def _require_ingress_peer(self):
+        # Request headers (including X-Ingress-Path) can be forged. Use the
+        # TCP peer address, which the Supervisor documents for Ingress traffic.
+        if not self.client_address or self.client_address[0] != INGRESS_PROXY_ADDRESS:
+            self.send_error(403, 'Dostęp tylko przez Home Assistant Ingress')
+            return False
+        return True
+    def _read_json_request(self):
+        # Explicit limits prevent slow/unbounded reads and memory exhaustion in
+        # this privileged App's Ingress server. No change to Ingress routing.
+        if self.headers.get('Transfer-Encoding'):
+            raise JsonRequestError('Transfer-Encoding nie jest obsługiwane')
+        mime = self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower()
+        if mime != 'application/json':
+            raise JsonRequestError('Oczekiwano Content-Type: application/json', 415)
+        length = self.headers.get('Content-Length')
+        if length is None:
+            raise JsonRequestError('Wymagany Content-Length', 411)
+        if not re.fullmatch(r'[0-9]{1,10}', length):
+            raise JsonRequestError('Nieprawidłowy Content-Length')
+        size = int(length)
+        if size > MAX_POST_BYTES:
+            raise JsonRequestError('Zbyt duże żądanie JSON', 413)
+        if size == 0:
+            raise JsonRequestError('Puste żądanie JSON')
+        raw = self.rfile.read(size)
+        if len(raw) != size:
+            raise JsonRequestError('Niekompletna treść żądania JSON')
+        # Python's JSON decoder accepts non-standard NaN/Infinity by default.
+        # Reject those constants in every nested field, not just numeric options.
+        def reject_constant(value):
+            raise ValueError(f'Niedozwolona stała JSON: {value}')
+        try:
+            data = json.loads(raw, parse_constant=reject_constant)
+        except (UnicodeError, json.JSONDecodeError, ValueError):
+            raise JsonRequestError('Niepoprawna treść JSON') from None
+        if not isinstance(data, dict):
+            raise JsonRequestError('Żądanie JSON musi być obiektem')
+        return data
     def send_json(self,obj,status=200):
         body=json.dumps(obj,ensure_ascii=False).encode(); self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body)
     def do_GET(self):
+        if not self._require_ingress_peer(): return
         p=self.path.split('?',1)[0]
         if p in ('/','/index.html'):
             body=HTML.read_bytes(); self.send_response(200); self.send_header('Content-Type','text/html; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body); return
@@ -571,8 +623,9 @@ class H(BaseHTTPRequestHandler):
             except Exception as e: self.send_json({'ok':False,'error':f'Nie można odczytać wzorca karty update: {e}'},500); return
         self.send_error(404)
     def do_POST(self):
+        if not self._require_ingress_peer(): return
         try:
-            n=int(self.headers.get('Content-Length','0')); payload=json.loads(self.rfile.read(n) or b'{}')
+            payload = self._read_json_request()
             if self.path=='/api/save':
                 o=validate(payload.get('options',{}))
                 atomic_write(o,notify=False)
@@ -621,6 +674,7 @@ class H(BaseHTTPRequestHandler):
                 except DashboardSyncError as e: self.send_json({'ok':False,'error':str(e)},409); return
                 except Exception as e: self.send_json({'ok':False,'error':str(e)},500); return
             self.send_json({'ok':False,'error':'Nieznana akcja'},404)
+        except JsonRequestError as e: self.send_json({'ok':False,'error':str(e)},e.status)
         except ValueError as e: self.send_json({'ok':False,'error':str(e)},400)
         except Exception as e: self.send_json({'ok':False,'error':'Błąd zapisu konfiguracji'},500)
 
