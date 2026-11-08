@@ -55,6 +55,7 @@ def load_cleanup(source: str, reg: Registry):
     fake_asyncio = SimpleNamespace(sleep=lambda _: asyncio.sleep(0))
     ns = {
         "Path": Path,
+        "APP_VERSION": "test",
         "asyncio": fake_asyncio,
         "er": SimpleNamespace(async_get=lambda hass: reg),
         "_LOGGER": logging.getLogger("test_migration"),
