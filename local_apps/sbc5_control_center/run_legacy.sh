@@ -2973,24 +2973,44 @@ install_local_update() (
 
   scan_local_update_candidate || { log "Brak nowszej lokalnej paczki ZIP do instalacji."; return 1; }
 
-  local zip version root manifest_entry restart_required update_scope stage manifest_file ts backup app_src package_src bridge_src
+  local zip version root manifest_entry restart_required update_scope stage manifest_file ts backup app_src package_src bridge_src snapshot_dir snapshot
   zip="$(jq -r '.zip' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   version="$(jq -r '.version' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   root="$(jq -r '.root' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   manifest_entry="$(jq -r '.manifest_entry' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   restart_required="$(jq -r '.restart_required // "home_assistant"' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   update_scope="$(jq -r '.update_scope // "full"' "$LOCAL_UPDATE_CANDIDATE_FILE")"
-  stage="/tmp/sbc5_update_${$}"
-  # Reject unsafe member names, symlinks, undeclared files and invalid hashes
-  # before allowing unzip to touch the filesystem.
-  if ! python3 /zip_security_preflight.py "$zip"; then
-    log "BŁĄD aktualizacji: kontrola bezpieczeństwa ZIP przed rozpakowaniem nie powiodła się."
+
+  # Snapshot the candidate in a private, random directory. Validation and
+  # extraction use the SAME immutable-in-practice local copy, never the mutable
+  # archive in the user-writable update folder. Keep the snapshot outside the
+  # extraction tree so ZIP members can never overwrite the source while reading.
+  snapshot_dir="$(mktemp -d /tmp/sbc5_update.XXXXXXXX)" || {
+    log "BŁĄD aktualizacji: nie udało się utworzyć prywatnego katalogu staging."
+    return 1
+  }
+  snapshot="$snapshot_dir/candidate.zip"
+  stage="$snapshot_dir/extracted"
+  trap 'rm -rf -- "$snapshot_dir"; rmdir "$LOCAL_UPDATE_LOCK_FILE" 2>/dev/null || true' EXIT
+  if ! cp -- "$zip" "$snapshot"; then
+    log "BŁĄD aktualizacji: nie udało się zabezpieczyć kopii paczki ZIP."
     return 1
   fi
-  rm -rf "$stage"; mkdir -p "$stage"
-  unzip -q "$zip" -d "$stage" || { log "BŁĄD aktualizacji: nie można rozpakować ${zip}."; rm -rf "$stage"; return 1; }
+  # Check paths, member types, the manifest allow-list and all payload hashes
+  # BEFORE extraction. The original candidate can be replaced without changing
+  # this verified snapshot.
+  if ! python3 /zip_security_preflight.py "$snapshot"; then
+    log "BŁĄD aktualizacji: kontrola bezpieczeństwa kopii ZIP nie powiodła się."
+    return 1
+  fi
+  mkdir -p "$stage" || return 1
+  unzip -q "$snapshot" -d "$stage" || { log "BŁĄD aktualizacji: nie można rozpakować zweryfikowanej kopii ZIP."; return 1; }
   manifest_file="${stage}/${manifest_entry}"
-  verify_local_update_package "$zip" "$stage" "$root" "$manifest_file" || {
+  if [ "$(jq -r '.version // empty' "$manifest_file" 2>/dev/null || true)" != "$version" ]; then
+    log "BŁĄD aktualizacji: paczka zmieniła się od czasu skanowania; anulowano instalację."
+    return 1
+  fi
+  verify_local_update_package "$snapshot" "$stage" "$root" "$manifest_file" || {
     mkdir -p "$LOCAL_UPDATE_FAILED_DIR"
     failed_zip="$LOCAL_UPDATE_FAILED_DIR/$(basename "$zip")"
     mv -f "$zip" "$failed_zip" 2>/dev/null || { cp -f "$zip" "$failed_zip" 2>/dev/null || true; rm -f "$zip" 2>/dev/null || true; }
