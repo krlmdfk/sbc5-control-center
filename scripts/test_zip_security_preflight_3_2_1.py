@@ -130,9 +130,19 @@ with tempfile.TemporaryDirectory() as td:
         raise AssertionError("oversized entry accepted")
 
     runtime = (ROOT / "local_apps/sbc5_control_center/run_legacy.sh").read_text()
-    extract = runtime.index('unzip -q "$zip" -d "$stage"')
-    assert runtime.index('python3 /zip_security_preflight.py "$zip"') < extract
-    assert runtime.count('python3 /zip_security_preflight.py "$zip"') == 2
+    extract = runtime.index('unzip -q "$snapshot" -d "$stage"')
+    assert runtime.index('python3 /zip_security_preflight.py "$snapshot"') < extract
+    assert runtime.count('python3 /zip_security_preflight.py "$zip"') == 1
+    assert runtime.count('python3 /zip_security_preflight.py "$snapshot"') == 1
+    # The mutating archive stays untouched while the preflight inspects a
+    # private frozen-in-practice copy, preventing a scan/extract substitution.
+    install = runtime[runtime.index('install_local_update() ('): ]
+    assert 'snapshot_dir="$(mktemp -d /tmp/sbc5_update.XXXXXXXX)"' in install
+    assert 'snapshot="$snapshot_dir/candidate.zip"' in install
+    assert 'cp -- "$zip" "$snapshot"' in install
+    assert install.index('cp -- "$zip" "$snapshot"') < install.index('python3 /zip_security_preflight.py "$snapshot"') < install.index('unzip -q "$snapshot" -d "$stage"')
+    assert 'verify_local_update_package "$snapshot" "$stage" "$root" "$manifest_file"' in install
+    assert 'rm -rf -- "$snapshot_dir"' in install
     scan_start = runtime.index('scan_local_update_candidate() {')
     verify_start = runtime.index('verify_local_update_package() {')
     scanner = runtime[scan_start:verify_start]
