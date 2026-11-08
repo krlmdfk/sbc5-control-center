@@ -2660,6 +2660,11 @@ scan_local_update_candidate() {
   shopt -s nullglob
   for update_dir in "$LOCAL_UPDATE_DIR" "$LEGACY_LOCAL_UPDATE_DIR" "$LEGACY_OLD_LOCAL_UPDATE_DIR"; do
     for zip in "$update_dir"/*.zip; do
+      # Inspect and hash the untrusted archive before reading its embedded manifest.
+      # A second preflight immediately before extraction closes the scan/install gap.
+      if ! python3 /zip_security_preflight.py "$zip" >/dev/null 2>&1; then
+        continue
+      fi
       manifest_entry="$(unzip -Z1 "$zip" 2>/dev/null | awk '/(^|\/)update-manifest\.json$/ {print; exit}')"
       [ -n "$manifest_entry" ] || continue
       manifest="$(unzip -p "$zip" "$manifest_entry" 2>/dev/null || true)"
