@@ -46,6 +46,9 @@ jobs:
       - name: Test migration profile guard
         run: python scripts/test_migration_profile_guard.py
 
+      - name: Test legacy registry ownership before namespace cleanup
+        run: python scripts/test_migration_namespace_ownership_3_2_1.py
+
       - name: Test Ethernet EEE stability and persistence
         run: python scripts/test_ethernet_stability.py
 
