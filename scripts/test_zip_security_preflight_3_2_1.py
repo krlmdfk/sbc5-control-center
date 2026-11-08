@@ -79,6 +79,24 @@ with tempfile.TemporaryDirectory() as td:
         build_zip(path, members=members, listed=listed)
         should_reject(path, reason)
 
+    extra_dir = td / "undeclared_directory.zip"
+    with zipfile.ZipFile(extra_dir, "w") as arc:
+        arc.writestr("update-manifest.json", make_manifest(GOOD))
+        for name, body in GOOD.items():
+            arc.writestr(name, body)
+        arc.writestr("unlisted_empty_directory/", b"")
+    should_reject(extra_dir, "undeclared directory")
+
+    listed_dirs = td / "declared_directories.zip"
+    with zipfile.ZipFile(listed_dirs, "w") as arc:
+        arc.writestr("update-manifest.json", make_manifest(GOOD))
+        arc.writestr("local_apps/", b"")
+        arc.writestr("local_apps/sbc5_control_center/", b"")
+        arc.writestr("packages/", b"")
+        for name, body in GOOD.items():
+            arc.writestr(name, body)
+    checker.validate_archive(listed_dirs)
+
     dup = td / "duplicate.zip"
     with zipfile.ZipFile(dup, "w") as arc:
         arc.writestr("update-manifest.json", make_manifest(GOOD))
