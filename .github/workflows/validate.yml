@@ -58,6 +58,12 @@ jobs:
       - name: Test ZIP pre-extraction security
         run: python scripts/test_zip_security_preflight_3_2_1.py
 
+      - name: Test legacy registry ownership before namespace cleanup
+        run: python scripts/test_migration_namespace_ownership_3_2_1.py
+
+      - name: Test Ingress API JSON request bounds
+        run: python scripts/test_config_ui_request_limits_3_2_1.py
+
       - name: Test Thermal Predictor Shadow Assist
         run: python scripts/test_thermal_predictor_shadow.py
 
