@@ -70,6 +70,9 @@ jobs:
       - name: Test thermal control stability and predictor confirmation
         run: python scripts/test_thermal_stability_3_1_29.py
 
+      - name: Test SBC5 Global Edition preflight
+        run: python scripts/test_global_release_readiness_3_2_0.py
+
       - name: Test Thermal Predictor Stability v2
         run: python scripts/test_thermal_predictor_stability_3_1_30.py
 
