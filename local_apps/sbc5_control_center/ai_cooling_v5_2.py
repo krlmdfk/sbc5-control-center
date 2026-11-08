@@ -63,6 +63,16 @@ def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, 
     if not isinstance(stability_state, dict):
         stability_state = {}
         model["thermal_guidance_stability"] = stability_state
+    # Keep only short-term confirmation within an unchanged operating context.
+    # The predictor epoch is tied to the forecast being consumed, not wall time.
+    context_reset = policy.refresh_stability_context(
+        stability_state,
+        sample_epoch=_num(predictor.get("updated_epoch"), time.time()),
+        target=target,
+        regime=str(predictor.get("current_regime") or status.get("workload_bucket") or "unknown"),
+        ai_mode=str(status.get("mode") or "observe"),
+        control_mode=str(base._argv_value("--control-mode", "automatic") or "automatic"),
+    )
     stability = policy.stabilize_forecast(
         stability_state,
         raw_forecast=raw_weighted,
@@ -105,6 +115,8 @@ def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, 
         stability=stability,
     )
     return {
+        "stability_context_reset_reason": context_reset,
+        "stability_context_reset_count": int(_num(stability.get("context_reset_count"), 0)),
         "weighted_forecast_raw_c": round(raw_weighted, 2),
         "weighted_forecast_median_c": round(_num(stability.get("median_forecast_c"), raw_weighted), 2),
         "weighted_forecast_c": round(_num(stability.get("stable_forecast_c"), raw_weighted), 2),
@@ -179,6 +191,8 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
     predictor["guided_assist"] = {
         "mode": guidance.get("gate_mode", "observe"),
         "control_output_enabled": active and guidance.get("gate_mode") in {"active", "probation"},
+        "stability_context_reset_reason": guidance.get("stability_context_reset_reason", "none"),
+        "stability_context_reset_count": guidance.get("stability_context_reset_count", 0),
         "weighted_forecast_raw_c": guidance.get("weighted_forecast_raw_c"),
         "weighted_forecast_median_c": guidance.get("weighted_forecast_median_c"),
         "weighted_forecast_c": guidance.get("weighted_forecast_c"),
