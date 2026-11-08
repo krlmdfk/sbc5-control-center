@@ -578,9 +578,13 @@ class H(BaseHTTPRequestHandler):
         raw = self.rfile.read(size)
         if len(raw) != size:
             raise JsonRequestError('Niekompletna treść żądania JSON')
+        # Python's JSON decoder accepts non-standard NaN/Infinity by default.
+        # Reject those constants in every nested field, not just numeric options.
+        def reject_constant(value):
+            raise ValueError(f'Niedozwolona stała JSON: {value}')
         try:
-            data = json.loads(raw)
-        except (UnicodeError, json.JSONDecodeError):
+            data = json.loads(raw, parse_constant=reject_constant)
+        except (UnicodeError, json.JSONDecodeError, ValueError):
             raise JsonRequestError('Niepoprawna treść JSON') from None
         if not isinstance(data, dict):
             raise JsonRequestError('Żądanie JSON musi być obiektem')
