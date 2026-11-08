@@ -33,11 +33,14 @@
 - Architecture: aarch64
 - Companion HACS integration is distributed separately.
 
-### Verification
+### Verification and limitations
 
-- Repository validation and runtime tests must pass before publication.
-- Release manifest hashes are verified in strict mode.
-- The local-update ZIP is rebuilt and SHA-256 verified before upload.
+- Repository validation, runtime, Rust Core, HACS and Hassfest checks passed on release candidates; final publication workflows verify their respective commits.
+- Release manifest hashes are verified in strict mode and the local-update ZIP is rebuilt and SHA-256 checked before upload.
+- A clean installation on a second physical Raspberry Pi 5 **was not tested**.
+- The first in-place 3.1.37 → 3.2.0 upgrade on the existing Raspberry Pi 5 **has not been tested prior to publication**; it will be verified after release through the Home Assistant Apps channel.
+- User confirmed a backup and working cooling/telemetry baseline, but this is not a substitute for a successful 3.2.0 upgrade.
+- The App requests broad host privileges (full_access, host_pid, SYS_ADMIN, SYS_PTRACE, Supervisor manager, AppArmor disabled). It is a community App, **not accepted into the official Home Assistant Apps catalog**.
 
 ### Downloads & links
 
@@ -80,11 +83,14 @@
 - Architektura: aarch64
 - Integracja HACS jest dystrybuowana osobno.
 
-### Weryfikacja
+### Weryfikacja i ograniczenia
 
-- Przed publikacją muszą przejść walidacja repozytorium i testy runtime.
-- Hashe manifestu wydania są sprawdzane w trybie ścisłym.
-- Lokalna paczka aktualizacji ZIP jest ponownie budowana i weryfikowana SHA-256 przed wysłaniem.
+- Testy kodu, runtime, Rust Core, HACS i Hassfest zakończyły się sukcesem dla kandydatów; procesy publikacji sprawdzają finalne commity.
+- Sumy kontrolne manifestu są weryfikowane w trybie ścisłym; paczka ZIP jest ponownie budowana i sprawdzana SHA-256.
+- **Nie wykonano czystej instalacji na drugim fizycznym Raspberry Pi 5.**
+- **Nie przetestowano jeszcze na sprzęcie aktualizacji 3.1.37 → 3.2.0 przed publikacją** — weryfikacja nastąpi po udostępnieniu nowej wersji w kanale Apps.
+- Wykonano kopię zapasową i zapisano stan chłodzenia, ale nie zastępuje to testu aktualizacji 3.2.0.
+- Aplikacja wymaga szerokich uprawnień hosta (full_access, host_pid, SYS_ADMIN, SYS_PTRACE, rola Supervisor manager, wyłączony AppArmor). Jest to aplikacja **społecznościowa**, nie przyjęta do oficjalnego katalogu Home Assistant Apps.
 
 ### Pobieranie i linki
 
