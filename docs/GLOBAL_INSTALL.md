@@ -17,6 +17,8 @@ SBC5 is globally accessible as a **community App repository**. Its companion int
 
 **Security:** SBC5 currently uses `full_access` with a Home Assistant security score of 1. This is an intentional host-management tradeoff awaiting further least-privilege work. See [permission audit](SECURITY_PRIVILEGE_AUDIT_3_2_0.md).
 
+**Validation note:** SBC5 3.2.0 is verified using automated clean-environment checks and an in-place upgrade on the existing Raspberry Pi 5. A clean install on a second physical Raspberry Pi 5 is not tested. CI cannot reproduce hardware fan, host access or boot conditions.
+
 **Support:** https://github.com/krlmdfk/sbc5-control-center/issues
 
 ## Polski — Raspberry Pi 5, Home Assistant OS
@@ -31,5 +33,7 @@ SBC5 jest dostępne na całym świecie przez **publiczne repozytorium społeczno
 4. W HACS/Marketplace wyszukaj integrację **SBC5 Control Center**. Jeśli nie jest widoczna, dodaj repozytorium `https://github.com/krlmdfk/sbc5-control-center-integration` jako integrację niestandardową.
 5. Po instalacji, jeśli pojawi się prośba, uruchom ponownie Home Assistant i sprawdź encje w **Ustawienia → Urządzenia i usługi**.
 6. Opcjonalnie do pełnego dashboardu zainstaluj Mushroom, card-mod i ApexCharts Card.
+
+**Zakres testów:** Weryfikujemy kod w czystym środowisku CI oraz aktualizację na istniejącym Raspberry Pi 5. Czysta instalacja na drugim fizycznym Raspberry Pi 5 nie została przetestowana. Testy CI nie symulują w pełni wentylatora i dostępu do hosta.
 
 **Bezpieczeństwo:** `full_access` daje aplikacji ocenę bezpieczeństwa 1 w Home Assistant. Pełny audyt: [SECURITY_PRIVILEGE_AUDIT_3_2_0.md](SECURITY_PRIVILEGE_AUDIT_3_2_0.md).
