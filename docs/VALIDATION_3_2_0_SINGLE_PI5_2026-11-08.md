@@ -2,7 +2,7 @@
 # SBC5 Control Center 3.2.0 — Weryfikacja po wydaniu na jednym Raspberry Pi 5
 
 Date / Data: 2026-11-08
-Status / Status: **Partial on-device PASS; follow-up checks pending / Częściowy wynik pozytywny; pozostałe kontrole oczekują.**
+Status / Status: **On-device upgrade and configuration persistence PASS; long-term and independent-device checks remain unverified / Aktualizacja i trwałość konfiguracji na urządzeniu zaliczone; testy długoterminowe i niezależny sprzęt niezweryfikowane.**
 
 ## English
 
@@ -15,8 +15,8 @@ A user tested an in-place update from **3.1.37 to 3.2.0** on their existing Rasp
 - Supply voltage: **5.1456 V**.
 - CPU profile: **Mild OC / 2500 MHz**.
 - AI Cooling: **Assist**, **low workload bucket**, **97% confidence**, **1358 qualified samples**.
-- Active Cooler calibration: **92 points**, **minimum safe PWM 9%** (pre-update only; not yet independently rechecked after update).
-- GPU: **Balanced**, 950/950/1000 MHz (pre-update only; post-update persistence not yet checked).
+- Active Cooler calibration: **92 points**, **minimum safe PWM 9%** (subsequently confirmed in post-update UI).
+- GPU: **Balanced**, 950/950/1000 MHz (subsequently confirmed in post-update UI).
 
 ### Post-update observations (App / Card UI 3.2.0)
 - UI displays **3.2.0** for both App and Card UI; Raspberry Pi 5 system card indicates normal operation and matching requested/runtime cooling profile.
@@ -30,10 +30,17 @@ A user tested an in-place update from **3.1.37 to 3.2.0** on their existing Rasp
 - Predictor's **75.8% observational effectiveness** is a historical diagnostic statistic, **not** independently verified physical improvement attributable to 3.2.0.
 - Sample qualification can be **rejected** when temperature trend exceeds the threshold; such a rejected sample is not evidence of data loss.
 
+### Follow-up screenshots (same installed 3.2.0, about 13:28 local time)
+- **Active Cooler calibration preserved:** 1% PWM steps, startup **9%**, minimum safe **9%**, **92-point map**; normal system status and matching requested/runtime profile (**Custom 1, Balanced, 49 °C, Automatic**).
+- **GPU profile preserved:** Balanced preset at **950/950/1000 MHz**, verified in expanded GPU/V3D/ISP section.
+- **CPU Mild OC preserved:** configured/runtime maximum **2500 MHz**, verified in expanded CPU/OC section; instantaneous frequency can vary with load.
+- **AI Cooling continues learning:** still **Assist**, low bucket, **96% direct/effective confidence**, qualified observations increased to **1359** from 1358 and total observations to **45794** from 45769; maturity **100%**. A one-point confidence change is ordinary variation, not evidence of model reset.
+- **Cooling at follow-up:** CPU **49.6 °C**, **50% PWM**, **5268 RPM**, supply voltage **5.1376 V**; another near-time system-status view reports **56% PWM / 5742 RPM** at the same displayed CPU temperature as the control adjusts.
+
 ### Assessment
-- **PASS, observed:** in-place App upgrade reached 3.2.0; cooling continued; Mild OC profile survived; AI mode and qualified learning data were retained.
+- **PASS, observed:** in-place App upgrade reached 3.2.0; cooling continued; Mild OC CPU and Balanced GPU profiles survived; 92-point Active Cooler calibration and AI mode/qualified learning data were retained.
 - **USER-REPORTED, not independently checked:** HACS companion update completed to 3.2.0.
-- **NOT YET VERIFIED:** 92-point Active Cooler calibration after update; GPU Balanced profile after update; longer-duration thermal behavior; restore/rollback execution; fresh install on second physical Raspberry Pi 5.
+- **NOT YET VERIFIED:** longer-duration thermal behavior; backup-restore/rollback execution; fresh install on a second physical Raspberry Pi 5.
 - **Important limitation:** lower fan speed/PWM with a slightly lower temperature is an encouraging snapshot, but different workloads may explain the difference. It is **not** causal proof of better cooling efficiency in 3.2.0.
 
 ### Release disclosure
@@ -60,7 +67,14 @@ Użytkownik wykonał aktualizację **3.1.37 → 3.2.0** na dotychczasowym Raspbe
 - W pokazanym cyklu TP zażądał i zastosował **0 pp** korekty PWM, przy decyzji `hot_forecast_unconfirmed`.
 - Wynik **75,8%** skuteczności to metryka obserwacyjna, nie pomiar rzeczywistego zysku przypisanego wersji 3.2.0.
 
+### Dodatkowa kontrola po aktualizacji (około 13:28 czasu lokalnego)
+- **Kalibracja Active Cooler zachowana:** siatka PWM 1%, start 9%, bezpieczne minimum 9%, mapa **92 punktów**.
+- **Profil GPU zachowany:** Zbalansowany **950/950/1000 MHz**, potwierdzony w rozwiniętym panelu GPU/V3D/ISP.
+- **CPU zachowany:** OC Łagodny, zapisane i maksymalne taktowanie **2500 MHz**, potwierdzone w panelu CPU/OC.
+- **AI nadal się uczy:** Assist, low, pewność direct/effective **96%**; liczba jakościowych wzrosła z 1358 do **1359**, a wszystkich obserwacji z 45 769 do **45 794**. Dojrzałość bucketa 100%.
+- **Chłodzenie:** CPU **49,6°C**, PWM **50%**, wentylator **5268 RPM**, napięcie **5,1376 V**. Inny odczyt z tego samego okresu pokazuje PWM **56%** i **5742 RPM** przy tej samej wyświetlanej temperaturze CPU.
+
 ### Wniosek
-**Pozytywnie potwierdzono aktualizację aplikacji oraz zachowanie podstawowego chłodzenia, profilu CPU i danych AI.** Wymagają dalszego sprawdzenia: kalibracja 92-punktowa po aktualizacji, profil GPU, stabilność długoterminowa, procedura odtworzenia i czysta instalacja na niezależnym urządzeniu. Aktualizacja HACS została potwierdzona słownie przez użytkownika, a nie osobnym zrzutem wersji.
+**Pozytywnie potwierdzono aktualizację aplikacji oraz zachowanie podstawowego chłodzenia, kalibracji Active Cooler, profili CPU/GPU i danych AI.** Nadal niezweryfikowane są długoterminowa stabilność, przywrócenie kopii/rollback oraz czysta instalacja na niezależnym urządzeniu. Aktualizacja HACS została potwierdzona słownie przez użytkownika, a nie osobnym zrzutem wersji.
 
 **Zastrzeżenie:** porównanie dwóch chwilowych odczytów przy różnym możliwym obciążeniu nie dowodzi poprawy efektywności chłodzenia po aktualizacji. Global Edition to wydanie społecznościowe, bez oficjalnego zatwierdzenia aplikacji przez Home Assistant.
