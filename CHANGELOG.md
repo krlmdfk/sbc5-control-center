@@ -1,5 +1,43 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.0 — 2026-11-08
+
+### English
+
+#### Added
+
+- Document global installation, security review and mandatory real-device release gates in English and Polish.
+
+#### Changed
+
+- Target raspberrypi5-64 explicitly to avoid offering the App on unsupported aarch64 boards.
+
+#### Security
+
+- Disclose full_access, host_pid, AppArmor disablement and elevated Supervisor/kernel privileges; do not reduce privileges without hardware validation.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Dodano
+
+- Dodano dwujęzyczną instrukcję instalacji globalnej, audyt bezpieczeństwa oraz wymagane testy na urządzeniu.
+
+#### Zmieniono
+
+- Ograniczono dostępność aplikacji do raspberrypi5-64 zamiast wszystkich urządzeń aarch64.
+
+#### Bezpieczeństwo
+
+- Jawnie opisano full_access, host_pid, wyłączenie AppArmor oraz uprawnienia Supervisor i systemu; bez zmiany uprawnień przed testami sprzętowymi.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.37 — 2026-11-08
 
 ### English
