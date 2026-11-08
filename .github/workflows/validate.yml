@@ -55,6 +55,9 @@ jobs:
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
 
+      - name: Test Ingress API JSON request bounds
+        run: python scripts/test_config_ui_request_limits_3_2_1.py
+
       - name: Test Thermal Predictor Shadow Assist
         run: python scripts/test_thermal_predictor_shadow.py
 
