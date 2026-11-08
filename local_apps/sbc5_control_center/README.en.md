@@ -2,7 +2,7 @@
 
 > Local control, diagnostics and configuration center for Raspberry Pi 5 running Home Assistant OS.
 
-**App release:** 3.1.37 · **Card UI:** 3.1.37 · **HA OS:** `>= 18.3` · **Core:** `>= 2026.10.1` · **License:** Apache-2.0
+**App release:** 3.2.0 · **Card UI:** 3.2.0 · **HA OS:** `>= 18.3` · **Core:** `>= 2026.10.1` · **License:** Apache-2.0
 
 SBC5 Control Center combines Active Cooler control, Adaptive PWM, local AI Cooling, CPU/PMIC/USB telemetry, guarded CPU overclocking profiles, managed `config.txt`, restart orchestration, local ZIP updates and Lovelace diagnostics.
 
