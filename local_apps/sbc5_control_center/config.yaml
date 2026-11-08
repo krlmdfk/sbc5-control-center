@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.1.36
+version: 3.1.37
 slug: sbc5_control_center
-description: "Raspberry Pi 5: AI Cooling, Adaptive PWM, CPU/GPU, monitoring and diagnostics / chłodzenie AI, profile i diagnostyka."
+description: "SBC5 Control Center 3.1.37 — Reset stale Thermal Predictor guidance when the operating context changes, preserving learned calibration and fan safety policy."
 arch:
 - aarch64
 homeassistant: 2026.10.1

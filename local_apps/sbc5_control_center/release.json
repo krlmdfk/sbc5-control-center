@@ -1,14 +1,14 @@
 {
-  "version": "3.1.36",
-  "release_date": "2026-11-03",
+  "version": "3.1.37",
+  "release_date": "2026-11-08",
   "restart_required": "none",
-  "summary": "Unify App and HACS 3.1.36: safe registry migrations, reviewer fixes, and refreshed user-facing documentation.",
-  "package_version": "3.1.36",
-  "card_ui_version": "3.1.36",
+  "summary": "Reset stale Thermal Predictor guidance when the operating context changes, preserving learned calibration and fan safety policy.",
+  "package_version": "3.1.37",
+  "card_ui_version": "3.1.37",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Ujednolicenie aplikacji i HACS 3.1.36: bezpieczna migracja encji, poprawki Frencka i odświeżona dokumentacja."
+  "summary_pl": "Reset nieaktualnej prognozy Thermal Predictora po zmianie warunków pracy, z zachowaniem wyuczonych danych i zabezpieczeń wentylatora."
 }

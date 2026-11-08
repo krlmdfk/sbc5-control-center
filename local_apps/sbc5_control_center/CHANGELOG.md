@@ -1,5 +1,35 @@
 # Changelog — SBC5 Control Center
 
+## 3.1.37 — 2026-11-08
+
+### English
+
+#### Changed
+
+- Expose guidance context reset reason and reset count; preserve Adaptive PWM authority and all predictor quality gates.
+
+#### Fixed
+
+- Reset short-term forecast smoothing and direction confirmations after setpoint, workload-regime, or mode changes and telemetry gaps.
+
+#### Upgrade notes
+
+- No restart is required.
+
+### Polski
+
+#### Zmieniono
+
+- Dodano przyczynę i licznik resetów stanu prognozy; bez zmian uprawnień Adaptive PWM i progów jakości.
+
+#### Naprawiono
+
+- Reset krótkoterminowego wygładzania prognoz oraz potwierdzeń kierunku po zmianie celu, zakresu obciążenia, trybu lub przerwie w telemetrii.
+
+#### Informacje o aktualizacji
+
+- Restart nie jest wymagany.
+
 ## 3.1.36 — 2026-11-03
 
 ### English
