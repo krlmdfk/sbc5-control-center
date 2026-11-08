@@ -64,8 +64,8 @@ for line in log_lines:
         "bin_qualified_samples=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}",
     ):
         assert field in line, (field, line)
-    assert "observations=${ai_bin_observations}" not in line
-    assert "qualified=${ai_qualified_samples}" not in line
+    assert "; observations=${ai_bin_observations}" not in line
+    assert "; qualified=${ai_qualified_samples}" not in line
 
 legacy = (APP / "ai_cooling_legacy.py").read_text(encoding="utf-8")
 assert '"observations_total": int(_num(model.get("observations_total"), 0))' in legacy
