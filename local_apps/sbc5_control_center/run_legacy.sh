@@ -9148,6 +9148,7 @@ adaptive_pwm_controller_loop() {
           case "$tp_req" in ''|-|*[!0-9-]*) tp_req=0 ;; esac
           case "$tp_applied" in ''|-|*[!0-9-]*) tp_applied=0 ;; esac
           case "$ai_qualified_samples" in ''|*[!0-9]*) ai_qualified_samples=0 ;; esac
+          case "$ai_observations_total" in ''|*[!0-9]*) ai_observations_total=0 ;; esac
           case "$ai_bin_observations" in ''|*[!0-9]*) ai_bin_observations=0 ;; esac
           case "$ai_qualified_total" in ''|*[!0-9]*) ai_qualified_total=0 ;; esac
           case "$ai_direct_conf" in ''|*[!0-9]*) ai_direct_conf="$ai_conf" ;; esac
@@ -9163,9 +9164,9 @@ adaptive_pwm_controller_loop() {
             action="${action}_ai_assist"
           fi
           if [ "$ai_qualified_flag" = "1" ] && { [ "$ai_qualified_samples" = "1" ] || [ "$ai_qualified_samples" = "$AI_COOLING_MIN_SAMPLES" ] || [ $((ai_qualified_samples % 5)) -eq 0 ]; }; then
-            log "AI Cooling: qualified sample; bucket=${ai_bucket}; quality=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; observations=${ai_bin_observations}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%."
+            log "AI Cooling: qualified sample; bucket=${ai_bucket}; observations_total=${ai_observations_total}; bin_observations=${ai_bin_observations}; qualified_samples_total=${ai_qualified_total}; bin_qualified_samples=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%."
           elif { [ "$ai_last_log" != "${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}" ] || [ $((ai_log_tick % AI_COOLING_LOG_KEEPALIVE_CYCLES)) -eq 0 ]; } && { [ "$ai_state" = "assist" ] || [ "$ai_reason" = "insufficient_qualified_samples" ] || [ "$ai_bin_observations" = "1" ]; }; then
-            log "AI Cooling: state=${ai_state}; reason=${ai_reason}; bucket=${ai_bucket}; observations=${ai_bin_observations}; qualified=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%; qualification=${ai_qualification_reason}."
+            log "AI Cooling: state=${ai_state}; reason=${ai_reason}; bucket=${ai_bucket}; observations_total=${ai_observations_total}; bin_observations=${ai_bin_observations}; qualified_samples_total=${ai_qualified_total}; bin_qualified_samples=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%; qualification=${ai_qualification_reason}."
             ai_last_log="${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}:${ai_effective_conf}:${ai_transfer_source}:${ai_effective_coverage}"
           fi
           # 3.1.21 Thermal Predictor observability travels in the existing AI evaluator TSV.
