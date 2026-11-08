@@ -20,14 +20,17 @@
 - [ ] HACS, Hassfest, integration migration and repairs tests pass on 3.2.0
 - [ ] App + HACS 3.2.0 manifests and published versions are identical
 - [ ] Strict update-manifest SHA-256 verification and local ZIP build pass
-- [ ] Clean install on a second Raspberry Pi 5 with documented OS/Core requirements
-- [ ] Verify cooling fan safety on boot, under normal idle/load and when host access is denied
-- [ ] Verify host platform guard blocks unsupported boards
-- [ ] Verify CPU/GPU presets default to factory; AI defaults to Learning when enabled
-- [ ] Test upgrade from 3.1.37, Home Assistant restart, state/AI/calibration persistence
-- [ ] Test rollback to previous App/integration versions from a verified backup
+- [ ] Clean-environment CI smoke tests for App packaging, integration manifests, dependency imports, platform guard and installer/update asset integrity (not a substitute for a real first installation)
+- [ ] Verify cooling fan operation on the **existing** Raspberry Pi 5 with read-only telemetry at idle and normal load, before and after the upgrade; do not forcibly disable working cooling or host access
+- [ ] Verify unsupported-machine rejection through automated platform-guard tests; the `raspberrypi5-64` install constraint is checked statically
+- [ ] Verify CPU/GPU factory defaults and AI's opt-in learning mode via CI plus current-device settings review
+- [ ] Test **in-place** upgrade from 3.1.37 on the existing Pi 5, after a verified backup, followed by restart and checks of state/AI/calibration persistence
+- [ ] Validate backup and rollback **procedure** without disrupting live fan control; perform a real rollback only if safe/necessary
 - [ ] Confirm an actual HACS/Marketplace update reaches completion (not stuck at a progress percentage)
+- [ ] Document as an explicit release limitation: fresh physical installation on an independent Raspberry Pi 5 **not tested**; request independent community verification after publication
 - [ ] Human review of privilege justification, code changes and user-facing warning
+
+**Single-device validation policy:** A second Raspberry Pi 5 is **optional** and not a publication blocker for the public community edition. CI's clean checkout/build cannot validate physical first-run behavior. Release notes must explicitly say "fresh installation on a second device not tested", and the only available Pi must not be reset, uninstalled, or used for destructive failure injection. A stable community release still requires successful in-place upgrade and normal fan-safety observations on the existing device. Acceptance into the official Home Assistant catalog remains separate.
 
 **Official Home Assistant catalog:** not automatic. Review official contribution policy and obtain maintainers' approval separately. Do not submit to the official repository until the security posture and physical testing have been reviewed.
 
@@ -44,6 +47,8 @@ Official references:
 
 **Ostrzeżenie bezpieczeństwa:** aplikacja wymaga wyłączonego Protection Mode oraz szerokich uprawnień do hosta. Home Assistant ocenia `full_access: true` na poziomie bezpieczeństwa **1**. Przed instalacją wykonaj kopię zapasową, sprawdź źródło i udziel dostępu tylko administratorom. To nie jest wersja po niezależnym audycie penetracyjnym.
 
-**Warunki wydania:** zielone testy App/HACS, zgodność 3.2.0 i sum kontrolnych, czysta instalacja na drugim Raspberry Pi 5, test pracy wentylatora i zabezpieczeń, aktualizacja 3.1.37 → 3.2.0, weryfikacja zachowania stanu AI/kalibracji, test przywrócenia kopii oraz poprawne zakończenie aktualizacji integracji. Weryfikacje wymagające sprzętu muszą być wykonane na prawdziwym urządzeniu przed publikacją jako stabilnej wersji.
+**Warunki wydania:** zielone testy App/HACS, zgodność wersji 3.2.0, sumy kontrolne, test pakowania i podstawowy test w czystym środowisku CI, bezpieczna aktualizacja **na obecnym Raspberry Pi 5** z wykonaną i sprawdzoną kopią zapasową, sprawdzenie odczytów wentylatora i temperatury przed oraz po aktualizacji, zachowanie stanu AI/kalibracji, przygotowana ścieżka przywracania i poprawne zakończenie aktualizacji HACS/Marketplace. Bez destrukcyjnego testowania awarii wentylatora lub wyłączania wymaganych uprawnień na pracującym urządzeniu.
+
+**Brak drugiego Raspberry Pi 5 nie blokuje publicznego wydania społecznościowego.** Czysta instalacja na drugim fizycznym urządzeniu pozostaje **nieprzetestowana** i musi być tak oznaczona w informacjach o wydaniu. Testy CI nie zastępują fizycznej instalacji. Niezależne testy społeczności można zebrać po publikacji.
 
 **Katalog oficjalny:** osobny proces przeglądu i akceptacji przez opiekunów Home Assistant; dostępność globalna przez własne repozytorium nie oznacza oficjalnej akceptacji.
