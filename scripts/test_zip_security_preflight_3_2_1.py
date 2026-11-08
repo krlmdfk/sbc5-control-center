@@ -114,7 +114,11 @@ with tempfile.TemporaryDirectory() as td:
     runtime = (ROOT / "local_apps/sbc5_control_center/run_legacy.sh").read_text()
     extract = runtime.index('unzip -q "$zip" -d "$stage"')
     assert runtime.index('python3 /zip_security_preflight.py "$zip"') < extract
-    assert runtime.count('python3 /zip_security_preflight.py "$zip"') == 1
+    assert runtime.count('python3 /zip_security_preflight.py "$zip"') == 2
+    scan_start = runtime.index('scan_local_update_candidate() {')
+    verify_start = runtime.index('verify_local_update_package() {')
+    scanner = runtime[scan_start:verify_start]
+    assert scanner.index('python3 /zip_security_preflight.py "$zip"') < scanner.index('unzip -Z1 "$zip"')
     docker = (ROOT / "local_apps/sbc5_control_center/Dockerfile").read_text()
     assert "COPY zip_security_preflight.py /zip_security_preflight.py" in docker
 
