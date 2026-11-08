@@ -54,6 +54,7 @@ def load_cleanup(source: str, reg: Registry):
                     node.name == "_cleanup_rpi5_namespace_entries")
     fake_asyncio = SimpleNamespace(sleep=lambda _: asyncio.sleep(0))
     ns = {
+        "Path": Path,
         "asyncio": fake_asyncio,
         "er": SimpleNamespace(async_get=lambda hass: reg),
         "_LOGGER": logging.getLogger("test_migration"),
