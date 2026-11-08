@@ -4,6 +4,8 @@ slug: sbc5_control_center
 description: "SBC5 Control Center 3.1.37 — Reset stale Thermal Predictor guidance when the operating context changes, preserving learned calibration and fan safety policy."
 arch:
 - aarch64
+machine:
+- raspberrypi5-64
 homeassistant: 2026.10.1
 breaking_versions:
 - 2.0.0
