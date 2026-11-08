@@ -110,9 +110,13 @@ def validate_archive(path: str | Path) -> None:
         if actual != expected:
             raise UnsafeUpdateArchive("ZIP members differ from manifest allow-list")
 
+        allowed_dirs: set[str] = set()
+        for name in expected:
+            parts = name.split("/")
+            allowed_dirs.update("/".join(parts[:i]) + "/" for i in range(1, len(parts)))
         for name, info in members.items():
-            if info.is_dir() and not (name == prefix or name.startswith(prefix)):
-                raise UnsafeUpdateArchive("directory outside ZIP package root")
+            if info.is_dir() and name not in allowed_dirs:
+                raise UnsafeUpdateArchive("undeclared ZIP directory")
 
         # Validate every ZIP data stream and every digest before extracting any member.
         for rel, expected_digest in manifest["files"].items():
