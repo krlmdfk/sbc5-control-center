@@ -76,6 +76,9 @@ HTML = Path('/config_ui/index.html')
 PORT = int(os.environ.get('RPI5CC_CONFIG_UI_PORT', '8099'))
 # Browser dashboard backups can be larger than option saves; reject unbounded uploads.
 MAX_POST_BYTES = 8 * 1024 * 1024
+# Home Assistant Supervisor is the sole trusted Ingress reverse proxy.
+# https://contributors.home-assistant.io/apps/guides/ingress/
+INGRESS_PROXY_ADDRESS = '172.30.32.2'
 CPU_STATE = Path('/data/cpu_profile_state.json')
 CPU_STATE_SCHEMA = 2
 GPU_STATE = Path('/data/gpu_profile_state.json')
@@ -557,6 +560,13 @@ class JsonRequestError(Exception):
 
 class H(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
+    def _require_ingress_peer(self):
+        # Request headers (including X-Ingress-Path) can be forged. Use the
+        # TCP peer address, which the Supervisor documents for Ingress traffic.
+        if not self.client_address or self.client_address[0] != INGRESS_PROXY_ADDRESS:
+            self.send_error(403, 'Dostęp tylko przez Home Assistant Ingress')
+            return False
+        return True
     def _read_json_request(self):
         # Explicit limits prevent slow/unbounded reads and memory exhaustion in
         # this privileged App's Ingress server. No change to Ingress routing.
@@ -592,6 +602,7 @@ class H(BaseHTTPRequestHandler):
     def send_json(self,obj,status=200):
         body=json.dumps(obj,ensure_ascii=False).encode(); self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body)
     def do_GET(self):
+        if not self._require_ingress_peer(): return
         p=self.path.split('?',1)[0]
         if p in ('/','/index.html'):
             body=HTML.read_bytes(); self.send_response(200); self.send_header('Content-Type','text/html; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body); return
@@ -612,6 +623,7 @@ class H(BaseHTTPRequestHandler):
             except Exception as e: self.send_json({'ok':False,'error':f'Nie można odczytać wzorca karty update: {e}'},500); return
         self.send_error(404)
     def do_POST(self):
+        if not self._require_ingress_peer(): return
         try:
             payload = self._read_json_request()
             if self.path=='/api/save':
