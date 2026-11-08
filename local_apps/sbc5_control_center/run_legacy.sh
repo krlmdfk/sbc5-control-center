@@ -2976,6 +2976,12 @@ install_local_update() (
   restart_required="$(jq -r '.restart_required // "home_assistant"' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   update_scope="$(jq -r '.update_scope // "full"' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   stage="/tmp/sbc5_update_${$}"
+  # Reject unsafe member names, symlinks, undeclared files and invalid hashes
+  # before allowing unzip to touch the filesystem.
+  if ! python3 /zip_security_preflight.py "$zip"; then
+    log "BŁĄD aktualizacji: kontrola bezpieczeństwa ZIP przed rozpakowaniem nie powiodła się."
+    return 1
+  fi
   rm -rf "$stage"; mkdir -p "$stage"
   unzip -q "$zip" -d "$stage" || { log "BŁĄD aktualizacji: nie można rozpakować ${zip}."; rm -rf "$stage"; return 1; }
   manifest_file="${stage}/${manifest_entry}"
