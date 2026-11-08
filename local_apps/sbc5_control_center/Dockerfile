@@ -22,6 +22,7 @@ LABEL \
 COPY --from=rust-builder /build/target/release/sbc5-core /usr/local/bin/sbc5-core
 COPY run.sh /
 COPY run_legacy.sh /
+COPY zip_security_preflight.py /zip_security_preflight.py
 COPY ethernet_guard.py /ethernet_guard.py
 COPY release.json /
 COPY config_txt_catalog.json /config_txt_catalog.json
