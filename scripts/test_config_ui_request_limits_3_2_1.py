@@ -21,12 +21,13 @@ tree = ast.parse(text)
 find = lambda name: next(n for n in tree.body if getattr(n, "name", None) == name)
 handler = find("H")
 parser = next(n for n in handler.body if getattr(n, "name", None) == "_read_json_request")
+peer_guard = next(n for n in handler.body if getattr(n, "name", None) == "_require_ingress_peer")
 error_cls = find("JsonRequestError")
 clamp = find("clamp_num")
-ns = {"json": json, "re": re, "math": math, "MAX_POST_BYTES": 8 * 1024 * 1024}
+ns = {"json": json, "re": re, "math": math, "MAX_POST_BYTES": 8 * 1024 * 1024, "INGRESS_PROXY_ADDRESS": "172.30.32.2"}
 module = ast.Module(body=[error_cls, clamp], type_ignores=[])
 exec(compile(ast.fix_missing_locations(module), str(SOURCE), "exec"), ns)
-parser_class = ast.ClassDef(name="Parser", bases=[], keywords=[], body=[parser], decorator_list=[])
+parser_class = ast.ClassDef(name="Parser", bases=[], keywords=[], body=[parser, peer_guard], decorator_list=[])
 exec(compile(ast.fix_missing_locations(ast.Module(body=[parser_class], type_ignores=[])), str(SOURCE), "exec"), ns)
 Parser, JsonRequestError, clamp_num = ns["Parser"], ns["JsonRequestError"], ns["clamp_num"]
 
@@ -79,6 +80,19 @@ for bad in ("nan", "NaN", "inf", "-inf", float("nan"), float("inf")):
     except ValueError:
         continue
     raise AssertionError(f"accepted nonfinite numeric setting: {bad!r}")
+
+# A fake X-Ingress-Path header is not proof of proxy identity.
+peer = Parser()
+peer.send_error = lambda code, msg: setattr(peer, "blocked", code)
+peer.client_address = ("172.30.32.2", 48888)
+assert peer._require_ingress_peer() is True
+for foreign in ("127.0.0.1", "172.30.32.10", "192.168.1.123"):
+    peer.client_address = (foreign, 48888)
+    peer.blocked = None
+    peer.headers = {"X-Ingress-Path": "/api/hassio_ingress/fake"}
+    assert peer._require_ingress_peer() is False and peer.blocked == 403
+assert "if not self._require_ingress_peer(): return" in text
+assert text.count("if not self._require_ingress_peer(): return") == 2
 
 # Regression: documented protocol boundary must precede all mutable actions.
 assert "payload = self._read_json_request()" in text
