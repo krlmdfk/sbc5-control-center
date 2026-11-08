@@ -55,6 +55,9 @@ jobs:
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
 
+      - name: Test ZIP pre-extraction security
+        run: python scripts/test_zip_security_preflight_3_2_1.py
+
       - name: Test Thermal Predictor Shadow Assist
         run: python scripts/test_thermal_predictor_shadow.py
 
