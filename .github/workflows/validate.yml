@@ -73,6 +73,9 @@ jobs:
       - name: Test Thermal Predictor Stability v2
         run: python scripts/test_thermal_predictor_stability_3_1_30.py
 
+      - name: Test Thermal Predictor short-term context resets
+        run: python scripts/test_thermal_guidance_context_reset.py
+
       - name: Test Adaptive Trim Recovery and Trend Fusion
         run: python scripts/test_adaptive_trim_recovery_3_1_31.py
 

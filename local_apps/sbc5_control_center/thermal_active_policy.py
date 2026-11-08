@@ -75,6 +75,56 @@ def dynamic_forecast(predictor: dict[str, Any], target: float) -> tuple[float, d
     return round(weighted, 3), weights
 
 
+
+STABILITY_CONTEXT_MAX_GAP_SECONDS = 35.0
+STABILITY_TARGET_RESET_DELTA_C = 0.25
+
+
+def refresh_stability_context(
+    state: dict[str, Any], *, sample_epoch: float, target: float,
+    regime: str, ai_mode: str, control_mode: str,
+) -> str:
+    """Reset only short-term forecast smoothing/confirmation after context changes.
+
+    Model calibration, validated samples, and AI Cooling learning live elsewhere
+    and must not be cleared by a context transition.
+    """
+    context = {
+        "target_c": round(target, 2),
+        "regime": str(regime),
+        "ai_mode": str(ai_mode),
+        "control_mode": str(control_mode),
+    }
+    previous = state.get("context") if isinstance(state.get("context"), dict) else {}
+    last_epoch = num(state.get("last_sample_epoch"), 0.0)
+    has_history = bool(state.get("forecast_history_c"))
+    reason = "none"
+    if has_history:
+        if not previous or last_epoch <= 0.0:
+            reason = "unversioned_history"
+        elif sample_epoch < last_epoch:
+            reason = "clock_moved_backwards"
+        elif sample_epoch - last_epoch > STABILITY_CONTEXT_MAX_GAP_SECONDS:
+            reason = "sample_gap"
+        elif abs(target - num(previous.get("target_c"), target)) > STABILITY_TARGET_RESET_DELTA_C:
+            reason = "target_changed"
+        elif str(previous.get("regime")) != context["regime"]:
+            reason = "regime_changed"
+        elif str(previous.get("ai_mode")) != context["ai_mode"]:
+            reason = "ai_mode_changed"
+        elif str(previous.get("control_mode")) != context["control_mode"]:
+            reason = "control_mode_changed"
+
+    if reason != "none":
+        reset_count = max(0, int(round(num(state.get("context_reset_count"), 0.0))))
+        state.clear()
+        state["context_reset_count"] = reset_count + 1
+    state["context"] = context
+    state["last_sample_epoch"] = round(sample_epoch, 3)
+    state["context_reset_reason"] = reason
+    return reason
+
+
 def stabilize_forecast(
     state: dict[str, Any], *, raw_forecast: float, target: float,
     confidence: float, average_mae: float,
