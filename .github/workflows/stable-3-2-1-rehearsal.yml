@@ -1,0 +1,88 @@
+name: SBC5 3.2.1 stable readiness rehearsal (no publish)
+
+on:
+  push:
+    branches:
+      - release/3-2-1-stable-readiness-20261109
+    paths:
+      - '.github/workflows/stable-3-2-1-rehearsal.yml'
+      - 'scripts/test_release_3_2_1_hacs_distribution.py'
+      - '.github/workflows/release.yml'
+      - 'scripts/test_release_workflow_3_2_1_gates.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout candidate without repository write credential
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install release validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Verify publication is gated
+        run: python scripts/test_release_workflow_3_2_1_gates.py
+
+      - name: Prepare 3.2.1 in ephemeral CI checkout only
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.2.1 \
+            --release-date 2026-11-09 \
+            --restart-required home_assistant \
+            --summary-en "3.2.1 stable rehearsal: model preservation, thermal control safety and verified updates." \
+            --summary-pl "Próba wydania 3.2.1: zachowanie modelu AI, bezpieczeństwo chłodzenia i weryfikacja aktualizacji." \
+            --fixed-en "Fix Card UI prerelease synchronization and AI model reset races." \
+            --fixed-pl "Poprawiono synchronizację Card UI i współbieżny reset modelu AI." \
+            --security-en "Preserve existing learned model, require reset backup, validate update archive inputs." \
+            --security-pl "Ochrona wyuczonego modelu, kopia przed resetem i weryfikacja zawartości aktualizacji."
+
+      - name: Verify App / HACS 3.2.1 distribution parity without pushing
+        run: python scripts/test_release_3_2_1_hacs_distribution.py
+
+      - name: Strict validation, verified ZIP and security preflight
+        run: |
+          python scripts/validate_release.py --strict-manifest-hashes
+          mkdir -p dist
+          python scripts/build_local_update.py --output dist/SBC5_3.2.1_RELEASE_REHEARSAL_ONLY.zip
+          python scripts/build_local_update.py --verify-only --output dist/SBC5_3.2.1_RELEASE_REHEARSAL_ONLY.zip
+          python local_apps/sbc5_control_center/zip_security_preflight.py dist/SBC5_3.2.1_RELEASE_REHEARSAL_ONLY.zip
+          sha256sum dist/SBC5_3.2.1_RELEASE_REHEARSAL_ONLY.zip > dist/SBC5_3.2.1_RELEASE_REHEARSAL_ONLY.zip.sha256
+
+      - name: Print safety summary
+        run: |
+          cat > dist/NOT_FOR_INSTALLATION.txt <<'TXT'
+          SBC5 3.2.1 STABLE RELEASE REHEARSAL — NOT FOR INSTALLATION.
+          Do not load the ZIP into the running SBC5 App.
+          This workflow does not change main, HACS, tags or GitHub Releases.
+          Hardware and real AI-model backup/restore verification remain required.
+          TXT
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          release=json.loads(Path("local_apps/sbc5_control_center/release.json").read_text())
+          manifest=json.loads(Path("update-manifest.json").read_text())
+          assert release["version"] == manifest["version"] == "3.2.1"
+          print("STABLE REHEARSAL ONLY: release metadata and package version 3.2.1")
+          print("Manifest files:", len(manifest["files"]))
+          print("No installation or publication occurred")
+          PY
+
+      - name: Upload rehearsal-only results (7 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SBC5-3.2.1-STABLE-REHEARSAL-NOT-INSTALLABLE
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
