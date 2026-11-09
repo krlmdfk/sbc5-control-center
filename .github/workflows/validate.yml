@@ -129,6 +129,9 @@ jobs:
       - name: Test AI v5 observability and log cleanup
         run: python scripts/test_ai_v5_observability.py
 
+      - name: Validate AI output-to-PWM boundary
+        run: python scripts/test_ai_output_boundary_3_2_1.py
+
       - name: Validate App-private AI training telemetry
         run: python scripts/test_private_ai_training_telemetry_3_2_1.py
 
