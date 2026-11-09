@@ -265,7 +265,12 @@ def main() -> int:
     # predictor diagnostics. The UI reset must not interleave with any stage.
     if len(sys.argv) > 1 and sys.argv[1] in ("step", "reset"):
         from ai_model_lock import ai_model_lock
-        with ai_model_lock(timeout_seconds=8.0):
+        # For normal SBC5 /data this resolves to /data/ai_cooling_model.lock,
+        # shared with Config UI reset. Isolated tests and custom model paths
+        # use the matching directory instead of the host machine's /data.
+        model_arg = base._argv_value("--model")
+        lock_path = Path(model_arg).with_name("ai_cooling_model.lock") if model_arg else None
+        with ai_model_lock(lock_path=lock_path, timeout_seconds=8.0):
             return base.main()
     return base.main()
 
