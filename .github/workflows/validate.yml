@@ -49,6 +49,9 @@ jobs:
       - name: Test release ZIP runtime dependency coverage
         run: python scripts/test_update_zip_runtime_completeness.py
 
+      - name: Test read-only AI model diagnostics
+        run: python scripts/test_ai_model_readonly_diagnostics.py
+
       - name: Dry-run offline ZIP with refreshed manifest (never publish/install)
         run: |
           python scripts/update_manifest_hashes.py
