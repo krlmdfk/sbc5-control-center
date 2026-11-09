@@ -61,7 +61,10 @@ assert 'if [ "$HACS_CURRENT" != "$CURRENT_VERSION" ] && [ "$HACS_CURRENT" != "$V
 assert 'if git diff --cached --quiet; then' in rel
 assert 'if [ "$HACS_CURRENT" != "$VERSION" ]; then' in rel
 assert 'if [ "$HACS_CURRENT" = "$VERSION" ]; then' in rel
-assert 'Refusing to overwrite partial release' in rel
+assert 'non-documentation file: $changed_path' in rel
+assert 'git diff --cached --name-only -z' in rel
+assert 'README.md|info.md|"RELEASE_NOTES_${VERSION}.md")' in rel
+assert 'git commit -m "Release ${VERSION}"' in rel
 assert 'echo "HACS_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"' in rel
 
 for name in ("Upload preflight artifact", "Publish main GitHub Release"):
