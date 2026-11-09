@@ -55,6 +55,9 @@ jobs:
       - name: Test 3.2.0 to 3.2.1-rc2 model-safe canary upgrade
         run: python scripts/test_upgrade_3_2_1_model_preservation.py
 
+      - name: Test full v5.2 evaluator persistence across process restarts
+        run: python scripts/test_ai_v5_2_process_restart_persistence.py
+
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
 
