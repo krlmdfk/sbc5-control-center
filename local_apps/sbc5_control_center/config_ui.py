@@ -3,6 +3,7 @@ import json, os, tempfile, time, copy, re, math, hashlib, shutil
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError, CARD_MARKER_VERSION_PATTERN
+from ai_model_lock import ai_model_lock
 CARD_JSON = Path('/dashboard_card.json')
 UPDATE_CARD_JSON = Path('/update_status_card.json')
 UI_OVERRIDE_DIR = Path('/data/ui_updates')
@@ -614,6 +615,30 @@ def backup_ai_model_before_reset(model_path=AI_MODEL_FILE, backup_dir=AI_MODEL_B
             pass
 
 
+def reset_ai_model_with_backup(
+    model_path=AI_MODEL_FILE,
+    backup_dir=AI_MODEL_BACKUPS,
+    status_path=Path('/data/ai_cooling_status.json'),
+    mirror_path=Path('/homeassistant/sbc5_control_center/ai_cooling.json'),
+    lock_path=None,
+):
+    """Serialize snapshot+delete with the complete AI evaluator transaction.
+
+    Retain the lock file across resets: unlinking it would split lock ownership
+    between old and new inodes. The model may be recreated by later learning,
+    but no in-flight pre-reset model write can resurrect historical state.
+    """
+    with ai_model_lock(lock_path=lock_path, timeout_seconds=8.0):
+        snapshot = backup_ai_model_before_reset(model_path, backup_dir)
+        # Every participant that writes the model must hold the same lock.
+        for path in (model_path, status_path, mirror_path):
+            try:
+                Path(path).unlink()
+            except FileNotFoundError:
+                pass
+        return snapshot
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
     def _require_ingress_peer(self):
@@ -711,12 +736,9 @@ class H(BaseHTTPRequestHandler):
             if self.path=='/api/reset_ai_model':
                 if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
                 try:
-                    snapshot = backup_ai_model_before_reset()
+                    snapshot = reset_ai_model_with_backup()
                 except (OSError, ValueError, RuntimeError) as exc:
                     self.send_json({'ok':False,'error':f'Reset modelu AI anulowany: {exc}'},409); return
-                for path in ('/data/ai_cooling_model.json','/data/ai_cooling_status.json','/homeassistant/sbc5_control_center/ai_cooling.json'):
-                    try: Path(path).unlink()
-                    except FileNotFoundError: pass
                 self.send_json({'ok':True,'model_backup':snapshot}); return
             if self.path=='/api/dashboard_card/backup':
                 if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
