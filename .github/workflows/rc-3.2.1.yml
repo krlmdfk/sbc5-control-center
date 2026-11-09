@@ -1,0 +1,108 @@
+name: Build SBC5 3.2.1-rc1 test package
+
+on:
+  push:
+    branches:
+      - rc/3.2.1-rc1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sbc5-3-2-1-rc1-build
+  cancel-in-progress: true
+
+jobs:
+  rc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out RC source without touching stable main
+        uses: actions/checkout@v4
+        with:
+          ref: rc/3.2.1-rc1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install release validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Prepare versioned RC metadata and manifest
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("update-manifest.json")
+          manifest = json.loads(path.read_text(encoding="utf-8"))
+          # This code is needed when rebuilding an already installed local App.
+          manifest["files"]["local_apps/sbc5_control_center/zip_security_preflight.py"] = "0" * 64
+          path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          python scripts/release_prepare.py \
+            --version 3.2.1-rc1 \
+            --release-date 2026-11-09 \
+            --restart-required home_assistant \
+            --summary-en "Release candidate for security hardening, AI input validation and diagnostics." \
+            --summary-pl "Wersja testowa: poprawki bezpieczeństwa, walidacja danych AI i diagnostyka."
+          # Never present an RC as a stable App update.
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+          path = Path("local_apps/sbc5_control_center/config.yaml")
+          text = path.read_text(encoding="utf-8")
+          assert "stage: stable" in text
+          path.write_text(text.replace("stage: stable", "stage: experimental", 1), encoding="utf-8")
+          PY
+          python scripts/update_manifest_hashes.py
+          python scripts/validate_release.py --strict-manifest-hashes
+
+      - name: Validate RC runtime and security tests
+        run: |
+          set -euo pipefail
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          python -m compileall -q custom_components/sbc5_control_center local_apps/sbc5_control_center scripts
+          python scripts/test_zip_security_preflight_3_2_1.py
+          python scripts/test_config_ui_request_limits_3_2_1.py
+          python scripts/test_migration_namespace_ownership_3_2_1.py
+          python scripts/test_private_ai_training_telemetry_3_2_1.py
+          python scripts/test_ai_output_boundary_3_2_1.py
+          python scripts/test_ai_v5_observability.py
+          python scripts/validate_release.py --strict-manifest-hashes
+
+      - name: Build verified install/update ZIP
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          python scripts/build_local_update.py --output dist/SBC5_UPDATE_3.2.1-rc1.zip
+          python local_apps/sbc5_control_center/zip_security_preflight.py dist/SBC5_UPDATE_3.2.1-rc1.zip
+          sha256sum dist/SBC5_UPDATE_3.2.1-rc1.zip > dist/SBC5_UPDATE_3.2.1-rc1.sha256
+          cp RELEASE_NOTES_3.2.1-rc1.md dist/
+          python - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          p = Path("dist/SBC5_UPDATE_3.2.1-rc1.zip")
+          with zipfile.ZipFile(p) as archive:
+              meta=json.loads(archive.read("update-manifest.json"))
+              config=archive.read("local_apps/sbc5_control_center/config.yaml").decode()
+              assert meta["version"] == meta["package_version"] == "3.2.1-rc1"
+              assert "version: 3.2.1-rc1" in config
+              assert "stage: experimental" in config
+              assert "local_apps/sbc5_control_center/zip_security_preflight.py" in archive.namelist()
+          print("RC archive version, stage and updater: PASS")
+          PY
+
+      - name: Upload 3.2.1-rc1 test build (not a stable release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SBC5_Control_Center_3.2.1-rc1_TEST_ONLY
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            dist/SBC5_UPDATE_3.2.1-rc1.zip
+            dist/SBC5_UPDATE_3.2.1-rc1.sha256
+            dist/RELEASE_NOTES_3.2.1-rc1.md
