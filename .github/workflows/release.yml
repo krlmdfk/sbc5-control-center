@@ -225,9 +225,19 @@ jobs:
             echo "HACS $VERSION already synchronized; reusing the previously validated commit."
           else
             if [ "$HACS_CURRENT" = "$VERSION" ]; then
-              echo "Existing HACS $VERSION differs from expected distribution. Refusing to overwrite partial release." >&2
-              git diff --cached --stat
-              exit 1
+              # The code of the existing target may never be overwritten on retry.
+              # Human-edited release summaries can legitimately differ, so permit
+              # exactly three generated documentation files and nothing else.
+              while IFS= read -r -d '' changed_path; do
+                case "$changed_path" in
+                  README.md|info.md|"RELEASE_NOTES_${VERSION}.md") ;;
+                  *)
+                    echo "Existing HACS $VERSION differs in non-documentation file: $changed_path" >&2
+                    exit 1
+                    ;;
+                esac
+              done < <(git diff --cached --name-only -z)
+              echo "HACS $VERSION already synchronized; updating approved release documentation only."
             fi
             git commit -m "Release ${VERSION}"
             git push origin HEAD:main
