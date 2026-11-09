@@ -132,6 +132,9 @@ jobs:
       - name: Test AI reset backup and integrity
         run: python scripts/test_ai_model_reset_backup.py
 
+      - name: Test concurrent AI learning and reset transaction
+        run: python scripts/test_ai_model_reset_concurrency.py
+
       - name: Test Restart Manager HACS handoff
         run: python scripts/test_restart_manager_hacs_handoff.py
 
