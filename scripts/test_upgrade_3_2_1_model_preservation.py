@@ -30,7 +30,8 @@ def main() -> None:
     assert mm.semver("3.2.1-rc2") is not None
     assert mm.semver("3.2.0") < mm.semver("3.2.1-rc1")
     assert mm.semver("3.2.1-rc1") < mm.semver("3.2.1-rc2")
-    assert mm.semver("3.2.1-rc2") < mm.semver("3.2.1-rc10")
+    assert mm.semver("3.2.1-rc.2") < mm.semver("3.2.1-rc.10")
+    assert mm.semver("3.2.1-rc2") < mm.semver("3.2.1-rc3")
     assert mm.semver("3.2.1-rc10") < mm.semver("3.2.1")
     assert mm.semver("3.2.1-beta.2+build.8") < mm.semver("3.2.1-rc2")
     assert mm.semver("3.2.1-rc.02") is None
