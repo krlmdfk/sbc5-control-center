@@ -9,6 +9,8 @@ CARD_JSON = Path('/dashboard_card.json')
 UI_OVERRIDE_DIR = Path('/data/ui_updates')
 CARD_JSON_OVERRIDE = UI_OVERRIDE_DIR / 'dashboard_card.json'
 CARD_UI_VERSION_FILE = Path('/data/card_ui_version')
+# Complete SemVer marker, including optional pre-release/build metadata.
+CARD_MARKER_VERSION_PATTERN = r'\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?(?:\+[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?'
 BACKUP_DIR = Path('/data/lovelace_backups')
 RELEASE_JSON = Path('/release.json')
 
@@ -48,9 +50,9 @@ def _runtime_versioned_card(card):
     version = current_card_version()
     def walk(value):
         if isinstance(value, str):
-            value = re.sub(r'Card UI v\d+\.\d+\.\d+', f'Card UI v{version}', value)
-            value = re.sub(r'Update Card v\d+\.\d+\.\d+', f'Update Card v{version}', value)
-            value = re.sub(r'SBC5CC \d+\.\d+\.\d+', f'SBC5CC {version}', value)
+            value = re.sub(rf'Card UI v{CARD_MARKER_VERSION_PATTERN}', f'Card UI v{version}', value)
+            value = re.sub(rf'Update Card v{CARD_MARKER_VERSION_PATTERN}', f'Update Card v{version}', value)
+            value = re.sub(rf'SBC5CC {CARD_MARKER_VERSION_PATTERN}', f'SBC5CC {version}', value)
             return value
         if isinstance(value, list):
             return [walk(v) for v in value]
@@ -109,7 +111,7 @@ def _is_project_card(card):
     return all(x in s for x in required)
 
 def _card_version(card):
-    m=re.search(r'Card UI v(\d+\.\d+\.\d+)', _serialized(card))
+    m=re.search(rf'Card UI v({CARD_MARKER_VERSION_PATTERN})', _serialized(card))
     return m.group(1) if m else None
 
 def _walk_cards(cards, prefix):
