@@ -9162,11 +9162,11 @@ adaptive_pwm_controller_loop() {
           # Log every ~60 s to keep diagnostics useful without adding polling or log spam.
           if [ -n "${tp_mode:-}" ] && [ $((ai_log_tick % 6)) -eq 0 ]; then
             log "Thermal Predictor: mode=${tp_mode}; F30=${tp_f30}C F60=${tp_f60}C F120=${tp_f120}C; confidence=${tp_conf}%; MAE_avg=${tp_mae}C; weighted=${tp_weighted}C error=${tp_error}C; weights=${tp_weights}; gain=${tp_gain}; accepted/rejected=${tp_accepted}/${tp_rejected}; AI_corr=${ai_correction}pp; TP_req=${tp_req}pp; TP_applied=${tp_applied}pp; gate=${tp_gate_mode:-observe}/${tp_gate_reason:-unknown}; decision=${tp_decision_reason:-near_target}; guard=${ai_reason}."
-          else
-            if [ "$ai_eval_empty_warned" != "true" ]; then
-              log "AI Cooling: evaluator nie zwrócił wyniku; bez korekty AI, Adaptive PWM pozostaje aktywny. Sprawdź integralność modelu /data/ai_cooling_model.json."
-              ai_eval_empty_warned=true
-            fi
+          fi
+        else
+          if [ "$ai_eval_empty_warned" != "true" ]; then
+            log "AI Cooling: evaluator nie zwrócił wyniku; bez korekty AI, Adaptive PWM pozostaje aktywny. Sprawdź integralność modelu /data/ai_cooling_model.json."
+            ai_eval_empty_warned=true
           fi
         fi
       fi
