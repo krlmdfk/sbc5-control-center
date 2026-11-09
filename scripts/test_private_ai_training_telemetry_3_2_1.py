@@ -76,7 +76,7 @@ with tempfile.TemporaryDirectory() as tmp:
 assert 'AI_TRAINING_TELEMETRY_FILE="/data/ai_training_telemetry.json"' in RUN
 assert 'TELEMETRY_STATE_FILE="/homeassistant/sbc5_control_center/telemetry.json"' in RUN
 assert '--telemetry "$AI_TRAINING_TELEMETRY_FILE" --require-private-telemetry' in RUN
-assert 'mktemp "\${AI_TRAINING_TELEMETRY_FILE}.XXXXXX"' in RUN
+assert 'mktemp "' + chr(36) + '{AI_TRAINING_TELEMETRY_FILE}.XXXXXX"' in RUN
 assert 'mv -f -- "$ai_training_tmp" "$AI_TRAINING_TELEMETRY_FILE"' in RUN
 assert 'AI_TRAINING_TELEMETRY_FILE' not in (APP / "config_ui.py").read_text(encoding="utf-8")
 legacy = AI.read_text(encoding="utf-8")
