@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.1 — 2026-11-09
+
+### English
+
+#### Changed
+
+- AI model preservation and cooling stability improvements
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Ochrona modelu AI i poprawa stabilności chłodzenia
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.0 — 2026-11-08
 
 ### English

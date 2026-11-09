@@ -1,14 +1,14 @@
 {
-  "version": "3.2.0",
-  "release_date": "2026-11-08",
-  "restart_required": "none",
-  "summary": "Global Community Edition for Raspberry Pi 5: international installation guide, explicit host-access security disclosure and platform-specific installation.",
-  "package_version": "3.2.0",
-  "card_ui_version": "3.2.0",
+  "version": "3.2.1",
+  "release_date": "2026-11-09",
+  "restart_required": "home_assistant",
+  "summary": "AI model preservation and cooling stability improvements",
+  "package_version": "3.2.1",
+  "card_ui_version": "3.2.1",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Wydanie społecznościowe Global Edition dla Raspberry Pi 5: globalna instalacja, jawny audyt uprawnień i ograniczenie platformy docelowej."
+  "summary_pl": "Ochrona modelu AI i poprawa stabilności chłodzenia"
 }

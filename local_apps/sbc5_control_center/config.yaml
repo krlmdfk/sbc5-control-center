@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.2.0
+version: 3.2.1
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.2.0 — Global Community Edition for Raspberry Pi 5: international installation guide, explicit host-access security disclosure and platform-specific installation."
+description: "SBC5 Control Center 3.2.1 — AI model preservation and cooling stability improvements"
 arch:
 - aarch64
 machine:
