@@ -101,7 +101,7 @@ def normalize_current_version_surfaces(version: str) -> None:
         path.write_text(text, encoding="utf-8")
 
     current_literals = [
-        (APP / "namespace_native_guard.sh", r'(?m)^VERSION="\d+\.\d+\.\d+(?:-rc[1-9]\d*)?"
+        (APP / "namespace_native_guard.sh", r'(?m)^VERSION="\d+\.\d+\.\d+(?:-rc[1-9]\d*)?"$', f'VERSION="{version}"'),
         (APP / "config_ui.py", r"return ['\"]\d+\.\d+\.\d+(?:-rc[1-9]\d*)?['\"]", f"return '{version}'"),
     ]
     for path, pattern, replacement in current_literals:
