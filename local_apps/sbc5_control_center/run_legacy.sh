@@ -8929,6 +8929,7 @@ adaptive_pwm_controller_loop() {
   local up_confirm_cycles=2 up_hold_cycles=3
   local ai_cycle="$AI_COOLING_EVAL_CYCLES" ai_result="" ai_output="" ai_state="" ai_reason="" ai_conf=0 ai_prediction=-1 ai_qualified_samples=0 ai_correction=0 ai_bucket="" ai_observations_total=0 ai_bin_observations=0 ai_qualified_total=0 ai_qualified_flag=0 ai_qualification_reason="" ai_stable_streak=0 ai_last_log="" ai_log_tick=0 ai_direct_conf=0 ai_global_conf=0 ai_effective_conf=0 ai_direct_prediction=-1 ai_global_prediction=-1 ai_effective_prediction=-1 ai_transfer_source="legacy" ai_effective_coverage=0 tp_mode="" tp_f30="" tp_f60="" tp_f120="" tp_conf=0 tp_mae="" tp_weighted="" tp_error="" tp_gain="" tp_weights="" tp_accepted=0 tp_rejected=0 tp_req=0 tp_applied=0 tp_gate_mode="" tp_gate_reason="" tp_decision_reason=""
   local reload_token="" reload_now=""
+  local ai_eval_empty_warned=false
 
   load_custom_curve 1
   reload_token="$(cat "$CONFIG_UI_RELOAD_FILE" 2>/dev/null || true)"
@@ -9202,6 +9203,7 @@ adaptive_pwm_controller_loop() {
           --min-safe "$min_run_floor" --maximum "$max_state" --assist-limit "$AI_COOLING_ASSIST_LIMIT_PCT" --deadband "$ADAPTIVE_PWM_DEADBAND_C" \
           --min-samples "$AI_COOLING_MIN_SAMPLES" --grid-profile "$AI_GRID_PROFILE_FILE" --curve-points-csv "$CUSTOM_TRIPS_CSV" 2>/dev/null || true)"
         if [ -n "$ai_result" ]; then
+          ai_eval_empty_warned=false
           ai_log_tick=$((ai_log_tick + 1))
           IFS=$'\t' read -r ai_output ai_state ai_reason ai_conf ai_prediction ai_qualified_samples ai_correction ai_bucket ai_observations_total ai_bin_observations ai_qualified_total ai_qualified_flag ai_qualification_reason ai_stable_streak ai_direct_conf ai_global_conf ai_effective_conf ai_direct_prediction ai_global_prediction ai_effective_prediction ai_transfer_source ai_effective_coverage tp_mode tp_f30 tp_f60 tp_f120 tp_conf tp_mae tp_weighted tp_error tp_gain tp_weights tp_accepted tp_rejected tp_req tp_applied tp_gate_mode tp_gate_reason tp_decision_reason <<< "$ai_result"
           case "$ai_output" in ''|*[!0-9]*) ai_output="$desired" ;; esac
@@ -9241,6 +9243,11 @@ adaptive_pwm_controller_loop() {
           # Log every ~60 s to keep diagnostics useful without adding polling or log spam.
           if [ -n "${tp_mode:-}" ] && [ $((ai_log_tick % 6)) -eq 0 ]; then
             log "Thermal Predictor: mode=${tp_mode}; F30=${tp_f30}C F60=${tp_f60}C F120=${tp_f120}C; confidence=${tp_conf}%; MAE_avg=${tp_mae}C; weighted=${tp_weighted}C error=${tp_error}C; weights=${tp_weights}; gain=${tp_gain}; accepted/rejected=${tp_accepted}/${tp_rejected}; AI_corr=${ai_correction}pp; TP_req=${tp_req}pp; TP_applied=${tp_applied}pp; gate=${tp_gate_mode:-observe}/${tp_gate_reason:-unknown}; decision=${tp_decision_reason:-near_target}; guard=${ai_reason}."
+          fi
+        else
+          if [ "$ai_eval_empty_warned" != "true" ]; then
+            log "AI Cooling: evaluator nie zwrócił wyniku; bez korekty AI, Adaptive PWM pozostaje aktywny. Sprawdź integralność modelu /data/ai_cooling_model.json."
+            ai_eval_empty_warned=true
           fi
         fi
       fi
