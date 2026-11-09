@@ -17,6 +17,7 @@ required = required_runtime_files()
 
 for name in (
     "local_apps/sbc5_control_center/ai_model_lock.py",
+    "local_apps/sbc5_control_center/ai_model_diagnostics.py",
     "local_apps/sbc5_control_center/zip_security_preflight.py",
     "local_apps/sbc5_control_center/ai_cooling_v5.py",
     "local_apps/sbc5_control_center/ai_cooling_v5_1.py",
