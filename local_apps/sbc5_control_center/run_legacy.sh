@@ -8890,6 +8890,26 @@ ai_cooling_mark_paused() {
   tmp="${AI_COOLING_MIRROR_FILE}.tmp.$$"; printf '%s\n' "$payload" > "$tmp" 2>/dev/null && mv -f "$tmp" "$AI_COOLING_MIRROR_FILE" 2>/dev/null || true
 }
 
+# Last line of defense between the numerical AI worker and the physical fan.
+# AI Cooling may adjust the Adaptive baseline by up to 2 pp; active Thermal
+# Predictor may add up to another 2 pp. The controller must enforce this bound
+# regardless of the model files or evaluator's reported state.
+ai_cooling_suggestion_allowed() {
+  local baseline="$1" proposed="$2" correction="$3" state="$4" minimum="$5" maximum="$6"
+  [[ "$state" == "assist" ]] || return 1
+  [[ "$baseline" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  [[ "$proposed" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  [[ "$correction" =~ ^-?(0|[1-9][0-9]?)$ ]] || return 1
+  [[ "$minimum" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  [[ "$maximum" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  (( minimum <= baseline && baseline <= maximum )) || return 1
+  (( minimum <= proposed && proposed <= maximum )) || return 1
+  (( proposed >= 0 && proposed <= 100 )) || return 1
+  local delta=$((proposed - baseline))
+  (( delta >= -4 && delta <= 4 && correction == delta )) || return 1
+  return 0
+}
+
 adaptive_pwm_controller_loop() {
   sleep 8
   trap 'fan_control_shutdown_or_handoff controller_exit' EXIT
@@ -9201,10 +9221,15 @@ adaptive_pwm_controller_loop() {
           case "$ai_effective_prediction" in ''|-|*[!0-9.-]*) ai_effective_prediction="$ai_prediction" ;; esac
           [ -n "$ai_transfer_source" ] || ai_transfer_source="legacy"
           case "$ai_effective_coverage" in ''|*[!0-9]*) ai_effective_coverage=0 ;; esac
-          if [ "$AI_COOLING_EFFECTIVE_MODE" = "assist" ] && [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$ai_output" -ne "$desired" ] 2>/dev/null; then
-            desired="$ai_output"
-            action="${action}_ai_assist"
+          if [ "$AI_COOLING_EFFECTIVE_MODE" = "assist" ] && [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$ai_output" != "$desired" ]; then
+            if ai_cooling_suggestion_allowed "$desired" "$ai_output" "$ai_correction" "$ai_state" "$min_run_floor" "$max_state"; then
+              desired="$ai_output"
+              action="${action}_ai_assist"
+            else
+              log "AI Cooling: odrzucono nieprawidłową korektę modelu; zachowuję decyzję Adaptive PWM (state=${ai_state}, output=${ai_output}, correction=${ai_correction})."
+            fi
           fi
+
           if [ "$ai_qualified_flag" = "1" ] && { [ "$ai_qualified_samples" = "1" ] || [ "$ai_qualified_samples" = "$AI_COOLING_MIN_SAMPLES" ] || [ $((ai_qualified_samples % 5)) -eq 0 ]; }; then
             log "AI Cooling: qualified sample; bucket=${ai_bucket}; observations_total=${ai_observations_total}; bin_observations=${ai_bin_observations}; qualified_samples_total=${ai_qualified_total}; bin_qualified_samples=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%."
           elif { [ "$ai_last_log" != "${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}" ] || [ $((ai_log_tick % AI_COOLING_LOG_KEEPALIVE_CYCLES)) -eq 0 ]; } && { [ "$ai_state" = "assist" ] || [ "$ai_reason" = "insufficient_qualified_samples" ] || [ "$ai_bin_observations" = "1" ]; }; then
