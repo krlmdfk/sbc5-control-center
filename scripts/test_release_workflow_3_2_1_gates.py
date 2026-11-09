@@ -16,10 +16,22 @@ assert len(names) == len([step for step in steps if "name" in step])
 index, guard = names["Block unverified publication"]
 assert guard["if"] == "${{ !inputs.dry_run }}"
 assert guard["env"]["HARDWARE_VERIFIED"] == "${{ inputs.hardware_verified }}"
-assert "HARDWARE_VERIFIED" in guard["run"] and "3.2.1" in guard["run"]
+assert guard["env"]["FIELD_TEST_ACKNOWLEDGED"] == "${{ inputs.field_test_acknowledged }}"
+assert guard["env"]["RELEASE_CHANNEL"] == "${{ inputs.release_channel }}"
+assert 'if [ "$RELEASE_CHANNEL" = "stable" ]; then' in guard["run"]
+assert 'test "$HARDWARE_VERIFIED" = "true"' in guard["run"]
+assert 'elif [ "$RELEASE_CHANNEL" = "field_test" ]; then' in guard["run"]
+assert 'test "$FIELD_TEST_ACKNOWLEDGED" = "true"' in guard["run"]
+assert "3.2.1" in guard["run"]
 inputs = data.get("on", data.get(True))["workflow_dispatch"]["inputs"]
 assert inputs["dry_run"]["default"] is True
 assert inputs["hardware_verified"]["default"] is False
+assert inputs["field_test_acknowledged"]["default"] is False
+assert set(inputs["release_channel"]["options"]) == {"stable", "field_test"}
+for release_name in ("Publish main GitHub Release", "Publish HACS integration Release"):
+    body = names[release_name][1]["run"]
+    assert "--prerelease" in body and "--latest" in body, release_name
+    assert 'inputs.release_channel' in body, release_name
 
 publish_names = [
     "Clone and synchronize HACS repository",
