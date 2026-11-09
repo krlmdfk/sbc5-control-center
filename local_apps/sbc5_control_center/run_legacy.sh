@@ -79,6 +79,8 @@ LEGACY_BRIDGE_MIGRATION_MARKER="/homeassistant/sbc5_control_center/legacy_bridge
 LEGACY_BRIDGE_SOURCE_DIR="/legacy_bridge"
 NATIVE_RESTART_MARKER="/homeassistant/sbc5_control_center/restart_required.json"
 TELEMETRY_STATE_FILE="/homeassistant/sbc5_control_center/telemetry.json"
+# Model input must not be sourced from the Home Assistant configuration mirror.
+AI_TRAINING_TELEMETRY_FILE="/data/ai_training_telemetry.json"
 REALTIME_STATE_FILE="/homeassistant/sbc5_control_center/realtime.json"
 ADAPTIVE_PWM_STATE_FILE="/homeassistant/sbc5_control_center/adaptive_pwm.json"
 # v2.5.2 AI Adaptive Cooling Preview — local/offline online learner.
@@ -7844,6 +7846,26 @@ publish_telemetry_snapshot() {
     > "$tmp" 2>/dev/null || { rm -f "$tmp"; return 1; }
   mv -f "$tmp" "$TELEMETRY_STATE_FILE"
 
+  # Build a compact training snapshot directly from fresh host readings. Never
+  # read back the Home Assistant mirror: other Apps may have write access there.
+  # mktemp creates a 0600 file inside the App-private persistent volume.
+  local ai_training_tmp=""
+  if ai_training_tmp="$(mktemp "${AI_TRAINING_TELEMETRY_FILE}.XXXXXX")"; then
+    if jq -cn \
+      --argjson sample_epoch "$now" \
+      --argjson cpu_core_usage_percent "$SYS_CPU_CORE_USAGE_JSON" \
+      --argjson load_1m "$SYS_LOAD_1M" \
+      --argjson cpu_core_count "$SYS_CPU_CORE_COUNT" \
+      --argjson pmic_power_w "$SYS_PMIC_POWER_W" \
+      --argjson cpu_frequency_mhz "$SYS_CPU_FREQ_MHZ" \
+      '{schema:1,sample_epoch:$sample_epoch,cpu_core_usage_percent:$cpu_core_usage_percent,load_1m:$load_1m,cpu_core_count:$cpu_core_count,pmic_power_w:$pmic_power_w,cpu_frequency_mhz:$cpu_frequency_mhz}' \
+      > "$ai_training_tmp" 2>/dev/null; then
+      mv -f -- "$ai_training_tmp" "$AI_TRAINING_TELEMETRY_FILE" || rm -f -- "$ai_training_tmp"
+    else
+      rm -f -- "$ai_training_tmp"
+    fi
+  fi
+
   if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
     local relay_payload relay_now telemetry_json
     relay_now="${EPOCHREALTIME%%.*}"
@@ -9123,7 +9145,7 @@ adaptive_pwm_controller_loop() {
         ai_cycle=0
         ai_result="$(python3 "$AI_COOLING_SCRIPT" step \
           --model "$AI_COOLING_MODEL_FILE" --status "$AI_COOLING_STATUS_FILE" --mirror "$AI_COOLING_MIRROR_FILE" \
-          --telemetry "$TELEMETRY_STATE_FILE" --mode "$AI_COOLING_EFFECTIVE_MODE" --control-mode "$COOLING_CONTROL_MODE" \
+          --telemetry "$AI_TRAINING_TELEMETRY_FILE" --require-private-telemetry --mode "$AI_COOLING_EFFECTIVE_MODE" --control-mode "$COOLING_CONTROL_MODE" \
           --controller-action "$action" --temp-milli "$temp_milli" --target "$CURVE1_TARGET_C" --pwm "$controller_state" --baseline "$desired" \
           --min-safe "$min_run_floor" --maximum "$max_state" --assist-limit "$AI_COOLING_ASSIST_LIMIT_PCT" --deadband "$ADAPTIVE_PWM_DEADBAND_C" \
           --min-samples "$AI_COOLING_MIN_SAMPLES" --grid-profile "$AI_GRID_PROFILE_FILE" --curve-points-csv "$CUSTOM_TRIPS_CSV" 2>/dev/null || true)"
