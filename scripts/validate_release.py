@@ -101,7 +101,7 @@ def main() -> int:
 
     release = load_json(APP / "release.json")
     expected = str(release["version"])
-    expect(bool(re.fullmatch(r"\d+\.\d+\.\d+", expected)), f"Invalid release version: {expected}")
+    expect(bool(re.fullmatch(r"\d+\.\d+\.\d+(?:-rc[1-9]\d*)?", expected)), f"Invalid release version: {expected}")
 
     manifests = [
         ROOT / "custom_components" / DOMAIN / "manifest.json",
