@@ -46,6 +46,9 @@ jobs:
       - name: Validate Dockerfile runtime paths
         run: python scripts/test_dockerfile_runtime_paths.py
 
+      - name: Test release ZIP runtime dependency coverage
+        run: python scripts/test_update_zip_runtime_completeness.py
+
       - name: Test migration profile guard
         run: python scripts/test_migration_profile_guard.py
 
