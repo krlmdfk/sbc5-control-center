@@ -8849,6 +8849,7 @@ ai_cooling_suggestion_allowed() {
   [[ "$correction" =~ ^-?(0|[1-9][0-9]?)$ ]] || return 1
   [[ "$minimum" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
   [[ "$maximum" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  (( minimum >= 0 && minimum <= maximum && maximum <= 100 )) || return 1
   (( minimum <= baseline && baseline <= maximum )) || return 1
   (( minimum <= proposed && proposed <= maximum )) || return 1
   (( proposed >= 0 && proposed <= 100 )) || return 1
