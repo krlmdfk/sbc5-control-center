@@ -633,6 +633,47 @@ def _migrate_model(raw: Any, now: float) -> dict[str, Any]:
     model["workload_model_reset_reason"] = "workload_buckets_v2"
     return model
 
+def _load_model_for_step(path: Path, now: float) -> dict[str, Any]:
+    """Refuse to replace an existing unreadable model with fresh training state.
+
+    A genuinely missing file (new install or explicitly requested reset) may
+    initialize a fresh model. Existing malformed files remain untouched.
+    """
+    try:
+        raw_text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return _fresh_model(now)
+    except (OSError, UnicodeError) as exc:
+        raise RuntimeError(
+            "SBC5 AI model integrity: existing model unreadable; preserving file"
+        ) from exc
+    try:
+        raw = json.loads(raw_text)
+    except (ValueError, UnicodeError) as exc:
+        raise RuntimeError(
+            "SBC5 AI model integrity: existing model is invalid JSON; preserving file"
+        ) from exc
+    if not isinstance(raw, dict) or not raw:
+        raise RuntimeError(
+            "SBC5 AI model integrity: existing model is not a nonempty object; preserving file"
+        )
+    if not any(k in raw for k in ("schema", "observations_total", "samples_total", "bins", "temperature_density", "hierarchical_v5")):
+        raise RuntimeError(
+            "SBC5 AI model integrity: existing model is missing recognized keys; preserving file"
+        )
+    schema = raw.get("schema")
+    if schema is not None and (
+        isinstance(schema, bool)
+        or not isinstance(schema, int)
+        or schema < 0
+        or schema > SCHEMA
+    ):
+        raise RuntimeError(
+            "SBC5 AI model integrity: unsupported existing schema; preserving file"
+        )
+    return _migrate_model(raw, now)
+
+
 def _bin_confidence(b: dict[str, Any], min_samples: int) -> int:
     qn = int(_num(b.get("qualified_n"), 0))
     if qn <= 0:
@@ -942,7 +983,7 @@ def step(args: argparse.Namespace) -> int:
     status_path = Path(args.status)
     mirror_path = Path(args.mirror) if args.mirror else None
     telemetry = _read_json(Path(args.telemetry), {})
-    model = _migrate_model(_read_json(model_path, {}), now)
+    model = _load_model_for_step(model_path, now)
 
     temp = args.temp_milli / 1000.0
     target = float(args.target)
