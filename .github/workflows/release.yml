@@ -33,6 +33,11 @@ on:
         required: true
         default: true
         type: boolean
+      hardware_verified:
+        description: "Explicitly confirm manual Raspberry Pi 5 and backup/rollback verification before publishing"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -60,6 +65,21 @@ jobs:
 
       - name: Install validators
         run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Block unverified publication
+        if: ${{ !inputs.dry_run }}
+        env:
+          HARDWARE_VERIFIED: ${{ inputs.hardware_verified }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          test "$HARDWARE_VERIFIED" = "true" || {
+            echo "Stable publication blocked: actual Raspberry Pi 5 controller, AI history backup and rollback must be verified." >&2
+            exit 1
+          }
+          test "$VERSION" = "3.2.1" || {
+            echo "This controlled publication workflow currently allows only 3.2.1." >&2
+            exit 1
+          }
 
       - name: Preflight version
         env:
@@ -94,22 +114,29 @@ jobs:
           fi
           python scripts/release_prepare.py "${args[@]}"
 
-      - name: Validate prepared release
-        run: python scripts/validate_release.py
+      - name: Validate prepared release strictly
+        run: python scripts/validate_release.py --strict-manifest-hashes
 
-      - name: Build install/update package
-        run: python scripts/build_release_zip.py --out dist
+      - name: Build and verify install/update package
+        run: |
+          mkdir -p dist
+          python scripts/build_local_update.py --output "dist/SBC5_UPDATE_${{ inputs.version }}.zip"
+          python scripts/build_local_update.py --verify-only --output "dist/SBC5_UPDATE_${{ inputs.version }}.zip"
+          python local_apps/sbc5_control_center/zip_security_preflight.py "dist/SBC5_UPDATE_${{ inputs.version }}.zip"
+          cd dist
+          sha256sum "SBC5_UPDATE_${{ inputs.version }}.zip" > "SBC5_UPDATE_${{ inputs.version }}.zip.sha256"
 
       - name: Upload preflight artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbc5-${{ inputs.version }}-preflight
           path: |
-            dist/SBC5_Control_Center_v${{ inputs.version }}.zip
-            dist/SBC5_Control_Center_v${{ inputs.version }}.sha256
+            dist/SBC5_UPDATE_${{ inputs.version }}.zip
+            dist/SBC5_UPDATE_${{ inputs.version }}.zip.sha256
             RELEASE_NOTES_${{ inputs.version }}.md
 
       - name: Verify HACS repository token
+        if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ secrets.HACS_REPO_TOKEN }}
         run: |
@@ -225,8 +252,8 @@ jobs:
             --title "SBC5 Control Center ${VERSION}" \
             --notes-file "RELEASE_NOTES_${VERSION}.md" \
             --latest \
-            "dist/SBC5_Control_Center_v${VERSION}.zip" \
-            "dist/SBC5_Control_Center_v${VERSION}.sha256"
+            "dist/SBC5_UPDATE_${VERSION}.zip" \
+            "dist/SBC5_UPDATE_${VERSION}.zip.sha256"
 
       - name: Publish HACS integration Release
         if: ${{ !inputs.dry_run }}
