@@ -49,6 +49,34 @@ jobs:
       - name: Test release ZIP runtime dependency coverage
         run: python scripts/test_update_zip_runtime_completeness.py
 
+      - name: Dry-run offline ZIP with refreshed manifest (never publish/install)
+        run: |
+          python scripts/update_manifest_hashes.py
+          python scripts/validate_release.py --strict-manifest-hashes
+          python scripts/build_local_update.py --output "$RUNNER_TEMP/SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
+          python scripts/build_local_update.py --verify-only --output "$RUNNER_TEMP/SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
+          python local_apps/sbc5_control_center/zip_security_preflight.py "$RUNNER_TEMP/SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
+          python - <<'PY'
+          import json
+          import os
+          import zipfile
+          from pathlib import Path
+          manifest = json.loads(Path("update-manifest.json").read_text())
+          assert manifest["version"] == "3.2.0", "Offline test must not bump production version"
+          path = Path(os.environ["RUNNER_TEMP"]) / "SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
+          with zipfile.ZipFile(path) as archive:
+              members = set(archive.namelist())
+              for item in (
+                  "local_apps/sbc5_control_center/ai_model_lock.py",
+                  "local_apps/sbc5_control_center/zip_security_preflight.py",
+                  "local_apps/sbc5_control_center/ai_cooling_v5.py",
+                  "local_apps/sbc5_control_center/ai_cooling_v5_1.py",
+                  "local_apps/sbc5_control_center/thermal_effectiveness.py",
+              ):
+                  assert item in members, f"Offline ZIP missing required runtime dependency: {item}"
+          print("OFFLINE CI ZIP self-verification: PASS; not an installable release")
+          PY
+
       - name: Test migration profile guard
         run: python scripts/test_migration_profile_guard.py
 
