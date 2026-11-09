@@ -65,7 +65,11 @@ jobs:
           import zipfile
           from pathlib import Path
           manifest = json.loads(Path("update-manifest.json").read_text())
-          assert manifest["version"] == "3.2.0", "Offline test must not bump production version"
+          release = json.loads(Path("local_apps/sbc5_control_center/release.json").read_text())
+          assert manifest["version"] == release["version"], (
+              "Offline CI cannot unexpectedly change release version",
+              manifest["version"], release["version"],
+          )
           path = Path(os.environ["RUNNER_TEMP"]) / "SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
           with zipfile.ZipFile(path) as archive:
               members = set(archive.namelist())
@@ -144,6 +148,12 @@ jobs:
 
       - name: Test SBC5 Global Edition preflight
         run: python scripts/test_global_release_readiness_3_2_0.py
+
+      - name: Test 3.2.1 manual release publication gates
+        run: python scripts/test_release_workflow_3_2_1_gates.py
+
+      - name: Test isolated 3.2.1 diagnostic Canary safety
+        run: python scripts/test_canary_3_2_1_shadow_isolation.py
 
       - name: Test Thermal Predictor Stability v2
         run: python scripts/test_thermal_predictor_stability_3_1_30.py
