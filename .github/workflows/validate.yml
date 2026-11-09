@@ -55,6 +55,9 @@ jobs:
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
 
+      - name: Test Card UI pre-release version synchronization
+        run: python scripts/test_card_ui_prerelease_sync.py
+
       - name: Test Thermal Predictor Shadow Assist
         run: python scripts/test_thermal_predictor_shadow.py
 

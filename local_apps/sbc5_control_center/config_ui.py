@@ -2,7 +2,7 @@
 import json, os, tempfile, time, copy, re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError
+from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError, CARD_MARKER_VERSION_PATTERN
 CARD_JSON = Path('/dashboard_card.json')
 UPDATE_CARD_JSON = Path('/update_status_card.json')
 UI_OVERRIDE_DIR = Path('/data/ui_updates')
@@ -59,9 +59,9 @@ def _runtime_versioned_card(card):
     version = current_card_ui_version()
     def walk(value):
         if isinstance(value, str):
-            value = re.sub(r'Card UI v\d+\.\d+\.\d+', f'Card UI v{version}', value)
-            value = re.sub(r'Update Card v\d+\.\d+\.\d+', f'Update Card v{version}', value)
-            value = re.sub(r'SBC5CC \d+\.\d+\.\d+', f'SBC5CC {version}', value)
+            value = re.sub(rf'Card UI v{CARD_MARKER_VERSION_PATTERN}', f'Card UI v{version}', value)
+            value = re.sub(rf'Update Card v{CARD_MARKER_VERSION_PATTERN}', f'Update Card v{version}', value)
+            value = re.sub(rf'SBC5CC {CARD_MARKER_VERSION_PATTERN}', f'SBC5CC {version}', value)
             return value
         if isinstance(value, list):
             return [walk(v) for v in value]
