@@ -40,6 +40,9 @@ jobs:
       - name: Validate repository consistency
         run: python scripts/validate_release.py
 
+      - name: Verify strict HACS candidate code parity (PR 36)
+        run: python scripts/check_companion_parity.py --role app --hacs-ref safety/3-2-1-namespace-ownership-parity
+
       - name: Validate Dockerfile runtime paths
         run: python scripts/test_dockerfile_runtime_paths.py
 
