@@ -8854,7 +8854,8 @@ adaptive_pwm_controller_loop() {
   local down_direct_delta=1000 down_fast_delta=2000 up_direct_delta=2000
   local up_confirm_cycles=2 up_hold_cycles=3
   local ai_cycle="$AI_COOLING_EVAL_CYCLES" ai_result="" ai_output="" ai_state="" ai_reason="" ai_conf=0 ai_prediction=-1 ai_qualified_samples=0 ai_correction=0 ai_bucket="" ai_observations_total=0 ai_bin_observations=0 ai_qualified_total=0 ai_qualified_flag=0 ai_qualification_reason="" ai_stable_streak=0 ai_last_log="" ai_log_tick=0 ai_direct_conf=0 ai_global_conf=0 ai_effective_conf=0 ai_direct_prediction=-1 ai_global_prediction=-1 ai_effective_prediction=-1 ai_transfer_source="legacy" ai_effective_coverage=0 tp_mode="" tp_f30="" tp_f60="" tp_f120="" tp_conf=0 tp_mae="" tp_weighted="" tp_error="" tp_gain="" tp_weights="" tp_accepted=0 tp_rejected=0 tp_req=0 tp_applied=0 tp_gate_mode="" tp_gate_reason="" tp_decision_reason=""
-  local reload_token="" reload_now="" ai_eval_empty_warned=false
+  local reload_token="" reload_now=""
+  local ai_eval_empty_warned=false
 
   load_custom_curve 1
   reload_token="$(cat "$CONFIG_UI_RELOAD_FILE" 2>/dev/null || true)"
