@@ -34,7 +34,20 @@ on:
         default: true
         type: boolean
       hardware_verified:
-        description: "Explicitly confirm manual Raspberry Pi 5 and backup/rollback verification before publishing"
+        description: "Confirm REAL hardware testing before STABLE publication only"
+        required: true
+        default: false
+        type: boolean
+      release_channel:
+        description: "Field-test prerelease (not stable) or stable after actual hardware validation"
+        required: true
+        default: field_test
+        type: choice
+        options:
+          - field_test
+          - stable
+      field_test_acknowledged:
+        description: "I have external backups; I accept that 3.2.1 is an UNVERIFIED FIELD-TEST, not a stable hardware-validated version"
         required: true
         default: false
         type: boolean
@@ -70,16 +83,29 @@ jobs:
         if: ${{ !inputs.dry_run }}
         env:
           HARDWARE_VERIFIED: ${{ inputs.hardware_verified }}
+          FIELD_TEST_ACKNOWLEDGED: ${{ inputs.field_test_acknowledged }}
+          RELEASE_CHANNEL: ${{ inputs.release_channel }}
           VERSION: ${{ inputs.version }}
         run: |
-          test "$HARDWARE_VERIFIED" = "true" || {
-            echo "Stable publication blocked: actual Raspberry Pi 5 controller, AI history backup and rollback must be verified." >&2
-            exit 1
-          }
           test "$VERSION" = "3.2.1" || {
-            echo "This controlled publication workflow currently allows only 3.2.1." >&2
+            echo "Only 3.2.1 is supported by this controlled release path." >&2
             exit 1
           }
+          if [ "$RELEASE_CHANNEL" = "stable" ]; then
+            test "$HARDWARE_VERIFIED" = "true" || {
+              echo "STABLE publication blocked: real RPi5 hardware and rollback testing is required." >&2
+              exit 1
+            }
+          elif [ "$RELEASE_CHANNEL" = "field_test" ]; then
+            test "$FIELD_TEST_ACKNOWLEDGED" = "true" || {
+              echo "FIELD TEST requires explicit consent and verified off-device backups." >&2
+              exit 1
+            }
+            echo "::warning::3.2.1 FIELD TEST: no real-world thermal/hardware verification; marking release as prerelease."
+          else
+            echo "Unsupported release channel." >&2
+            exit 1
+          fi
 
       - name: Preflight version
         env:
@@ -246,12 +272,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
         run: |
+          release_flags=(--latest)
+          if [ "${{ inputs.release_channel }}" = "field_test" ]; then
+            release_flags=(--prerelease)
+          fi
           gh release create "$VERSION" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$MAIN_SHA" \
-            --title "SBC5 Control Center ${VERSION}" \
+            --title "SBC5 Control Center ${VERSION} (${{ inputs.release_channel }})" \
             --notes-file "RELEASE_NOTES_${VERSION}.md" \
-            --latest \
+            "${release_flags[@]}" \
             "dist/SBC5_UPDATE_${VERSION}.zip" \
             "dist/SBC5_UPDATE_${VERSION}.zip.sha256"
 
@@ -265,12 +295,16 @@ jobs:
             echo "HACS release $VERSION already exists" >&2
             exit 1
           fi
+          release_flags=(--latest)
+          if [ "${{ inputs.release_channel }}" = "field_test" ]; then
+            release_flags=(--prerelease)
+          fi
           gh release create "$VERSION" \
             --repo "$HACS_REPO" \
             --target "$HACS_SHA" \
-            --title "SBC5 Control Center Integration ${VERSION}" \
+            --title "SBC5 Control Center Integration ${VERSION} (${{ inputs.release_channel }})" \
             --notes-file "/tmp/sbc5-hacs/RELEASE_NOTES_${VERSION}.md" \
-            --latest
+            "${release_flags[@]}"
 
       - name: Publication summary
         if: ${{ !inputs.dry_run }}
