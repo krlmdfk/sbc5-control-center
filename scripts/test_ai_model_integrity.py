@@ -64,7 +64,8 @@ with tempfile.TemporaryDirectory() as td:
     before = digest(model)
     status_path = Path(td) / "status.json"
     args = argparse.Namespace(model=str(model), status=str(status_path),
-                              mirror="", telemetry=str(Path(td) / "telemetry.json"))
+                              mirror="", telemetry=str(Path(td) / "telemetry.json"),
+                              require_private_telemetry=False)
     try:
         ai.step(args)
     except RuntimeError as exc:
