@@ -38,7 +38,12 @@ jobs:
           version=$(python -c 'import json; print(json.load(open("local_apps/sbc5_control_center/release.json"))["version"])')
           echo "version=$version" >> "$GITHUB_OUTPUT"
           test -f "RELEASE_NOTES_${version}.md"
-          if gh release view "$version" >/dev/null 2>&1; then
+          # 3.2.1+ uses one explicitly approved manual release workflow.
+          # Never race that workflow with a second automatic publisher.
+          if [ "$version" != "3.2.0" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release $version requires the manually approved Publish SBC5 release workflow."
+          elif gh release view "$version" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "Release $version already exists and is immutable; nothing to publish."
           else

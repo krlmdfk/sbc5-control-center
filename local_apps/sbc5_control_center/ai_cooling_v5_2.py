@@ -14,6 +14,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 import time
+import sys
 from typing import Any
 
 import thermal_active_policy as policy
@@ -260,6 +261,17 @@ base.V5_POLICY = "hierarchical_continuous_v5_2_thermal_guided_stability_v2"
 
 
 def main() -> int:
+    # One transaction spans v4 learning, v5 hierarchical writes and v5.2
+    # predictor diagnostics. The UI reset must not interleave with any stage.
+    if len(sys.argv) > 1 and sys.argv[1] in ("step", "reset"):
+        from ai_model_lock import ai_model_lock
+        # For normal SBC5 /data this resolves to /data/ai_cooling_model.lock,
+        # shared with Config UI reset. Isolated tests and custom model paths
+        # use the matching directory instead of the host machine's /data.
+        model_arg = base._argv_value("--model")
+        lock_path = Path(model_arg).with_name("ai_cooling_model.lock") if model_arg else None
+        with ai_model_lock(lock_path=lock_path, timeout_seconds=8.0):
+            return base.main()
     return base.main()
 
 

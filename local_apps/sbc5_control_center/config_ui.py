@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import json, os, tempfile, time, copy, re
+import json, os, tempfile, time, copy, re, math, hashlib, shutil
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError
+from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError, CARD_MARKER_VERSION_PATTERN
+from ai_model_lock import ai_model_lock
 CARD_JSON = Path('/dashboard_card.json')
 UPDATE_CARD_JSON = Path('/update_status_card.json')
 UI_OVERRIDE_DIR = Path('/data/ui_updates')
@@ -59,9 +60,9 @@ def _runtime_versioned_card(card):
     version = current_card_ui_version()
     def walk(value):
         if isinstance(value, str):
-            value = re.sub(r'Card UI v\d+\.\d+\.\d+', f'Card UI v{version}', value)
-            value = re.sub(r'Update Card v\d+\.\d+\.\d+', f'Update Card v{version}', value)
-            value = re.sub(r'SBC5CC \d+\.\d+\.\d+', f'SBC5CC {version}', value)
+            value = re.sub(rf'Card UI v{CARD_MARKER_VERSION_PATTERN}', f'Card UI v{version}', value)
+            value = re.sub(rf'Update Card v{CARD_MARKER_VERSION_PATTERN}', f'Update Card v{version}', value)
+            value = re.sub(rf'SBC5CC {CARD_MARKER_VERSION_PATTERN}', f'SBC5CC {version}', value)
             return value
         if isinstance(value, list):
             return [walk(v) for v in value]
@@ -74,6 +75,11 @@ OPTIONS = Path('/data/options.json')
 RELOAD = Path('/data/config_ui_reload.request')
 HTML = Path('/config_ui/index.html')
 PORT = int(os.environ.get('RPI5CC_CONFIG_UI_PORT', '8099'))
+# Browser dashboard backups can be larger than option saves; reject unbounded uploads.
+MAX_POST_BYTES = 8 * 1024 * 1024
+# Home Assistant Supervisor is the sole trusted Ingress reverse proxy.
+# https://contributors.home-assistant.io/apps/guides/ingress/
+INGRESS_PROXY_ADDRESS = '172.30.32.2'
 CPU_STATE = Path('/data/cpu_profile_state.json')
 CPU_STATE_SCHEMA = 2
 GPU_STATE = Path('/data/gpu_profile_state.json')
@@ -388,7 +394,8 @@ def runtime_summary():
 
 def clamp_num(v,lo,hi,float_ok=True):
     try: x=float(v)
-    except Exception: raise ValueError('Nieprawidłowa liczba')
+    except (TypeError, ValueError, OverflowError): raise ValueError('Nieprawidłowa liczba')
+    if not math.isfinite(x): raise ValueError('Nieprawidłowa liczba: NaN i nieskończoność są niedozwolone')
     if x<lo or x>hi: raise ValueError(f'Zakres {lo}–{hi}')
     return x if float_ok else int(x)
 
@@ -546,11 +553,137 @@ def cleanup_update_packages():
     out=update_package_cleanup_status(); out.update({'deleted':len(deleted),'freed_bytes':freed,'deleted_files':deleted})
     return out
 
+class JsonRequestError(Exception):
+    def __init__(self, message, status=400):
+        super().__init__(message)
+        self.status = status
+
+
+AI_MODEL_FILE = Path('/data/ai_cooling_model.json')
+AI_MODEL_BACKUPS = Path('/data/ai_model_backups')
+
+
+def _file_sha256(path):
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def backup_ai_model_before_reset(model_path=AI_MODEL_FILE, backup_dir=AI_MODEL_BACKUPS):
+    """Fail closed if an existing AI model cannot be durably snapshotted.
+
+    Keep independent timestamped backups; do not rely on the later reset
+    succeeding to retain a recoverable copy.
+    """
+    if model_path.is_symlink():
+        raise ValueError('Model AI jest dowiązaniem symbolicznym; reset przerwany')
+    if not model_path.exists():
+        return None
+    if not model_path.is_file():
+        raise ValueError('Plik modelu AI nie jest zwykłym plikiem; reset przerwany')
+
+    backup_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    stamp = time.strftime('%Y%m%d-%H%M%S')
+    fd, tmp_name = tempfile.mkstemp(prefix='.ai-model-', suffix='.tmp', dir=str(backup_dir))
+    backup = backup_dir / f'ai_cooling_model_{stamp}_{os.path.basename(tmp_name)[10:-4]}.json'
+    try:
+        with os.fdopen(fd, 'wb') as dst, model_path.open('rb') as src:
+            shutil.copyfileobj(src, dst)
+            dst.flush()
+            os.fsync(dst.fileno())
+        copied_sha = _file_sha256(Path(tmp_name))
+        # Model may be updated by the running learner: do not delete if the
+        # snapshot no longer matches the current source.
+        if _file_sha256(model_path) != copied_sha:
+            raise ValueError('Model AI zmienił się podczas kopii; reset przerwany')
+        os.replace(tmp_name, backup)
+        try:
+            dir_fd = os.open(str(backup_dir), os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
+        except OSError as exc:
+            raise RuntimeError('Nie można zatwierdzić trwałej kopii modelu AI') from exc
+        return {'backup': str(backup), 'sha256': copied_sha, 'bytes': backup.stat().st_size}
+    finally:
+        try:
+            Path(tmp_name).unlink()
+        except FileNotFoundError:
+            pass
+
+
+def reset_ai_model_with_backup(
+    model_path=AI_MODEL_FILE,
+    backup_dir=AI_MODEL_BACKUPS,
+    status_path=Path('/data/ai_cooling_status.json'),
+    mirror_path=Path('/homeassistant/sbc5_control_center/ai_cooling.json'),
+    lock_path=None,
+):
+    """Serialize snapshot+delete with the complete AI evaluator transaction.
+
+    Retain the lock file across resets: unlinking it would split lock ownership
+    between old and new inodes. The model may be recreated by later learning,
+    but no in-flight pre-reset model write can resurrect historical state.
+    """
+    with ai_model_lock(lock_path=lock_path, timeout_seconds=8.0):
+        snapshot = backup_ai_model_before_reset(model_path, backup_dir)
+        # Every participant that writes the model must hold the same lock.
+        for path in (model_path, status_path, mirror_path):
+            try:
+                Path(path).unlink()
+            except FileNotFoundError:
+                pass
+        return snapshot
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
+    def _require_ingress_peer(self):
+        # Request headers (including X-Ingress-Path) can be forged. Use the
+        # TCP peer address, which the Supervisor documents for Ingress traffic.
+        if not self.client_address or self.client_address[0] != INGRESS_PROXY_ADDRESS:
+            self.send_error(403, 'Dostęp tylko przez Home Assistant Ingress')
+            return False
+        return True
+    def _read_json_request(self):
+        # Explicit limits prevent slow/unbounded reads and memory exhaustion in
+        # this privileged App's Ingress server. No change to Ingress routing.
+        if self.headers.get('Transfer-Encoding'):
+            raise JsonRequestError('Transfer-Encoding nie jest obsługiwane')
+        mime = self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower()
+        if mime != 'application/json':
+            raise JsonRequestError('Oczekiwano Content-Type: application/json', 415)
+        length = self.headers.get('Content-Length')
+        if length is None:
+            raise JsonRequestError('Wymagany Content-Length', 411)
+        if not re.fullmatch(r'[0-9]{1,10}', length):
+            raise JsonRequestError('Nieprawidłowy Content-Length')
+        size = int(length)
+        if size > MAX_POST_BYTES:
+            raise JsonRequestError('Zbyt duże żądanie JSON', 413)
+        if size == 0:
+            raise JsonRequestError('Puste żądanie JSON')
+        raw = self.rfile.read(size)
+        if len(raw) != size:
+            raise JsonRequestError('Niekompletna treść żądania JSON')
+        # Python's JSON decoder accepts non-standard NaN/Infinity by default.
+        # Reject those constants in every nested field, not just numeric options.
+        def reject_constant(value):
+            raise ValueError(f'Niedozwolona stała JSON: {value}')
+        try:
+            data = json.loads(raw, parse_constant=reject_constant)
+        except (UnicodeError, json.JSONDecodeError, ValueError):
+            raise JsonRequestError('Niepoprawna treść JSON') from None
+        if not isinstance(data, dict):
+            raise JsonRequestError('Żądanie JSON musi być obiektem')
+        return data
     def send_json(self,obj,status=200):
         body=json.dumps(obj,ensure_ascii=False).encode(); self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body)
     def do_GET(self):
+        if not self._require_ingress_peer(): return
         p=self.path.split('?',1)[0]
         if p in ('/','/index.html'):
             body=HTML.read_bytes(); self.send_response(200); self.send_header('Content-Type','text/html; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body); return
@@ -571,8 +704,9 @@ class H(BaseHTTPRequestHandler):
             except Exception as e: self.send_json({'ok':False,'error':f'Nie można odczytać wzorca karty update: {e}'},500); return
         self.send_error(404)
     def do_POST(self):
+        if not self._require_ingress_peer(): return
         try:
-            n=int(self.headers.get('Content-Length','0')); payload=json.loads(self.rfile.read(n) or b'{}')
+            payload = self._read_json_request()
             if self.path=='/api/save':
                 o=validate(payload.get('options',{}))
                 atomic_write(o,notify=False)
@@ -601,10 +735,11 @@ class H(BaseHTTPRequestHandler):
                 self.send_json(cleanup_update_packages()); return
             if self.path=='/api/reset_ai_model':
                 if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
-                for path in ('/data/ai_cooling_model.json','/data/ai_cooling_status.json','/homeassistant/sbc5_control_center/ai_cooling.json'):
-                    try: Path(path).unlink()
-                    except FileNotFoundError: pass
-                self.send_json({'ok':True}); return
+                try:
+                    snapshot = reset_ai_model_with_backup()
+                except (OSError, ValueError, RuntimeError) as exc:
+                    self.send_json({'ok':False,'error':f'Reset modelu AI anulowany: {exc}'},409); return
+                self.send_json({'ok':True,'model_backup':snapshot}); return
             if self.path=='/api/dashboard_card/backup':
                 if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
                 cfg=payload.get('config')
@@ -621,6 +756,7 @@ class H(BaseHTTPRequestHandler):
                 except DashboardSyncError as e: self.send_json({'ok':False,'error':str(e)},409); return
                 except Exception as e: self.send_json({'ok':False,'error':str(e)},500); return
             self.send_json({'ok':False,'error':'Nieznana akcja'},404)
+        except JsonRequestError as e: self.send_json({'ok':False,'error':str(e)},e.status)
         except ValueError as e: self.send_json({'ok':False,'error':str(e)},400)
         except Exception as e: self.send_json({'ok':False,'error':'Błąd zapisu konfiguracji'},500)
 

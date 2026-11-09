@@ -22,6 +22,7 @@ LABEL \
 COPY --from=rust-builder /build/target/release/sbc5-core /usr/local/bin/sbc5-core
 COPY run.sh /
 COPY run_legacy.sh /
+COPY zip_security_preflight.py /zip_security_preflight.py
 COPY ethernet_guard.py /ethernet_guard.py
 COPY release.json /
 COPY config_txt_catalog.json /config_txt_catalog.json
@@ -42,6 +43,8 @@ COPY patch_adaptive_trim_3_1_31.py /patch_adaptive_trim_3_1_31.py
 COPY patch_setpoint_stability_3_1_32.py /patch_setpoint_stability_3_1_32.py
 # 3.1.28 AI stack: every module imported by the public v5.2 runtime must be
 # present in the container image. Keep each layer on a distinct runtime path.
+COPY ai_model_lock.py /ai_model_lock.py
+COPY ai_model_diagnostics.py /ai_model_diagnostics.py
 COPY ai_cooling_legacy.py /ai_cooling_legacy.py
 COPY thermal_predictor_v3.py /thermal_predictor_v3.py
 COPY thermal_active_policy.py /thermal_active_policy.py

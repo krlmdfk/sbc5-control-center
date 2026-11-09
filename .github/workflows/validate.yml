@@ -40,8 +40,49 @@ jobs:
       - name: Validate repository consistency
         run: python scripts/validate_release.py
 
+      - name: Verify strict HACS candidate code parity (PR 36)
+        run: python scripts/check_companion_parity.py --role app --hacs-ref safety/3-2-1-namespace-ownership-parity
+
       - name: Validate Dockerfile runtime paths
         run: python scripts/test_dockerfile_runtime_paths.py
+
+      - name: Test release ZIP runtime dependency coverage
+        run: python scripts/test_update_zip_runtime_completeness.py
+
+      - name: Test read-only AI model diagnostics
+        run: python scripts/test_ai_model_readonly_diagnostics.py
+
+      - name: Dry-run offline ZIP with refreshed manifest (never publish/install)
+        run: |
+          python scripts/update_manifest_hashes.py
+          python scripts/validate_release.py --strict-manifest-hashes
+          python scripts/build_local_update.py --output "$RUNNER_TEMP/SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
+          python scripts/build_local_update.py --verify-only --output "$RUNNER_TEMP/SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
+          python local_apps/sbc5_control_center/zip_security_preflight.py "$RUNNER_TEMP/SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
+          python - <<'PY'
+          import json
+          import os
+          import zipfile
+          from pathlib import Path
+          manifest = json.loads(Path("update-manifest.json").read_text())
+          release = json.loads(Path("local_apps/sbc5_control_center/release.json").read_text())
+          assert manifest["version"] == release["version"], (
+              "Offline CI cannot unexpectedly change release version",
+              manifest["version"], release["version"],
+          )
+          path = Path(os.environ["RUNNER_TEMP"]) / "SBC5_OFFLINE_CI_INSPECTION_ONLY.zip"
+          with zipfile.ZipFile(path) as archive:
+              members = set(archive.namelist())
+              for item in (
+                  "local_apps/sbc5_control_center/ai_model_lock.py",
+                  "local_apps/sbc5_control_center/zip_security_preflight.py",
+                  "local_apps/sbc5_control_center/ai_cooling_v5.py",
+                  "local_apps/sbc5_control_center/ai_cooling_v5_1.py",
+                  "local_apps/sbc5_control_center/thermal_effectiveness.py",
+              ):
+                  assert item in members, f"Offline ZIP missing required runtime dependency: {item}"
+          print("OFFLINE CI ZIP self-verification: PASS; not an installable release")
+          PY
 
       - name: Test migration profile guard
         run: python scripts/test_migration_profile_guard.py
@@ -52,8 +93,43 @@ jobs:
       - name: Test canary migration handoff
         run: python scripts/test_canary_migration.py
 
+      - name: Test 3.2.0 to 3.2.1-rc2 model-safe canary upgrade
+        run: python scripts/test_upgrade_3_2_1_model_preservation.py
+
+      - name: Test full v5.2 evaluator persistence across process restarts
+        run: python scripts/test_ai_v5_2_process_restart_persistence.py
+
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
+
+      - name: Test Card UI pre-release version synchronization
+        run: python scripts/test_card_ui_prerelease_sync.py
+
+      - name: Test ZIP pre-extraction security
+        run: python scripts/test_zip_security_preflight_3_2_1.py
+
+      - name: Verify published 3.2.0 ZIP with new security preflight
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/sbc5-release-zip"
+          gh release download 3.2.0 --repo "$GITHUB_REPOSITORY" --pattern '*.zip' --dir "$RUNNER_TEMP/sbc5-release-zip"
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, 'local_apps/sbc5_control_center')
+          from zip_security_preflight import validate_archive
+          files = list(Path(__import__('os').environ['RUNNER_TEMP'], 'sbc5-release-zip').glob('*.zip'))
+          assert len(files) == 1, f'Expected one published release ZIP, found {len(files)}'
+          validate_archive(files[0])
+          print(f'Published 3.2.0 ZIP security compatibility: PASS ({files[0].name})')
+          PY
+
+      - name: Test legacy registry ownership before namespace cleanup
+        run: python scripts/test_migration_namespace_ownership_3_2_1.py
+
+      - name: Test Ingress API JSON request bounds
+        run: python scripts/test_config_ui_request_limits_3_2_1.py
 
       - name: Test Thermal Predictor Shadow Assist
         run: python scripts/test_thermal_predictor_shadow.py
@@ -72,6 +148,12 @@ jobs:
 
       - name: Test SBC5 Global Edition preflight
         run: python scripts/test_global_release_readiness_3_2_0.py
+
+      - name: Test 3.2.1 manual release publication gates
+        run: python scripts/test_release_workflow_3_2_1_gates.py
+
+      - name: Test isolated 3.2.1 diagnostic Canary safety
+        run: python scripts/test_canary_3_2_1_shadow_isolation.py
 
       - name: Test Thermal Predictor Stability v2
         run: python scripts/test_thermal_predictor_stability_3_1_30.py
@@ -97,11 +179,26 @@ jobs:
       - name: Test AI Cooling hierarchical continuous learning v5
         run: python scripts/test_ai_hierarchical_v5.py
 
+      - name: Test AI model integrity fail-closed protection
+        run: python scripts/test_ai_model_integrity.py
+
+      - name: Test AI reset backup and integrity
+        run: python scripts/test_ai_model_reset_backup.py
+
+      - name: Test concurrent AI learning and reset transaction
+        run: python scripts/test_ai_model_reset_concurrency.py
+
       - name: Test Restart Manager HACS handoff
         run: python scripts/test_restart_manager_hacs_handoff.py
 
       - name: Test AI v5 observability and log cleanup
         run: python scripts/test_ai_v5_observability.py
+
+      - name: Validate AI output-to-PWM boundary
+        run: python scripts/test_ai_output_boundary_3_2_1.py
+
+      - name: Validate App-private AI training telemetry
+        run: python scripts/test_private_ai_training_telemetry_3_2_1.py
 
       - name: Test AI Cooling v5.1 transient learning guards
         run: python scripts/test_ai_v5_1_transient_learning.py

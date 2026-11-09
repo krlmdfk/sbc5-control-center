@@ -79,6 +79,8 @@ LEGACY_BRIDGE_MIGRATION_MARKER="/homeassistant/sbc5_control_center/legacy_bridge
 LEGACY_BRIDGE_SOURCE_DIR="/legacy_bridge"
 NATIVE_RESTART_MARKER="/homeassistant/sbc5_control_center/restart_required.json"
 TELEMETRY_STATE_FILE="/homeassistant/sbc5_control_center/telemetry.json"
+# Model input must not be sourced from the Home Assistant configuration mirror.
+AI_TRAINING_TELEMETRY_FILE="/data/ai_training_telemetry.json"
 REALTIME_STATE_FILE="/homeassistant/sbc5_control_center/realtime.json"
 ADAPTIVE_PWM_STATE_FILE="/homeassistant/sbc5_control_center/adaptive_pwm.json"
 # v2.5.2 AI Adaptive Cooling Preview — local/offline online learner.
@@ -2660,6 +2662,11 @@ scan_local_update_candidate() {
   shopt -s nullglob
   for update_dir in "$LOCAL_UPDATE_DIR" "$LEGACY_LOCAL_UPDATE_DIR" "$LEGACY_OLD_LOCAL_UPDATE_DIR"; do
     for zip in "$update_dir"/*.zip; do
+      # Inspect and hash the untrusted archive before reading its embedded manifest.
+      # A second preflight immediately before extraction closes the scan/install gap.
+      if ! python3 /zip_security_preflight.py "$zip" >/dev/null 2>&1; then
+        continue
+      fi
       manifest_entry="$(unzip -Z1 "$zip" 2>/dev/null | awk '/(^|\/)update-manifest\.json$/ {print; exit}')"
       [ -n "$manifest_entry" ] || continue
       manifest="$(unzip -p "$zip" "$manifest_entry" 2>/dev/null || true)"
@@ -2968,18 +2975,44 @@ install_local_update() (
 
   scan_local_update_candidate || { log "Brak nowszej lokalnej paczki ZIP do instalacji."; return 1; }
 
-  local zip version root manifest_entry restart_required update_scope stage manifest_file ts backup app_src package_src bridge_src
+  local zip version root manifest_entry restart_required update_scope stage manifest_file ts backup app_src package_src bridge_src snapshot_dir snapshot
   zip="$(jq -r '.zip' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   version="$(jq -r '.version' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   root="$(jq -r '.root' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   manifest_entry="$(jq -r '.manifest_entry' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   restart_required="$(jq -r '.restart_required // "home_assistant"' "$LOCAL_UPDATE_CANDIDATE_FILE")"
   update_scope="$(jq -r '.update_scope // "full"' "$LOCAL_UPDATE_CANDIDATE_FILE")"
-  stage="/tmp/sbc5_update_${$}"
-  rm -rf "$stage"; mkdir -p "$stage"
-  unzip -q "$zip" -d "$stage" || { log "BŁĄD aktualizacji: nie można rozpakować ${zip}."; rm -rf "$stage"; return 1; }
+
+  # Snapshot the candidate in a private, random directory. Validation and
+  # extraction use the SAME immutable-in-practice local copy, never the mutable
+  # archive in the user-writable update folder. Keep the snapshot outside the
+  # extraction tree so ZIP members can never overwrite the source while reading.
+  snapshot_dir="$(mktemp -d /tmp/sbc5_update.XXXXXXXX)" || {
+    log "BŁĄD aktualizacji: nie udało się utworzyć prywatnego katalogu staging."
+    return 1
+  }
+  snapshot="$snapshot_dir/candidate.zip"
+  stage="$snapshot_dir/extracted"
+  trap 'rm -rf -- "$snapshot_dir"; rmdir "$LOCAL_UPDATE_LOCK_FILE" 2>/dev/null || true' EXIT
+  if ! cp -- "$zip" "$snapshot"; then
+    log "BŁĄD aktualizacji: nie udało się zabezpieczyć kopii paczki ZIP."
+    return 1
+  fi
+  # Check paths, member types, the manifest allow-list and all payload hashes
+  # BEFORE extraction. The original candidate can be replaced without changing
+  # this verified snapshot.
+  if ! python3 /zip_security_preflight.py "$snapshot"; then
+    log "BŁĄD aktualizacji: kontrola bezpieczeństwa kopii ZIP nie powiodła się."
+    return 1
+  fi
+  mkdir -p "$stage" || return 1
+  unzip -q "$snapshot" -d "$stage" || { log "BŁĄD aktualizacji: nie można rozpakować zweryfikowanej kopii ZIP."; return 1; }
   manifest_file="${stage}/${manifest_entry}"
-  verify_local_update_package "$zip" "$stage" "$root" "$manifest_file" || {
+  if [ "$(jq -r '.version // empty' "$manifest_file" 2>/dev/null || true)" != "$version" ]; then
+    log "BŁĄD aktualizacji: paczka zmieniła się od czasu skanowania; anulowano instalację."
+    return 1
+  fi
+  verify_local_update_package "$snapshot" "$stage" "$root" "$manifest_file" || {
     mkdir -p "$LOCAL_UPDATE_FAILED_DIR"
     failed_zip="$LOCAL_UPDATE_FAILED_DIR/$(basename "$zip")"
     mv -f "$zip" "$failed_zip" 2>/dev/null || { cp -f "$zip" "$failed_zip" 2>/dev/null || true; rm -f "$zip" 2>/dev/null || true; }
@@ -7844,6 +7877,26 @@ publish_telemetry_snapshot() {
     > "$tmp" 2>/dev/null || { rm -f "$tmp"; return 1; }
   mv -f "$tmp" "$TELEMETRY_STATE_FILE"
 
+  # Build a compact training snapshot directly from fresh host readings. Never
+  # read back the Home Assistant mirror: other Apps may have write access there.
+  # mktemp creates a 0600 file inside the App-private persistent volume.
+  local ai_training_tmp=""
+  if ai_training_tmp="$(mktemp "${AI_TRAINING_TELEMETRY_FILE}.XXXXXX")"; then
+    if jq -cn \
+      --argjson sample_epoch "$now" \
+      --argjson cpu_core_usage_percent "$SYS_CPU_CORE_USAGE_JSON" \
+      --argjson load_1m "$SYS_LOAD_1M" \
+      --argjson cpu_core_count "$SYS_CPU_CORE_COUNT" \
+      --argjson pmic_power_w "$SYS_PMIC_POWER_W" \
+      --argjson cpu_frequency_mhz "$SYS_CPU_FREQ_MHZ" \
+      '{schema:1,sample_epoch:$sample_epoch,cpu_core_usage_percent:$cpu_core_usage_percent,load_1m:$load_1m,cpu_core_count:$cpu_core_count,pmic_power_w:$pmic_power_w,cpu_frequency_mhz:$cpu_frequency_mhz}' \
+      > "$ai_training_tmp" 2>/dev/null; then
+      mv -f -- "$ai_training_tmp" "$AI_TRAINING_TELEMETRY_FILE" || rm -f -- "$ai_training_tmp"
+    else
+      rm -f -- "$ai_training_tmp"
+    fi
+  fi
+
   if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
     local relay_payload relay_now telemetry_json
     relay_now="${EPOCHREALTIME%%.*}"
@@ -8837,6 +8890,27 @@ ai_cooling_mark_paused() {
   tmp="${AI_COOLING_MIRROR_FILE}.tmp.$$"; printf '%s\n' "$payload" > "$tmp" 2>/dev/null && mv -f "$tmp" "$AI_COOLING_MIRROR_FILE" 2>/dev/null || true
 }
 
+# Last line of defense between the numerical AI worker and the physical fan.
+# AI Cooling may adjust the Adaptive baseline by up to 2 pp; active Thermal
+# Predictor may add up to another 2 pp. The controller must enforce this bound
+# regardless of the model files or evaluator's reported state.
+ai_cooling_suggestion_allowed() {
+  local baseline="$1" proposed="$2" correction="$3" state="$4" minimum="$5" maximum="$6"
+  [[ "$state" == "assist" ]] || return 1
+  [[ "$baseline" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  [[ "$proposed" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  [[ "$correction" =~ ^-?(0|[1-9][0-9]?)$ ]] || return 1
+  [[ "$minimum" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  [[ "$maximum" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+  (( minimum >= 0 && minimum <= maximum && maximum <= 100 )) || return 1
+  (( minimum <= baseline && baseline <= maximum )) || return 1
+  (( minimum <= proposed && proposed <= maximum )) || return 1
+  (( proposed >= 0 && proposed <= 100 )) || return 1
+  local delta=$((proposed - baseline))
+  (( delta >= -4 && delta <= 4 && correction == delta )) || return 1
+  return 0
+}
+
 adaptive_pwm_controller_loop() {
   sleep 8
   trap 'fan_control_shutdown_or_handoff controller_exit' EXIT
@@ -8855,6 +8929,7 @@ adaptive_pwm_controller_loop() {
   local up_confirm_cycles=2 up_hold_cycles=3
   local ai_cycle="$AI_COOLING_EVAL_CYCLES" ai_result="" ai_output="" ai_state="" ai_reason="" ai_conf=0 ai_prediction=-1 ai_qualified_samples=0 ai_correction=0 ai_bucket="" ai_observations_total=0 ai_bin_observations=0 ai_qualified_total=0 ai_qualified_flag=0 ai_qualification_reason="" ai_stable_streak=0 ai_last_log="" ai_log_tick=0 ai_direct_conf=0 ai_global_conf=0 ai_effective_conf=0 ai_direct_prediction=-1 ai_global_prediction=-1 ai_effective_prediction=-1 ai_transfer_source="legacy" ai_effective_coverage=0 tp_mode="" tp_f30="" tp_f60="" tp_f120="" tp_conf=0 tp_mae="" tp_weighted="" tp_error="" tp_gain="" tp_weights="" tp_accepted=0 tp_rejected=0 tp_req=0 tp_applied=0 tp_gate_mode="" tp_gate_reason="" tp_decision_reason=""
   local reload_token="" reload_now=""
+  local ai_eval_empty_warned=false
 
   load_custom_curve 1
   reload_token="$(cat "$CONFIG_UI_RELOAD_FILE" 2>/dev/null || true)"
@@ -9123,11 +9198,12 @@ adaptive_pwm_controller_loop() {
         ai_cycle=0
         ai_result="$(python3 "$AI_COOLING_SCRIPT" step \
           --model "$AI_COOLING_MODEL_FILE" --status "$AI_COOLING_STATUS_FILE" --mirror "$AI_COOLING_MIRROR_FILE" \
-          --telemetry "$TELEMETRY_STATE_FILE" --mode "$AI_COOLING_EFFECTIVE_MODE" --control-mode "$COOLING_CONTROL_MODE" \
+          --telemetry "$AI_TRAINING_TELEMETRY_FILE" --require-private-telemetry --mode "$AI_COOLING_EFFECTIVE_MODE" --control-mode "$COOLING_CONTROL_MODE" \
           --controller-action "$action" --temp-milli "$temp_milli" --target "$CURVE1_TARGET_C" --pwm "$controller_state" --baseline "$desired" \
           --min-safe "$min_run_floor" --maximum "$max_state" --assist-limit "$AI_COOLING_ASSIST_LIMIT_PCT" --deadband "$ADAPTIVE_PWM_DEADBAND_C" \
           --min-samples "$AI_COOLING_MIN_SAMPLES" --grid-profile "$AI_GRID_PROFILE_FILE" --curve-points-csv "$CUSTOM_TRIPS_CSV" 2>/dev/null || true)"
         if [ -n "$ai_result" ]; then
+          ai_eval_empty_warned=false
           ai_log_tick=$((ai_log_tick + 1))
           IFS=$'\t' read -r ai_output ai_state ai_reason ai_conf ai_prediction ai_qualified_samples ai_correction ai_bucket ai_observations_total ai_bin_observations ai_qualified_total ai_qualified_flag ai_qualification_reason ai_stable_streak ai_direct_conf ai_global_conf ai_effective_conf ai_direct_prediction ai_global_prediction ai_effective_prediction ai_transfer_source ai_effective_coverage tp_mode tp_f30 tp_f60 tp_f120 tp_conf tp_mae tp_weighted tp_error tp_gain tp_weights tp_accepted tp_rejected tp_req tp_applied tp_gate_mode tp_gate_reason tp_decision_reason <<< "$ai_result"
           case "$ai_output" in ''|*[!0-9]*) ai_output="$desired" ;; esac
@@ -9137,6 +9213,7 @@ adaptive_pwm_controller_loop() {
           case "$tp_req" in ''|-|*[!0-9-]*) tp_req=0 ;; esac
           case "$tp_applied" in ''|-|*[!0-9-]*) tp_applied=0 ;; esac
           case "$ai_qualified_samples" in ''|*[!0-9]*) ai_qualified_samples=0 ;; esac
+          case "$ai_observations_total" in ''|*[!0-9]*) ai_observations_total=0 ;; esac
           case "$ai_bin_observations" in ''|*[!0-9]*) ai_bin_observations=0 ;; esac
           case "$ai_qualified_total" in ''|*[!0-9]*) ai_qualified_total=0 ;; esac
           case "$ai_direct_conf" in ''|*[!0-9]*) ai_direct_conf="$ai_conf" ;; esac
@@ -9147,20 +9224,30 @@ adaptive_pwm_controller_loop() {
           case "$ai_effective_prediction" in ''|-|*[!0-9.-]*) ai_effective_prediction="$ai_prediction" ;; esac
           [ -n "$ai_transfer_source" ] || ai_transfer_source="legacy"
           case "$ai_effective_coverage" in ''|*[!0-9]*) ai_effective_coverage=0 ;; esac
-          if [ "$AI_COOLING_EFFECTIVE_MODE" = "assist" ] && [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$ai_output" -ne "$desired" ] 2>/dev/null; then
-            desired="$ai_output"
-            action="${action}_ai_assist"
+          if [ "$AI_COOLING_EFFECTIVE_MODE" = "assist" ] && [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$ai_output" != "$desired" ]; then
+            if ai_cooling_suggestion_allowed "$desired" "$ai_output" "$ai_correction" "$ai_state" "$min_run_floor" "$max_state"; then
+              desired="$ai_output"
+              action="${action}_ai_assist"
+            else
+              log "AI Cooling: odrzucono nieprawidłową korektę modelu; zachowuję decyzję Adaptive PWM (state=${ai_state}, output=${ai_output}, correction=${ai_correction})."
+            fi
           fi
+
           if [ "$ai_qualified_flag" = "1" ] && { [ "$ai_qualified_samples" = "1" ] || [ "$ai_qualified_samples" = "$AI_COOLING_MIN_SAMPLES" ] || [ $((ai_qualified_samples % 5)) -eq 0 ]; }; then
-            log "AI Cooling: qualified sample; bucket=${ai_bucket}; quality=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; observations=${ai_bin_observations}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%."
+            log "AI Cooling: qualified sample; bucket=${ai_bucket}; observations_total=${ai_observations_total}; bin_observations=${ai_bin_observations}; qualified_samples_total=${ai_qualified_total}; bin_qualified_samples=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%."
           elif { [ "$ai_last_log" != "${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}" ] || [ $((ai_log_tick % AI_COOLING_LOG_KEEPALIVE_CYCLES)) -eq 0 ]; } && { [ "$ai_state" = "assist" ] || [ "$ai_reason" = "insufficient_qualified_samples" ] || [ "$ai_bin_observations" = "1" ]; }; then
-            log "AI Cooling: state=${ai_state}; reason=${ai_reason}; bucket=${ai_bucket}; observations=${ai_bin_observations}; qualified=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%; qualification=${ai_qualification_reason}."
+            log "AI Cooling: state=${ai_state}; reason=${ai_reason}; bucket=${ai_bucket}; observations_total=${ai_observations_total}; bin_observations=${ai_bin_observations}; qualified_samples_total=${ai_qualified_total}; bin_qualified_samples=${ai_qualified_samples}/${AI_COOLING_MIN_SAMPLES}; confidence=${ai_conf}% [direct=${ai_direct_conf}% global=${ai_global_conf}% effective=${ai_effective_conf}%]; prediction=${ai_prediction}% [direct=${ai_direct_prediction}% global=${ai_global_prediction}% effective=${ai_effective_prediction}%]; transfer=${ai_transfer_source}; effective_coverage=${ai_effective_coverage}%; qualification=${ai_qualification_reason}."
             ai_last_log="${ai_state}:${ai_bucket}:${ai_conf}:${ai_prediction}:${ai_qualified_samples}:${ai_effective_conf}:${ai_transfer_source}:${ai_effective_coverage}"
           fi
           # 3.1.21 Thermal Predictor observability travels in the existing AI evaluator TSV.
           # Log every ~60 s to keep diagnostics useful without adding polling or log spam.
           if [ -n "${tp_mode:-}" ] && [ $((ai_log_tick % 6)) -eq 0 ]; then
             log "Thermal Predictor: mode=${tp_mode}; F30=${tp_f30}C F60=${tp_f60}C F120=${tp_f120}C; confidence=${tp_conf}%; MAE_avg=${tp_mae}C; weighted=${tp_weighted}C error=${tp_error}C; weights=${tp_weights}; gain=${tp_gain}; accepted/rejected=${tp_accepted}/${tp_rejected}; AI_corr=${ai_correction}pp; TP_req=${tp_req}pp; TP_applied=${tp_applied}pp; gate=${tp_gate_mode:-observe}/${tp_gate_reason:-unknown}; decision=${tp_decision_reason:-near_target}; guard=${ai_reason}."
+          fi
+        else
+          if [ "$ai_eval_empty_warned" != "true" ]; then
+            log "AI Cooling: evaluator nie zwrócił wyniku; bez korekty AI, Adaptive PWM pozostaje aktywny. Sprawdź integralność modelu /data/ai_cooling_model.json."
+            ai_eval_empty_warned=true
           fi
         fi
       fi

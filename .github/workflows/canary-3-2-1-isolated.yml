@@ -1,0 +1,66 @@
+name: SBC5 3.2.1 isolated read-only Canary package
+
+on:
+  push:
+    branches:
+      - test/3-2-1-isolated-shadow-canary-20261109
+    paths:
+      - '.github/workflows/canary-3-2-1-isolated.yml'
+      - 'local_apps/sbc5_control_center_canary/**'
+      - 'scripts/test_canary_3_2_1_shadow_isolation.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary-inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Canary runtime isolation and synthetic archives
+        run: python scripts/test_canary_3_2_1_shadow_isolation.py
+      - name: Make separately installable local Home Assistant Canary folder
+        run: |
+          python - <<'PY'
+          import hashlib, zipfile
+          from pathlib import Path
+          source=Path("local_apps/sbc5_control_center_canary")
+          files=("config.yaml", "Dockerfile", "canary_runner.py", "README.md")
+          target=Path("dist/SBC5_3.2.1_ISOLATED_CANARY_LOCAL_APP.zip")
+          target.parent.mkdir(exist_ok=True)
+          with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+              for item in files:
+                  source_file=source/item
+                  assert source_file.is_file(), item
+                  archive.write(source_file, f"sbc5_control_center_canary/{item}")
+          digest=hashlib.sha256(target.read_bytes()).hexdigest()
+          (target.parent / (target.name + ".sha256")).write_text(f"{digest}  {target.name}\n")
+          with zipfile.ZipFile(target) as archive:
+              names=set(archive.namelist())
+              assert names=={f"sbc5_control_center_canary/{item}" for item in files}
+          print("Isolated Canary package: PASS", target, digest)
+          PY
+      - name: Explicitly mark the ZIP as local-app folder, not SBC5 update
+        run: |
+          cat > dist/READ_ME_FIRST.txt <<'TEXT'
+          ISOLATED SBC5 3.2.1 CANARY — LOCAL HOME ASSISTANT APP FOLDER.
+          NOT AN SBC5_UPDATE ZIP.
+          Extract to a distinct /addons/sbc5_control_center_canary directory.
+          NEVER put this ZIP in the SBC5 local-update directory.
+          Manual start only. Read-only /share mount. No fan/PWM control.
+          The inspectable 3.2.1 offline ZIP must be supplied separately under
+          /share/sbc5_canary/SBC5_3.2.1_OFFLINE_INSPECTION_ONLY.zip.
+          TEXT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SBC5-3.2.1-ISOLATED-LOCAL-CANARY-ONLY
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7

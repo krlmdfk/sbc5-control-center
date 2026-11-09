@@ -14,6 +14,8 @@ import argparse
 import json
 import math
 import os
+import stat
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -633,6 +635,47 @@ def _migrate_model(raw: Any, now: float) -> dict[str, Any]:
     model["workload_model_reset_reason"] = "workload_buckets_v2"
     return model
 
+def _load_model_for_step(path: Path, now: float) -> dict[str, Any]:
+    """Refuse to replace an existing unreadable model with fresh training state.
+
+    A genuinely missing file (new install or explicitly requested reset) may
+    initialize a fresh model. Existing malformed files remain untouched.
+    """
+    try:
+        raw_text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return _fresh_model(now)
+    except (OSError, UnicodeError) as exc:
+        raise RuntimeError(
+            "SBC5 AI model integrity: existing model unreadable; preserving file"
+        ) from exc
+    try:
+        raw = json.loads(raw_text)
+    except (ValueError, UnicodeError) as exc:
+        raise RuntimeError(
+            "SBC5 AI model integrity: existing model is invalid JSON; preserving file"
+        ) from exc
+    if not isinstance(raw, dict) or not raw:
+        raise RuntimeError(
+            "SBC5 AI model integrity: existing model is not a nonempty object; preserving file"
+        )
+    if not any(k in raw for k in ("schema", "observations_total", "samples_total", "bins", "temperature_density", "hierarchical_v5")):
+        raise RuntimeError(
+            "SBC5 AI model integrity: existing model is missing recognized keys; preserving file"
+        )
+    schema = raw.get("schema")
+    if schema is not None and (
+        isinstance(schema, bool)
+        or not isinstance(schema, int)
+        or schema < 0
+        or schema > SCHEMA
+    ):
+        raise RuntimeError(
+            "SBC5 AI model integrity: unsupported existing schema; preserving file"
+        )
+    return _migrate_model(raw, now)
+
+
 def _bin_confidence(b: dict[str, Any], min_samples: int) -> int:
     qn = int(_num(b.get("qualified_n"), 0))
     if qn <= 0:
@@ -936,13 +979,63 @@ def _grid_suggestion(
         "advisory_only": False,
     }
 
+# Train only from an atomic, local App-private host snapshot. The shared
+# Home Assistant telemetry mirror is never a trusted training input.
+PRIVATE_TELEMETRY_MAX_AGE_SECONDS = 90
+PRIVATE_TELEMETRY_MAX_SIZE_BYTES = 16384
+
+
+def _private_telemetry(path: Path, now: float) -> dict[str, Any] | None:
+    try:
+        # This is a defense-in-depth check against accidental shared/read-only
+        # mounts or malformed state, not protection from privileged host writes.
+        st = path.lstat()
+        if not stat.S_ISREG(st.st_mode) or st.st_size > PRIVATE_TELEMETRY_MAX_SIZE_BYTES:
+            return None
+        if st.st_mode & 0o077:
+            return None
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict) or data.get("schema") != 1:
+            return None
+        stamp = _num(data.get("sample_epoch"), -1)
+        if not (0 <= now - stamp <= PRIVATE_TELEMETRY_MAX_AGE_SECONDS):
+            return None
+        cores = _num(data.get("cpu_core_count"), -1)
+        load = _num(data.get("load_1m"), -1)
+        if not (1 <= cores <= 256 and 0 <= load <= 1024):
+            return None
+        core_loads = data.get("cpu_core_usage_percent")
+        if not isinstance(core_loads, (list, dict)):
+            return None
+        values = list(core_loads.values()) if isinstance(core_loads, dict) else core_loads
+        if not (1 <= len(values) <= 256):
+            return None
+        if any(not (0 <= _num(value, -1) <= 100) for value in values):
+            return None
+        for opt, maximum in (("pmic_power_w", 250.0), ("cpu_frequency_mhz", 5000.0)):
+            value = data.get(opt)
+            if value is not None and not (0 <= _num(value, -1) <= maximum):
+                return None
+        return data
+    except (OSError, ValueError, TypeError, AttributeError, json.JSONDecodeError):
+        return None
+
+
 def step(args: argparse.Namespace) -> int:
     now = time.time()
     model_path = Path(args.model)
     status_path = Path(args.status)
     mirror_path = Path(args.mirror) if args.mirror else None
-    telemetry = _read_json(Path(args.telemetry), {})
-    model = _migrate_model(_read_json(model_path, {}), now)
+    if args.require_private_telemetry:
+        telemetry = _private_telemetry(Path(args.telemetry), now)
+        if telemetry is None:
+            # stdout is intentionally empty on invalid inputs. The caller keeps
+            # the classic Adaptive PWM decision and performs no AI correction.
+            print("AI Cooling: rejected invalid/stale private telemetry", file=sys.stderr)
+            return 2
+    else:
+        telemetry = _read_json(Path(args.telemetry), {})
+    model = _load_model_for_step(model_path, now)
 
     temp = args.temp_milli / 1000.0
     target = float(args.target)
@@ -1391,6 +1484,7 @@ def main() -> int:
     s.add_argument("--status", required=True)
     s.add_argument("--mirror", default="")
     s.add_argument("--telemetry", required=True)
+    s.add_argument("--require-private-telemetry", action="store_true")
     s.add_argument("--mode", choices=("disabled", "learning", "assist"), required=True)
     s.add_argument("--control-mode", choices=("automatic", "hybrid", "manual"), required=True)
     s.add_argument("--controller-action", default="unknown")

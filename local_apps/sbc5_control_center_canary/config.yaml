@@ -1,0 +1,24 @@
+name: SBC5 Control Center Canary — Offline AI Shadow Test
+version: 3.2.1
+slug: sbc5_control_center_canary
+description: "Isolated offline 3.2.1 AI model shadow-test; no fan/GPIO control, no host configuration writes and no Home Assistant API access."
+arch:
+  - aarch64
+machine:
+  - raspberrypi5-64
+homeassistant: 2026.10.1
+stage: experimental
+startup: application
+boot: manual
+init: false
+full_access: false
+host_pid: false
+homeassistant_api: false
+hassio_api: false
+map:
+  - type: share
+    read_only: true
+    path: /share
+ingress: false
+options: {}
+schema: {}

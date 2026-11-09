@@ -5,6 +5,8 @@ import hashlib
 import json
 from pathlib import Path
 
+from build_local_update import required_runtime_files
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "update-manifest.json"
 
@@ -23,6 +25,11 @@ def main() -> int:
     if not isinstance(files, dict) or not files:
         raise SystemExit("update-manifest.json: missing non-empty 'files' mapping")
 
+    # Newly added runtime COPY inputs must not be silently absent from release ZIPs.
+    runtime_required = required_runtime_files(ROOT)
+    added = sorted(runtime_required - set(files))
+    for rel in added:
+        files[rel] = ""
     missing: list[str] = []
     for rel in list(files):
         p = ROOT / rel
@@ -35,7 +42,7 @@ def main() -> int:
         raise SystemExit("Missing manifest files:\n" + "\n".join(f"- {x}" for x in missing))
 
     MANIFEST.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"update-manifest hashes rebuilt: {len(files)}/{len(files)}")
+    print(f"update-manifest hashes rebuilt: {len(files)}/{len(files)}; Dockerfile COPY inputs added={len(added)}")
     return 0
 
 

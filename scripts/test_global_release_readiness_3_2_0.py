@@ -29,8 +29,12 @@ assert conf["hassio_role"] == "manager"
 
 release = json.loads((APP / "release.json").read_text(encoding="utf-8"))
 version = release["version"]
-assert version in {"3.1.37", "3.2.0"}, version
-if version == "3.2.0":
+# The 3.2.0 privilege disclosure remains the baseline for 3.2.x.
+# Keep 3.1.37 compatibility for the previously published release archive.
+assert version == "3.1.37" or (
+    version.startswith("3.2.") and version.split(".")[2].isdigit()
+), version
+if version != "3.1.37":
     assert conf["version"] == version
     assert release["package_version"] == version
     assert release["card_ui_version"] == version

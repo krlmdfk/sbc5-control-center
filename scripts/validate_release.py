@@ -16,6 +16,8 @@ from pathlib import Path
 
 import yaml
 
+from build_local_update import missing_runtime_files
+
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "local_apps" / "sbc5_control_center"
 DOMAIN = "sbc5_control_center"
@@ -168,6 +170,18 @@ def main() -> int:
     tree_issues = compare_trees(ROOT / "custom_components" / DOMAIN, APP / "bridge")
     expect(not tree_issues, "Integration/bridge mismatch:\n" + "\n".join(tree_issues))
 
+    missing_runtime = missing_runtime_files(um["files"])
+    if args.strict_manifest_hashes:
+        expect(
+            not missing_runtime,
+            "Release manifest omits Dockerfile COPY inputs:\n"
+            + "\n".join(f"- {item}" for item in missing_runtime),
+        )
+    elif missing_runtime:
+        print(
+            "Development manifest missing runtime sources (release blocked until hash rebuild): "
+            + ", ".join(missing_runtime)
+        )
     drift = manifest_drift(um)
     if args.strict_manifest_hashes:
         expect(not drift, "Update manifest validation failed:\n" + "\n".join(drift))

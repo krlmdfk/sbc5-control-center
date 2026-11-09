@@ -439,13 +439,34 @@ async def _prepare_sbc5_namespace_registry(hass: HomeAssistant) -> None:
         _LOGGER.warning("Could not write SBC5 registry migration marker")
 
 
-async def _cleanup_rpi5_namespace_entries(hass: HomeAssistant) -> None:
-    """Remove old-domain config entries only after native SBC5 entities are healthy."""
+async def _cleanup_rpi5_namespace_entries(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Remove old-domain entries only when native telemetry has the expected owner.
+
+    The package-provided update *sensor* is not owned by this integration; it
+    remains a readiness check, while CPU and fan require exact registry ownership.
+    """
     healthy = False
-    required = ("sensor.sbc5_cpu_temperature", "sensor.sbc5_fan_rpm", "sensor.sbc5_control_center_update")
+    required_native = {
+        "sensor.sbc5_cpu_temperature": "sbc5_cpu_temperature",
+        "sensor.sbc5_fan_rpm": "sbc5_fan_rpm",
+    }
+    update_sensor = "sensor.sbc5_control_center_update"
     for _ in range(45):
-        states = [hass.states.get(entity_id) for entity_id in required]
-        if all(st is not None and st.state not in {"unknown", "unavailable", "none", ""} for st in states):
+        registry = er.async_get(hass)
+        native_owned = all(
+            (registered := registry.async_get(entity_id)) is not None
+            and registered.platform == DOMAIN
+            and registered.unique_id == unique_id
+            and registered.config_entry_id == entry.entry_id
+            for entity_id, unique_id in required_native.items()
+        )
+        required_states = (*required_native, update_sensor)
+        live = all(
+            (state := hass.states.get(entity_id)) is not None
+            and state.state not in {"unknown", "unavailable", "none", ""}
+            for entity_id in required_states
+        )
+        if native_owned and live:
             healthy = True
             break
         await asyncio.sleep(2)
@@ -538,7 +559,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "sbc5_control_center_restore_legacy_customizations",
     )
     entry.async_create_background_task(
-        hass, _cleanup_rpi5_namespace_entries(hass), "sbc5_control_center_cleanup_rpi5_namespace"
+        hass, _cleanup_rpi5_namespace_entries(hass, entry), "sbc5_control_center_cleanup_rpi5_namespace"
     )
     return True
 

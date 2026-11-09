@@ -1,0 +1,142 @@
+name: SBC5 3.2.1 isolated offline candidate (no publish)
+
+on:
+  push:
+    branches:
+      - test/3-2-1-offline-candidate-20261109
+    paths:
+      - '.github/workflows/offline-3-2-1-candidate.yml'
+      - 'docs/TEST_PROTOCOL_3_2_1_OFFLINE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-only:
+    name: Prepare and inspect 3.2.1 offline ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact test candidate branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Reject unintended branch or event
+        run: |
+          test "$GITHUB_REF_NAME" = "test/3-2-1-offline-candidate-20261109"
+          case "$GITHUB_EVENT_NAME" in push|workflow_dispatch) ;; *) exit 1 ;; esac
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Validate source safety before version preparation
+        run: |
+          python scripts/validate_release.py
+          python scripts/test_update_zip_runtime_completeness.py
+          python scripts/test_ai_model_readonly_diagnostics.py
+          python scripts/test_ai_model_integrity.py
+          python scripts/test_ai_model_reset_backup.py
+          python scripts/test_ai_model_reset_concurrency.py
+          python scripts/test_ai_v5_2_process_restart_persistence.py
+          python scripts/test_upgrade_3_2_1_model_preservation.py
+          python scripts/check_companion_parity.py --role app --hacs-ref safety/3-2-1-namespace-ownership-parity
+
+      - name: Prepare 3.2.1 metadata in temporary runner checkout only
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.2.1 \
+            --release-date 2026-11-09 \
+            --restart-required home_assistant \
+            --summary-en "Offline 3.2.1 candidate: AI model preservation, safe migration, Card UI and verified update packaging." \
+            --summary-pl "Kandydat offline 3.2.1: ochrona modelu AI, bezpieczna migracja, Card UI i weryfikacja paczki aktualizacji." \
+            --fixed-en "Correct pre-release Card UI version handling and model-preserving migration validation." \
+            --fixed-pl "Poprawiono obsługę wersji testowych Card UI i weryfikację migracji chroniącą model." \
+            --security-en "Fail closed on invalid AI model; lock concurrent reset; preserve backup before reset; reject incomplete update archives." \
+            --security-pl "Blokada nadpisania uszkodzonego modelu AI, synchronizacja resetu, kopia przed resetem i wykrywanie niekompletnych paczek."
+          python scripts/validate_release.py --strict-manifest-hashes
+
+      - name: Validate all manifest-included Dockerfile sources and version consistency
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, "scripts")
+          from build_local_update import missing_runtime_files
+          release = json.loads(Path("local_apps/sbc5_control_center/release.json").read_text())
+          manifest = json.loads(Path("update-manifest.json").read_text())
+          bridge = json.loads(Path("custom_components/sbc5_control_center/manifest.json").read_text())
+          for name, value in (
+              ("App release", release["version"]),
+              ("Package", release["package_version"]),
+              ("Card UI", release["card_ui_version"]),
+              ("ZIP manifest", manifest["version"]),
+              ("Embedded HACS", bridge["version"]),
+          ):
+              assert value == "3.2.1", (name, value)
+          assert not missing_runtime_files(manifest["files"])
+          print("3.2.1 offline release metadata / runtime allow-list: PASS")
+          PY
+
+      - name: Build offline inspection ZIP and verify integrity
+        run: |
+          mkdir -p dist
+          python scripts/build_local_update.py --output dist/SBC5_3.2.1_OFFLINE_INSPECTION_ONLY.zip
+          python scripts/build_local_update.py --verify-only --output dist/SBC5_3.2.1_OFFLINE_INSPECTION_ONLY.zip
+          python local_apps/sbc5_control_center/zip_security_preflight.py dist/SBC5_3.2.1_OFFLINE_INSPECTION_ONLY.zip
+          sha256sum dist/SBC5_3.2.1_OFFLINE_INSPECTION_ONLY.zip > dist/SBC5_3.2.1_OFFLINE_INSPECTION_ONLY.zip.sha256
+
+      - name: Verify embedded model protection and exact package inventory
+        run: |
+          python - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path
+          z = Path("dist/SBC5_3.2.1_OFFLINE_INSPECTION_ONLY.zip")
+          with zipfile.ZipFile(z) as archive:
+              names = set(archive.namelist())
+              manifest = json.loads(archive.read("update-manifest.json"))
+              assert manifest["version"] == "3.2.1"
+              assert names == set(manifest["files"]) | {"update-manifest.json"}
+              essential = {
+                  "local_apps/sbc5_control_center/ai_model_lock.py",
+                  "local_apps/sbc5_control_center/ai_model_diagnostics.py",
+                  "local_apps/sbc5_control_center/zip_security_preflight.py",
+                  "local_apps/sbc5_control_center/ai_cooling_v5.py",
+                  "local_apps/sbc5_control_center/ai_cooling_v5_1.py",
+                  "local_apps/sbc5_control_center/ai_cooling_v5_2.py",
+                  "local_apps/sbc5_control_center/migration_manager_v2.py",
+                  "local_apps/sbc5_control_center/thermal_effectiveness.py",
+              }
+              assert essential <= names, sorted(essential - names)
+              print(f"Verified offline archive: {len(names)} entries, candidate 3.2.1")
+          PY
+
+      - name: Add offline-only non-install warning
+        run: |
+          cat > dist/READ_ME_FIRST.txt <<'TEXT'
+          SBC5 CONTROL CENTER 3.2.1 — OFFLINE INSPECTION ONLY.
+          THIS ARCHIVE IS NOT APPROVED FOR INSTALLATION OR PRODUCTION USE.
+          DO NOT COPY IT TO /config/sbc5_control_center_updates/.
+          NO HACS RELEASE OR APP RELEASE WAS CREATED.
+          THIS PACKAGE IS NOT VERIFIED AGAINST THE ACTUAL 3.2.1-rc2 INSTALLATION.
+          DO NOT INSTALL IT ON A RUNNING FAN CONTROLLER.
+          TEXT
+          cp docs/TEST_PROTOCOL_3_2_1_OFFLINE.md dist/TEST_PROTOCOL_3_2_1_OFFLINE.md
+          cp RELEASE_NOTES_3.2.1.md dist/RELEASE_NOTES_3.2.1_OFFLINE.md
+          sha256sum dist/*.zip | tee dist/VERIFY_SHA256.txt
+
+      - name: Upload offline artifact only (7 days, no GitHub Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SBC5-3.2.1-OFFLINE-INSPECTION-ONLY
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
