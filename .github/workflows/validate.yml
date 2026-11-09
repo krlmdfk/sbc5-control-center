@@ -52,6 +52,9 @@ jobs:
       - name: Test canary migration handoff
         run: python scripts/test_canary_migration.py
 
+      - name: Test 3.2.0 to 3.2.1-rc2 model-safe canary upgrade
+        run: python scripts/test_upgrade_3_2_1_model_preservation.py
+
       - name: Test runtime robustness
         run: python scripts/test_runtime_robustness.py
 
