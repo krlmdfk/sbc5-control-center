@@ -54,6 +54,16 @@ for text in ("build_local_update.py", "--verify-only", "zip_security_preflight.p
     assert text in zip_step["run"], text
 assert zip_i < names["Upload preflight artifact"][0]
 assert "build_release_zip.py" not in rel
+
+# A failed HACS validation must not force a second release attempt to
+# overwrite an already synchronized integration or block resumption.
+assert 'if [ "$HACS_CURRENT" != "$CURRENT_VERSION" ] && [ "$HACS_CURRENT" != "$VERSION" ]; then' in rel
+assert 'if git diff --cached --quiet; then' in rel
+assert 'if [ "$HACS_CURRENT" != "$VERSION" ]; then' in rel
+assert 'if [ "$HACS_CURRENT" = "$VERSION" ]; then' in rel
+assert 'Refusing to overwrite partial release' in rel
+assert 'echo "HACS_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"' in rel
+
 for name in ("Upload preflight artifact", "Publish main GitHub Release"):
     assert "SBC5_UPDATE_" in str(names[name][1])
     assert ".zip.sha256" in str(names[name][1])

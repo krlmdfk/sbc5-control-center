@@ -204,8 +204,8 @@ jobs:
           set -euo pipefail
           git clone "https://x-access-token:${HACS_TOKEN}@github.com/${HACS_REPO}.git" /tmp/sbc5-hacs
           HACS_CURRENT="$(python -c 'import json; print(json.load(open("/tmp/sbc5-hacs/custom_components/sbc5_control_center/manifest.json"))["version"])')"
-          if [ "$HACS_CURRENT" != "$CURRENT_VERSION" ]; then
-            echo "Version drift before release: main=$CURRENT_VERSION HACS=$HACS_CURRENT" >&2
+          if [ "$HACS_CURRENT" != "$CURRENT_VERSION" ] && [ "$HACS_CURRENT" != "$VERSION" ]; then
+            echo "Unexpected HACS version: App=$CURRENT_VERSION HACS=$HACS_CURRENT target=$VERSION" >&2
             exit 1
           fi
           python scripts/sync_hacs_repo.py \
@@ -218,11 +218,20 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "No HACS changes to publish" >&2
-            exit 1
+            if [ "$HACS_CURRENT" != "$VERSION" ]; then
+              echo "Unexpected empty HACS diff when upgrading from $HACS_CURRENT to $VERSION" >&2
+              exit 1
+            fi
+            echo "HACS $VERSION already synchronized; reusing the previously validated commit."
+          else
+            if [ "$HACS_CURRENT" = "$VERSION" ]; then
+              echo "Existing HACS $VERSION differs from expected distribution. Refusing to overwrite partial release." >&2
+              git diff --cached --stat
+              exit 1
+            fi
+            git commit -m "Release ${VERSION}"
+            git push origin HEAD:main
           fi
-          git commit -m "Release ${VERSION}"
-          git push origin HEAD:main
           echo "HACS_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Wait for HACS/Hassfest/Syntax validation
