@@ -61,17 +61,29 @@ def now_iso() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
-def semver(value: str) -> tuple[int, int, int] | None:
-    try:
-        parts = value.strip().split(".")
-        if len(parts) != 3:
-            return None
-        parsed = tuple(int(x) for x in parts)
-        if any(x < 0 for x in parsed):
-            return None
-        return parsed  # type: ignore[return-value]
-    except (AttributeError, TypeError, ValueError):
+def semver(value: str) -> tuple[int, int, int, int, tuple[tuple[int, int | str], ...]] | None:
+    """Parse stable and prerelease SemVer for candidate ordering."""
+    import re
+
+    if not isinstance(value, str):
         return None
+    match = re.fullmatch(
+        r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+        r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
+        r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?",
+        value.strip(),
+    )
+    if not match:
+        return None
+    major, minor, patch = (int(match.group(i)) for i in (1, 2, 3))
+    release_ids = match.group(4)
+    if release_ids is None:
+        return (major, minor, patch, 1, ())
+    identifiers = release_ids.split(".")
+    if any(item.isdigit() and len(item) > 1 and item[0] == "0" for item in identifiers):
+        return None
+    parts = tuple((0, int(item)) if item.isdigit() else (1, item) for item in identifiers)
+    return (major, minor, patch, 0, parts)
 
 
 def sha256(path: Path) -> str:
@@ -174,7 +186,7 @@ def app_state(slug: str) -> str:
 def select_target(current: str, source_version: str) -> tuple[str, str, str]:
     """Return target slug, target version and handoff mode."""
     source_channel = channel(current)
-    candidates: list[tuple[tuple[int, int, int], str, str, bool]] = []
+    candidates: list[tuple[tuple[int, int, int, int, tuple[tuple[int, int | str], ...]], str, str, bool]] = []
     source_semver = semver(source_version)
 
     for app in installed_apps():
@@ -412,7 +424,7 @@ def import_handoff(version: str) -> int:
         return 20 if mode == "canary_test" else 4
 
     expected_target_version = str(manifest.get("target_version", ""))
-    if expected_target_version and semver(expected_target_version) and semver(version) and semver(expected_target_version) != semver(version):
+    if expected_target_version and expected_target_version != version:
         write_status(
             "import_waiting_target_version",
             current_slug=current,
