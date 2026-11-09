@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import json, os, tempfile, time, copy, re
+import json, os, tempfile, time, copy, re, hashlib, shutil
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError
@@ -546,6 +546,62 @@ def cleanup_update_packages():
     out=update_package_cleanup_status(); out.update({'deleted':len(deleted),'freed_bytes':freed,'deleted_files':deleted})
     return out
 
+AI_MODEL_FILE = Path('/data/ai_cooling_model.json')
+AI_MODEL_BACKUPS = Path('/data/ai_model_backups')
+
+
+def _file_sha256(path):
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def backup_ai_model_before_reset(model_path=AI_MODEL_FILE, backup_dir=AI_MODEL_BACKUPS):
+    """Fail closed if an existing AI model cannot be durably snapshotted.
+
+    Keep independent timestamped backups; do not rely on the later reset
+    succeeding to retain a recoverable copy.
+    """
+    if model_path.is_symlink():
+        raise ValueError('Model AI jest dowiązaniem symbolicznym; reset przerwany')
+    if not model_path.exists():
+        return None
+    if not model_path.is_file():
+        raise ValueError('Plik modelu AI nie jest zwykłym plikiem; reset przerwany')
+
+    backup_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    stamp = time.strftime('%Y%m%d-%H%M%S')
+    fd, tmp_name = tempfile.mkstemp(prefix='.ai-model-', suffix='.tmp', dir=str(backup_dir))
+    backup = backup_dir / f'ai_cooling_model_{stamp}_{os.path.basename(tmp_name)[10:-4]}.json'
+    try:
+        with os.fdopen(fd, 'wb') as dst, model_path.open('rb') as src:
+            shutil.copyfileobj(src, dst)
+            dst.flush()
+            os.fsync(dst.fileno())
+        copied_sha = _file_sha256(Path(tmp_name))
+        # Model may be updated by the running learner: do not delete if the
+        # snapshot no longer matches the current source.
+        if _file_sha256(model_path) != copied_sha:
+            raise ValueError('Model AI zmienił się podczas kopii; reset przerwany')
+        os.replace(tmp_name, backup)
+        try:
+            dir_fd = os.open(str(backup_dir), os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
+        except OSError as exc:
+            raise RuntimeError('Nie można zatwierdzić trwałej kopii modelu AI') from exc
+        return {'backup': str(backup), 'sha256': copied_sha, 'bytes': backup.stat().st_size}
+    finally:
+        try:
+            Path(tmp_name).unlink()
+        except FileNotFoundError:
+            pass
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
     def send_json(self,obj,status=200):
@@ -601,10 +657,16 @@ class H(BaseHTTPRequestHandler):
                 self.send_json(cleanup_update_packages()); return
             if self.path=='/api/reset_ai_model':
                 if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
+                try:
+                    snapshot = backup_ai_model_before_reset()
+                except (OSError, ValueError, RuntimeError) as exc:
+                    self.send_json({'ok':False,'error':f'Reset modelu AI anulowany: {exc}'},409); return
+                # A reset explicitly requested by the user may clear these
+                # files only after the durable snapshot succeeded.
                 for path in ('/data/ai_cooling_model.json','/data/ai_cooling_status.json','/homeassistant/sbc5_control_center/ai_cooling.json'):
                     try: Path(path).unlink()
                     except FileNotFoundError: pass
-                self.send_json({'ok':True}); return
+                self.send_json({'ok':True,'model_backup':snapshot}); return
             if self.path=='/api/dashboard_card/backup':
                 if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
                 cfg=payload.get('config')
