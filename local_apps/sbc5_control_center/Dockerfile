@@ -43,6 +43,7 @@ COPY patch_adaptive_trim_3_1_31.py /patch_adaptive_trim_3_1_31.py
 COPY patch_setpoint_stability_3_1_32.py /patch_setpoint_stability_3_1_32.py
 # 3.1.28 AI stack: every module imported by the public v5.2 runtime must be
 # present in the container image. Keep each layer on a distinct runtime path.
+COPY ai_model_lock.py /ai_model_lock.py
 COPY ai_cooling_legacy.py /ai_cooling_legacy.py
 COPY thermal_predictor_v3.py /thermal_predictor_v3.py
 COPY thermal_active_policy.py /thermal_active_policy.py
