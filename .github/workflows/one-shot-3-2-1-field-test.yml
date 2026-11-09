@@ -1,0 +1,50 @@
+name: One-shot SBC5 3.2.1 field-test release request
+
+# This workflow is intentionally restricted to ONE introduction to main.
+# It does not trigger on normal source changes or future version bumps.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/one-shot-3-2-1-field-test.yml
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: sbc5-one-shot-3-2-1-field-test
+  cancel-in-progress: false
+
+jobs:
+  request:
+    if: github.repository == 'krlmdfk/sbc5-control-center' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Submit existing guarded release workflow (3.2.1 field-test only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Avoid duplicate publication requests if a release already exists.
+          if gh release view 3.2.1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "3.2.1 is already published; no release request submitted."
+            exit 0
+          fi
+          # Dispatch the EXISTING publishing workflow, not an independent
+          # publishing implementation. Its existing checks and safeguards apply.
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/dispatches" \
+            -f ref=main \
+            -f 'inputs[version]=3.2.1' \
+            -f 'inputs[restart_required]=home_assistant' \
+            -f 'inputs[summary_en]=AI model preservation and cooling stability improvements' \
+            -f 'inputs[summary_pl]=Ochrona modelu AI i poprawa stabilności chłodzenia' \
+            -f 'inputs[dry_run]=false' \
+            -f 'inputs[hardware_verified]=false' \
+            -f 'inputs[release_channel]=field_test' \
+            -f 'inputs[field_test_acknowledged]=true'
+          echo "Submitted 3.2.1 FIELD_TEST request to the guarded Publish SBC5 release workflow."
+          echo "NOT a hardware-validated stable release."
