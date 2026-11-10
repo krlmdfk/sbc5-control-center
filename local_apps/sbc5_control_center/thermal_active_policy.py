@@ -235,6 +235,33 @@ def gate(
     return "observe", "mae_above_threshold", 0
 
 
+
+def stabilize_quality_gate(
+    state: dict[str, Any], *, raw_mode: str, raw_reason: str,
+    raw_max_delta: int, enter_cycles: int = 2,
+) -> tuple[str, str, int]:
+    """Require consecutive high-quality cycles before expanding PWM authority.
+
+    Crucially, downgrades are *immediate*. A probation/observe decision is never
+    promoted or retained as active by history, so safety gates are authoritative.
+    State belongs to the short-lived guidance context, not predictor calibration.
+    """
+    if raw_mode != "active":
+        state["quality_gate_active_candidate_cycles"] = 0
+        state["quality_gate_effective_mode"] = raw_mode
+        return raw_mode, raw_reason, raw_max_delta
+
+    previous_mode = str(state.get("quality_gate_effective_mode") or "observe")
+    pending = max(0, int(round(num(state.get("quality_gate_active_candidate_cycles"), 0))))
+    pending = min(enter_cycles, pending + 1)
+    state["quality_gate_active_candidate_cycles"] = pending
+    if previous_mode == "active" or pending >= enter_cycles:
+        state["quality_gate_effective_mode"] = "active"
+        return "active", raw_reason, raw_max_delta
+    state["quality_gate_effective_mode"] = "probation"
+    return "probation", "active_waiting_confirmation", min(raw_max_delta, PROBATION_MAX_DELTA_PP)
+
+
 def forecast_confirmation(
     *, predictor: dict[str, Any], temp: float, target: float, slope: float, direction: str
 ) -> tuple[bool, str, dict[str, float]]:
