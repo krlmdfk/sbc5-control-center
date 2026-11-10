@@ -1,0 +1,84 @@
+name: SBC5 thermal PR75 preview ZIP
+
+on:
+  push:
+    branches:
+      - "fix/thermal-quality-hysteresis-20261110"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-preview:
+    name: Build verified test-only ZIP (no release)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate branch
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validation dependencies
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+
+      - name: Verify scripts and runtime syntax
+        run: |
+          bash -n local_apps/sbc5_control_center/run.sh
+          bash -n local_apps/sbc5_control_center/run_legacy.sh
+          python -m compileall -q local_apps/sbc5_control_center custom_components/sbc5_control_center scripts
+
+      - name: Strict App to HACS main and candidate parity
+        run: |
+          python scripts/check_companion_parity.py --role app --hacs-ref main
+          python scripts/check_companion_parity.py --role app --hacs-ref safety/3-2-1-namespace-ownership-parity
+
+      - name: Verify thermal regressions and preservation of learned AI state
+        run: |
+          python scripts/test_thermal_gate_diagnostics_3_2_1.py
+          python scripts/test_thermal_quality_gate_hysteresis.py
+          python scripts/test_thermal_gate_2h_replay.py
+          python scripts/test_analyze_thermal_control_logs.py
+          python scripts/test_thermal_predictor_stability_3_1_30.py
+          python scripts/test_thermal_guidance_context_reset.py
+          python scripts/test_ai_v5_2_process_restart_persistence.py
+
+      - name: Rebuild hashes in workspace (not committed)
+        run: |
+          python scripts/update_manifest_hashes.py
+          python scripts/validate_release.py --strict-manifest-hashes
+          git diff -- update-manifest.json > "${RUNNER_TEMP}/preview-manifest.diff"
+
+      - name: Build and verify complete ZIP
+        run: |
+          mkdir -p preview
+          python scripts/build_local_update.py --output preview/SBC5_3.2.1_PR75_THERMAL_PREVIEW_ONLY.zip
+          python scripts/build_local_update.py --verify-only --output preview/SBC5_3.2.1_PR75_THERMAL_PREVIEW_ONLY.zip
+          python local_apps/sbc5_control_center/zip_security_preflight.py preview/SBC5_3.2.1_PR75_THERMAL_PREVIEW_ONLY.zip
+          sha256sum preview/*.zip | tee preview/SHA256SUMS.txt
+
+      - name: Describe build and its limits
+        run: |
+          printf '%s\n' \
+            "SBC5 3.2.1 THERMAL PR75 PREVIEW" \
+            "Git SHA: ${GITHUB_SHA}" \
+            "Source branch: ${GITHUB_REF_NAME}" \
+            "Test only; not an official release; not published to Home Assistant or HACS." \
+            "Internal version remains 3.2.1; requires unique release version before production update." \
+            "Do not install on a critical system without backup and hardware test." \
+            "Build validated with strict App/HACS parity, thermal regressions, manifest checks and ZIP security preflight." \
+            > preview/BUILD_INFO.txt
+          cat preview/BUILD_INFO.txt >> "${GITHUB_STEP_SUMMARY}"
+          cat preview/SHA256SUMS.txt >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload ZIP as downloadable test artifact (not release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SBC5-3.2.1-PR75-THERMAL-PREVIEW
+          path: preview/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

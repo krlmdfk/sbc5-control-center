@@ -98,6 +98,16 @@ def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, 
         outcome_success_percent=outcome_success,
     )
 
+    # Raw eligibility is evaluated on every cycle. Only *promotion* to active
+    # is delayed; loss of quality/safety revokes active authority immediately.
+    raw_gate_mode, raw_gate_reason, raw_max_delta = gate_mode, gate_reason, max_delta
+    gate_mode, gate_reason, max_delta = policy.stabilize_quality_gate(
+        stability_state,
+        raw_mode=raw_gate_mode,
+        raw_reason=raw_gate_reason,
+        raw_max_delta=raw_max_delta,
+    )
+
     control_temp = _num(
         status.get("temperature_control_c"),
         _num(status.get("temperature_c"), target),
@@ -126,6 +136,9 @@ def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, 
         "candidate_gain": round(gain, 3),
         "gate_mode": gate_mode,
         "gate_reason": gate_reason,
+        "gate_raw_mode": raw_gate_mode,
+        "gate_raw_reason": raw_gate_reason,
+        "gate_active_candidate_cycles": int(_num(stability_state.get("quality_gate_active_candidate_cycles"), 0)),
         "decision_reason": str(decision.get("decision_reason") or "near_target"),
         "requested_delta_pp": int(_num(decision.get("requested_delta_pp"), 0.0)),
         "forecast_direction": str(decision.get("forecast_direction") or "neutral"),
@@ -203,6 +216,9 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         "requested_delta_pp": requested_delta,
         "applied_delta_pp": applied_delta,
         "gate_reason": guidance.get("gate_reason"),
+        "gate_raw_mode": guidance.get("gate_raw_mode"),
+        "gate_raw_reason": guidance.get("gate_raw_reason"),
+        "gate_active_candidate_cycles": guidance.get("gate_active_candidate_cycles", 0),
         "decision_reason": guidance.get("decision_reason"),
         "forecast_direction": guidance.get("forecast_direction"),
         "forecast_confirmed": guidance.get("forecast_confirmed"),
