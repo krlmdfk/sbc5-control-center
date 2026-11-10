@@ -12,6 +12,8 @@ on:
       - "scripts/test_thermal_gate_diagnostics_3_2_1.py"
       - "scripts/test_thermal_predictor_stability_3_1_30.py"
       - "scripts/test_thermal_quality_gate_hysteresis.py"
+      - "scripts/analyze_thermal_control_logs.py"
+      - "scripts/test_analyze_thermal_control_logs.py"
       - ".github/workflows/thermal-gate-audit.yml"
 
 permissions:
@@ -26,10 +28,12 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile thermal modules and diagnostic tests
-        run: python -m py_compile local_apps/sbc5_control_center/thermal_active_policy.py scripts/test_thermal_gate_diagnostics_3_2_1.py scripts/test_thermal_predictor_stability_3_1_30.py scripts/test_thermal_quality_gate_hysteresis.py
+        run: python -m py_compile local_apps/sbc5_control_center/thermal_active_policy.py scripts/test_thermal_gate_diagnostics_3_2_1.py scripts/test_thermal_predictor_stability_3_1_30.py scripts/test_thermal_quality_gate_hysteresis.py scripts/analyze_thermal_control_logs.py scripts/test_analyze_thermal_control_logs.py
       - name: Reproduce quality-gate baseline and safety behavior
         run: python scripts/test_thermal_gate_diagnostics_3_2_1.py
       - name: Test conservative hysteresis and safety downgrades
         run: python scripts/test_thermal_quality_gate_hysteresis.py
+      - name: Test read-only thermal log analysis
+        run: python scripts/test_analyze_thermal_control_logs.py
       - name: Preserve existing forecast stability tests
         run: python scripts/test_thermal_predictor_stability_3_1_30.py
