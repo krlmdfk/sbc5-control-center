@@ -32,7 +32,8 @@ jobs:
         run: python -m py_compile local_apps/sbc5_control_center/thermal_active_policy.py scripts/test_thermal_gate_diagnostics_3_2_1.py scripts/test_thermal_predictor_stability_3_1_30.py scripts/test_thermal_quality_gate_hysteresis.py scripts/test_thermal_gate_2h_replay.py scripts/analyze_thermal_control_logs.py scripts/test_analyze_thermal_control_logs.py
       - name: Enforce SBC5 App / released HACS integration and bridge parity
         run: python scripts/check_companion_parity.py --role app --hacs-ref main
-      - name: Enforce SBC5 App / HACS candidate PR 36 parity
+      - name: Enforce SBC5 App / HACS candidate PR 36 parity (candidate only)
+        if: github.head_ref == 'fix/thermal-quality-hysteresis-20261110' || github.ref_name == 'fix/thermal-quality-hysteresis-20261110'
         run: python scripts/check_companion_parity.py --role app --hacs-ref safety/3-2-1-namespace-ownership-parity
       - name: Reproduce quality-gate baseline and safety behavior
         run: python scripts/test_thermal_gate_diagnostics_3_2_1.py
