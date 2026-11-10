@@ -59,6 +59,53 @@ for i in range(10):
         assert mode == "active"
 assert state["quality_gate_active_candidate_cycles"] == 2
 
+# A partially restored state with an old active flag cannot bypass promotion.
+# This can occur after a legacy model handoff or a truncated state migration.
+for damaged in (
+    {"quality_gate_effective_mode": "active"},
+    {"quality_gate_effective_mode": "active", "quality_gate_active_candidate_cycles": 0},
+    {"quality_gate_effective_mode": "active", "quality_gate_active_candidate_cycles": float("nan")},
+):
+    first = policy.stabilize_quality_gate(
+        damaged, raw_mode="active", raw_reason="eligible", raw_max_delta=2,
+    )
+    assert first == ("probation", "active_waiting_confirmation", 1), first
+    second = policy.stabilize_quality_gate(
+        damaged, raw_mode="active", raw_reason="eligible", raw_max_delta=2,
+    )
+    assert second == ("active", "eligible", 2), second
+
+# Lost or stale context must revoke any previously earned promotion.
+s = {}
+policy.refresh_stability_context(
+    s, sample_epoch=100.0, target=49.0, regime="low",
+    ai_mode="assist", control_mode="automatic",
+)
+policy.stabilize_forecast(
+    s, raw_forecast=49.5, target=49.0, confidence=90, average_mae=1,
+)
+policy.stabilize_quality_gate(s, raw_mode="active", raw_reason="eligible", raw_max_delta=2)
+policy.refresh_stability_context(
+    s, sample_epoch=110.0, target=49.0, regime="low",
+    ai_mode="assist", control_mode="automatic",
+)
+policy.stabilize_forecast(
+    s, raw_forecast=49.5, target=49.0, confidence=90, average_mae=1,
+)
+assert policy.stabilize_quality_gate(
+    s, raw_mode="active", raw_reason="eligible", raw_max_delta=2,
+)[0] == "active"
+assert policy.refresh_stability_context(
+    s, sample_epoch=160.0, target=49.0, regime="low",
+    ai_mode="assist", control_mode="automatic",
+) == "sample_gap"
+policy.stabilize_forecast(
+    s, raw_forecast=49.5, target=49.0, confidence=90, average_mae=1,
+)
+assert policy.stabilize_quality_gate(
+    s, raw_mode="active", raw_reason="eligible", raw_max_delta=2,
+) == ("probation", "active_waiting_confirmation", 1)
+
 # In an ordinary predictor, stale values are still observe before hysteresis.
 p = {
     "updated_epoch": 100.0, "confidence_percent": 95,
