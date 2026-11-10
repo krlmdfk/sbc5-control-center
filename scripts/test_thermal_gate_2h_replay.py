@@ -54,6 +54,11 @@ for cycle in range(720):
         state, sample_epoch=now, target=target, regime=bucket,
         ai_mode=ai_mode, control_mode="automatic",
     )
+    # Mirror runtime order: context refresh, forecast stabilization, quality gate.
+    policy.stabilize_forecast(
+        state, raw_forecast=50.2, target=target,
+        confidence=conf, average_mae=mae,
+    )
     raw_mode, raw_reason, raw_limit = policy.gate(
         predictor=model, now=now, ai_mode=ai_mode,
         control_mode="automatic", controller_action=controller_action,
