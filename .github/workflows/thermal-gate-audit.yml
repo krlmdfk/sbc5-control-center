@@ -1,0 +1,32 @@
+name: Thermal gate diagnostic audit
+
+on:
+  push:
+    branches:
+      - "audit/thermal-gate-*"
+      - "fix/thermal-quality-hysteresis-*"
+  pull_request:
+    paths:
+      - "local_apps/sbc5_control_center/thermal_active_policy.py"
+      - "local_apps/sbc5_control_center/ai_cooling_v5_2.py"
+      - "scripts/test_thermal_gate_diagnostics_3_2_1.py"
+      - "scripts/test_thermal_predictor_stability_3_1_30.py"
+      - ".github/workflows/thermal-gate-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  thermal-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile thermal modules and diagnostic tests
+        run: python -m py_compile local_apps/sbc5_control_center/thermal_active_policy.py scripts/test_thermal_gate_diagnostics_3_2_1.py scripts/test_thermal_predictor_stability_3_1_30.py
+      - name: Reproduce quality-gate baseline and safety behavior
+        run: python scripts/test_thermal_gate_diagnostics_3_2_1.py
+      - name: Preserve existing forecast stability tests
+        run: python scripts/test_thermal_predictor_stability_3_1_30.py

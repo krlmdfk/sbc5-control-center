@@ -1,0 +1,50 @@
+name: Thermal Predictor isolated regressions
+
+on:
+  push:
+    paths:
+      - ".github/workflows/thermal-regression-isolated.yml"
+      - "local_apps/sbc5_control_center/thermal_active_policy.py"
+      - "local_apps/sbc5_control_center/ai_cooling_v5_2.py"
+      - "scripts/test_thermal_gate_diagnostics_3_2_1.py"
+      - "scripts/test_thermal_predictor_stability_3_1_30.py"
+      - "scripts/test_thermal_guidance_context_reset.py"
+      - "scripts/test_thermal_gate_hysteresis_3_2_1.py"
+  pull_request:
+    paths:
+      - ".github/workflows/thermal-regression-isolated.yml"
+      - "local_apps/sbc5_control_center/thermal_active_policy.py"
+      - "local_apps/sbc5_control_center/ai_cooling_v5_2.py"
+      - "scripts/test_thermal_gate_diagnostics_3_2_1.py"
+      - "scripts/test_thermal_predictor_stability_3_1_30.py"
+      - "scripts/test_thermal_guidance_context_reset.py"
+      - "scripts/test_thermal_gate_hysteresis_3_2_1.py"
+
+permissions:
+  contents: read
+
+jobs:
+  thermal-regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Thermal Predictor modules
+        run: |
+          python -m py_compile local_apps/sbc5_control_center/thermal_active_policy.py
+          python -m py_compile local_apps/sbc5_control_center/ai_cooling_v5_2.py
+      - name: Baseline Thermal Predictor stability
+        run: python scripts/test_thermal_predictor_stability_3_1_30.py
+      - name: Context reset isolation
+        run: python scripts/test_thermal_guidance_context_reset.py
+      - name: Gate and gain diagnostic baseline
+        run: python scripts/test_thermal_gate_diagnostics_3_2_1.py
+      - name: Hysteresis behavior (when test is present)
+        run: |
+          if test -f scripts/test_thermal_gate_hysteresis_3_2_1.py; then
+            python scripts/test_thermal_gate_hysteresis_3_2_1.py
+          fi
