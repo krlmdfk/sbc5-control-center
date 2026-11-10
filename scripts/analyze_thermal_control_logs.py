@@ -52,7 +52,9 @@ def analyze(lines: Any) -> dict[str, Any]:
         timestamp = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S")
         message = match.group(2)
         if message.startswith("Thermal Predictor:"):
-            gate = string(message, "gate")
+            gate_match = re.search(r"(?<![A-Za-z_])gate=([A-Za-z_]+)(?:/([A-Za-z_]+))?", message)
+            gate = gate_match.group(1) if gate_match else None
+            gate_reason = gate_match.group(2) if gate_match else None
             thermal.append({
                 "time": timestamp,
                 "confidence": number(message, "confidence"),
@@ -61,8 +63,8 @@ def analyze(lines: Any) -> dict[str, Any]:
                 "f60": number(message, "F60"),
                 "f120": number(message, "F120"),
                 "weighted": number(message, "weighted"),
-                "gate": gate.split("/")[0] if gate else None,
-                "reason": gate.split("/", 1)[1] if gate and "/" in gate else None,
+                "gate": gate,
+                "reason": gate_reason,
                 "tp_applied": number(message, "TP_applied"),
             })
         elif message.startswith("Adaptive PWM:"):
