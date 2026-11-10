@@ -45,3 +45,39 @@ jobs:
         run: python scripts/test_analyze_thermal_control_logs.py
       - name: Preserve existing forecast stability tests
         run: python scripts/test_thermal_predictor_stability_3_1_30.py
+
+  package-preview:
+    name: Package verified thermal preview
+    needs: thermal-audit
+    if: github.ref_name == 'fix/thermal-quality-hysteresis-20261110' || github.head_ref == 'fix/thermal-quality-hysteresis-20261110'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install release validators
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Validate App and HACS candidate code parity
+        run: |
+          python scripts/check_companion_parity.py --role app --hacs-ref main
+          python scripts/check_companion_parity.py --role app --hacs-ref safety/3-2-1-namespace-ownership-parity
+      - name: Recreate strictly checked manifest (workspace only)
+        run: |
+          python scripts/update_manifest_hashes.py
+          python scripts/validate_release.py --strict-manifest-hashes
+      - name: Produce verified ZIP and security checks
+        run: |
+          mkdir -p preview
+          python scripts/build_local_update.py --output preview/SBC5_3.2.1_PR75_THERMAL_PREVIEW_ONLY.zip
+          python scripts/build_local_update.py --verify-only --output preview/SBC5_3.2.1_PR75_THERMAL_PREVIEW_ONLY.zip
+          python local_apps/sbc5_control_center/zip_security_preflight.py preview/SBC5_3.2.1_PR75_THERMAL_PREVIEW_ONLY.zip
+          sha256sum preview/SBC5_3.2.1_PR75_THERMAL_PREVIEW_ONLY.zip > preview/SHA256SUMS.txt
+          printf 'PR75 test-only ZIP; source commit %s; application internal version 3.2.1; not a release or production-ready build.\n' "$GITHUB_SHA" > preview/BUILD_INFO.txt
+      - name: Upload build as GitHub Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SBC5-3.2.1-PR75-THERMAL-PREVIEW
+          path: preview/
+          retention-days: 14
+          if-no-files-found: error
