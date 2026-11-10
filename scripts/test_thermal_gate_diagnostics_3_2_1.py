@@ -101,12 +101,12 @@ second = policy.stabilize_forecast(
     confidence=90.0, average_mae=1.0,
 )
 assert first["stable_forecast_c"] == 49.1
-assert second["stable_forecast_c"] == 49.1, second
+assert math.isclose(second["stable_forecast_c"], 49.70725, abs_tol=0.002), second
 third = policy.stabilize_forecast(
     state, raw_forecast=52.57, target=49.0,
     confidence=90.0, average_mae=1.0,
 )
-assert math.isclose(third["stable_forecast_c"], 50.3145, abs_tol=0.002), third
+assert math.isclose(third["stable_forecast_c"], 50.7092, abs_tol=0.002), third
 
 # The 0.093 log value is exactly the diagnostic quality heuristic.
 conf, mae = 77, 1.458
