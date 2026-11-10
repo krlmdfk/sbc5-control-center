@@ -251,11 +251,12 @@ def stabilize_quality_gate(
         state["quality_gate_effective_mode"] = raw_mode
         return raw_mode, raw_reason, raw_max_delta
 
-    previous_mode = str(state.get("quality_gate_effective_mode") or "observe")
+    # Treat a persisted "active" flag without matching confirmations as
+    # incomplete state; it must never bypass the promotion gate.
     pending = max(0, int(round(num(state.get("quality_gate_active_candidate_cycles"), 0))))
     pending = min(enter_cycles, pending + 1)
     state["quality_gate_active_candidate_cycles"] = pending
-    if previous_mode == "active" or pending >= enter_cycles:
+    if pending >= enter_cycles:
         state["quality_gate_effective_mode"] = "active"
         return "active", raw_reason, raw_max_delta
     state["quality_gate_effective_mode"] = "probation"
