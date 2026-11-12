@@ -258,7 +258,7 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         str(_num(guidance.get("forecast_filter_lag_c"), 0.0)),
     ]
     # 22 base fields + 19 TP diagnostic fields; retain append-only TSV order.
-    if len(fields) < 41:
+    if len(fields) < 39:
         fields.extend(diagnostic_fields)
     else:
         fields[22:41] = diagnostic_fields
