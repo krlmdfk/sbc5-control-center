@@ -158,6 +158,9 @@ jobs:
       - name: Test Thermal Predictor Stability v2
         run: python scripts/test_thermal_predictor_stability_3_1_30.py
 
+      - name: Test Thermal Predictor raw and filtered forecast observability
+        run: python scripts/test_thermal_forecast_observability.py
+
       - name: Test Thermal Predictor short-term context resets
         run: python scripts/test_thermal_guidance_context_reset.py
 
