@@ -51,6 +51,14 @@ assert len(diagnostics.value.elts) == 19
 assert 'fields[22:41] = diagnostic_fields' in runtime
 assert 'if len(fields) < 39:' in runtime
 
+# The built container applies the Setpoint Stability patch after earlier patches.
+# Its runtime log must expose both fields without moving old TSV columns.
+legacy = (APP / "run_legacy.sh").read_text(encoding="utf-8")
+patch32 = (APP / "patch_setpoint_stability_3_1_32.py").read_text(encoding="utf-8")
+assert "tp_decision_reason tp_weighted_raw tp_filter_lag <<<" in legacy
+assert 'tp_weighted_raw="" tp_filter_lag=""' in legacy
+assert 'raw_weighted=${tp_weighted_raw}C filter_lag=${tp_filter_lag}C' in patch32
+
 # No new control authority or change to emergency limits.
 assert policy.ACTIVE_MAX_DELTA_PP == 2
 assert policy.PROBATION_MAX_DELTA_PP == 1
