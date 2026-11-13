@@ -8927,7 +8927,7 @@ adaptive_pwm_controller_loop() {
   local trim_sign_decay_step=2 trim_sign_threshold=250 sign_guard=""
   local down_direct_delta=1000 down_fast_delta=2000 up_direct_delta=2000
   local up_confirm_cycles=2 up_hold_cycles=3
-  local ai_cycle="$AI_COOLING_EVAL_CYCLES" ai_result="" ai_output="" ai_state="" ai_reason="" ai_conf=0 ai_prediction=-1 ai_qualified_samples=0 ai_correction=0 ai_bucket="" ai_observations_total=0 ai_bin_observations=0 ai_qualified_total=0 ai_qualified_flag=0 ai_qualification_reason="" ai_stable_streak=0 ai_last_log="" ai_log_tick=0 ai_direct_conf=0 ai_global_conf=0 ai_effective_conf=0 ai_direct_prediction=-1 ai_global_prediction=-1 ai_effective_prediction=-1 ai_transfer_source="legacy" ai_effective_coverage=0 tp_mode="" tp_f30="" tp_f60="" tp_f120="" tp_conf=0 tp_mae="" tp_weighted="" tp_error="" tp_gain="" tp_weights="" tp_accepted=0 tp_rejected=0 tp_req=0 tp_applied=0 tp_gate_mode="" tp_gate_reason="" tp_decision_reason=""
+  local ai_cycle="$AI_COOLING_EVAL_CYCLES" ai_result="" ai_output="" ai_state="" ai_reason="" ai_conf=0 ai_prediction=-1 ai_qualified_samples=0 ai_correction=0 ai_bucket="" ai_observations_total=0 ai_bin_observations=0 ai_qualified_total=0 ai_qualified_flag=0 ai_qualification_reason="" ai_stable_streak=0 ai_last_log="" ai_log_tick=0 ai_direct_conf=0 ai_global_conf=0 ai_effective_conf=0 ai_direct_prediction=-1 ai_global_prediction=-1 ai_effective_prediction=-1 ai_transfer_source="legacy" ai_effective_coverage=0 tp_mode="" tp_f30="" tp_f60="" tp_f120="" tp_conf=0 tp_mae="" tp_weighted="" tp_error="" tp_gain="" tp_weights="" tp_accepted=0 tp_rejected=0 tp_req=0 tp_applied=0 tp_gate_mode="" tp_gate_reason="" tp_decision_reason="" tp_weighted_raw="" tp_filter_lag=""
   local reload_token="" reload_now=""
   local ai_eval_empty_warned=false
 
@@ -9205,7 +9205,7 @@ adaptive_pwm_controller_loop() {
         if [ -n "$ai_result" ]; then
           ai_eval_empty_warned=false
           ai_log_tick=$((ai_log_tick + 1))
-          IFS=$'\t' read -r ai_output ai_state ai_reason ai_conf ai_prediction ai_qualified_samples ai_correction ai_bucket ai_observations_total ai_bin_observations ai_qualified_total ai_qualified_flag ai_qualification_reason ai_stable_streak ai_direct_conf ai_global_conf ai_effective_conf ai_direct_prediction ai_global_prediction ai_effective_prediction ai_transfer_source ai_effective_coverage tp_mode tp_f30 tp_f60 tp_f120 tp_conf tp_mae tp_weighted tp_error tp_gain tp_weights tp_accepted tp_rejected tp_req tp_applied tp_gate_mode tp_gate_reason tp_decision_reason <<< "$ai_result"
+          IFS=$'\t' read -r ai_output ai_state ai_reason ai_conf ai_prediction ai_qualified_samples ai_correction ai_bucket ai_observations_total ai_bin_observations ai_qualified_total ai_qualified_flag ai_qualification_reason ai_stable_streak ai_direct_conf ai_global_conf ai_effective_conf ai_direct_prediction ai_global_prediction ai_effective_prediction ai_transfer_source ai_effective_coverage tp_mode tp_f30 tp_f60 tp_f120 tp_conf tp_mae tp_weighted tp_error tp_gain tp_weights tp_accepted tp_rejected tp_req tp_applied tp_gate_mode tp_gate_reason tp_decision_reason tp_weighted_raw tp_filter_lag <<< "$ai_result"
           case "$ai_output" in ''|*[!0-9]*) ai_output="$desired" ;; esac
           case "$ai_conf" in ''|*[!0-9]*) ai_conf=0 ;; esac
           case "$ai_prediction" in ''|*[!0-9]*) ai_prediction=-1 ;; esac
