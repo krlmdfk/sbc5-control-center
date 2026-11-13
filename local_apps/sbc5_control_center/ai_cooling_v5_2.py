@@ -115,13 +115,17 @@ def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, 
         max_delta=max_delta,
         stability=stability,
     )
+    stabilized_forecast = _num(stability.get("stable_forecast_c"), raw_weighted)
+    filter_lag = round(stabilized_forecast - raw_weighted, 2)
     return {
         "stability_context_reset_reason": context_reset,
         "stability_context_reset_count": int(_num(stability.get("context_reset_count"), 0)),
         "weighted_forecast_raw_c": round(raw_weighted, 2),
         "weighted_forecast_median_c": round(_num(stability.get("median_forecast_c"), raw_weighted), 2),
         "weighted_forecast_c": round(_num(stability.get("stable_forecast_c"), raw_weighted), 2),
-        "weighted_forecast_error_c": round(_num(stability.get("stable_forecast_c"), raw_weighted) - target, 2),
+        "weighted_forecast_error_c": round(stabilized_forecast - target, 2),
+        "forecast_filter_lag_c": filter_lag,
+        "forecast_filter_lag_significant": abs(filter_lag) >= 1.0,
         "horizon_weights": weights,
         "candidate_gain": round(gain, 3),
         "gate_mode": gate_mode,
@@ -198,6 +202,8 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         "weighted_forecast_median_c": guidance.get("weighted_forecast_median_c"),
         "weighted_forecast_c": guidance.get("weighted_forecast_c"),
         "weighted_forecast_error_c": guidance.get("weighted_forecast_error_c"),
+        "forecast_filter_lag_c": guidance.get("forecast_filter_lag_c"),
+        "forecast_filter_lag_significant": guidance.get("forecast_filter_lag_significant", False),
         "horizon_weights": guidance.get("horizon_weights", {}),
         "candidate_gain": guidance.get("candidate_gain", 0.0),
         "requested_delta_pp": requested_delta,
@@ -248,11 +254,14 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         str(guidance.get("gate_mode") or "observe"),
         str(guidance.get("gate_reason") or "unknown"),
         str(guidance.get("decision_reason") or "near_target"),
+        str(_num(guidance.get("weighted_forecast_raw_c"), 0.0)),
+        str(_num(guidance.get("forecast_filter_lag_c"), 0.0)),
     ]
+    # 22 base fields + 19 TP diagnostic fields; retain append-only TSV order.
     if len(fields) < 39:
         fields.extend(diagnostic_fields)
     else:
-        fields[22:39] = diagnostic_fields
+        fields[22:41] = diagnostic_fields
     return model, status, fields
 
 
