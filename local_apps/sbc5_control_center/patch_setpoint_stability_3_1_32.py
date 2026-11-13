@@ -120,7 +120,7 @@ def patch(text: str) -> str:
               hot_forecast_unconfirmed) tp_log_reason="hot_forecast_confirmation_rejected" ;;
               cool_forecast_unconfirmed) tp_log_reason="cool_forecast_confirmation_rejected" ;;
             esac
-            log "Thermal Predictor: mode=${tp_mode}; F30=${tp_f30}C F60=${tp_f60}C F120=${tp_f120}C; confidence=${tp_conf}%; MAE_avg=${tp_mae}C; weighted=${tp_weighted}C error=${tp_error}C; weights=${tp_weights}; gain=${tp_gain}; accepted/rejected=${tp_accepted}/${tp_rejected}; AI_corr=${ai_correction}pp; TP_req=${tp_req}pp; TP_applied=${tp_applied}pp; gate=${tp_gate_mode:-observe}/${tp_gate_reason:-unknown}; decision=${tp_log_reason}; guard=${ai_reason}."
+            log "Thermal Predictor: mode=${tp_mode}; F30=${tp_f30}C F60=${tp_f60}C F120=${tp_f120}C; confidence=${tp_conf}%; MAE_avg=${tp_mae}C; weighted=${tp_weighted}C raw_weighted=${tp_weighted_raw}C filter_lag=${tp_filter_lag}C error=${tp_error}C; weights=${tp_weights}; gain=${tp_gain}; accepted/rejected=${tp_accepted}/${tp_rejected}; AI_corr=${ai_correction}pp; TP_req=${tp_req}pp; TP_applied=${tp_applied}pp; gate=${tp_gate_mode:-observe}/${tp_gate_reason:-unknown}; decision=${tp_log_reason}; guard=${ai_reason}."
 '''
     text = replace_once(text, old_tp_log, new_tp_log, "thermal predictor diagnostic reason")
 
