@@ -1,14 +1,14 @@
 {
-  "version": "3.2.1",
-  "release_date": "2026-11-09",
+  "version": "3.2.2",
+  "release_date": "2026-11-14",
   "restart_required": "home_assistant",
-  "summary": "AI model preservation and cooling stability improvements",
-  "package_version": "3.2.1",
-  "card_ui_version": "3.2.1",
+  "summary": "Thermal Predictor raw forecast and stabilization lag diagnostics with unchanged cooling safety limits.",
+  "package_version": "3.2.2",
+  "card_ui_version": "3.2.2",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Ochrona modelu AI i poprawa stabilności chłodzenia"
+  "summary_pl": "Rozszerzona diagnostyka Thermal Predictora: surowa prognoza i opóźnienie filtracji, bez zmian zabezpieczeń chłodzenia."
 }

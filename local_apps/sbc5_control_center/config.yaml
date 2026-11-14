@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.2.1
+version: 3.2.2
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.2.1 — AI model preservation and cooling stability improvements"
+description: "SBC5 Control Center 3.2.2 — Thermal Predictor raw forecast and stabilization lag diagnostics with unchanged cooling safety limits."
 arch:
 - aarch64
 machine:

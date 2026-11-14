@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <strong>Stable · v3.2.1 · Card UI 3.2.1 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
+  <strong>Stable · v3.2.2 · Card UI 3.2.2 · aarch64 · HA OS ≥ 18.3 · Core ≥ 2026.10.1 · Apache-2.0</strong>
 </p>
 
 <p align="center">
@@ -43,7 +43,7 @@
 
 ## English
 
-> **Global Community Edition 3.2.1 preparation:** [International installation / Instalacja](docs/GLOBAL_INSTALL.md) · [Release gates / Warunki wydania](docs/GLOBAL_RELEASE_3_2_0.md) · [Security audit / Audyt uprawnień](docs/SECURITY_PRIVILEGE_AUDIT_3_2_0.md). The App is distributed through a public community repository, not the official Home Assistant Apps catalog. Full host access and disabling Protection Mode are currently required; review the security warning before installation.
+> **Global Community Edition 3.2.2 preparation:** [International installation / Instalacja](docs/GLOBAL_INSTALL.md) · [Release gates / Warunki wydania](docs/GLOBAL_RELEASE_3_2_0.md) · [Security audit / Audyt uprawnień](docs/SECURITY_PRIVILEGE_AUDIT_3_2_0.md). The App is distributed through a public community repository, not the official Home Assistant Apps catalog. Full host access and disabling Protection Mode are currently required; review the security warning before installation.
 
 SBC5 Control Center combines **Raspberry Pi 5 fan control for Home Assistant**, Active Cooler management, Adaptive PWM, local AI Cooling, temperature and RPM monitoring, CPU/OC and GPU/V3D/ISP profiles, managed `config.txt`, Restart Manager, hardware diagnostics and safe local updates in one Home Assistant OS companion runtime.
 

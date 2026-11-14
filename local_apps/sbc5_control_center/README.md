@@ -1,6 +1,6 @@
 # SBC5 Control Center
 
-**Wersja 3.2.1 | Raspberry Pi 5 | HA OS 18.3+ | Core 2026.10.1+**
+**Wersja 3.2.2 | Raspberry Pi 5 | HA OS 18.3+ | Core 2026.10.1+**
 
 SBC5 monitoruje Raspberry Pi 5, steruje Active Cooler i obsługuje Adaptive PWM, AI Cooling, Thermal Predictor, profile CPU/GPU oraz diagnostykę zasilania i firmware.
 

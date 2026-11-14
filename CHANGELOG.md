@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.2 — 2026-11-14
+
+### English
+
+#### Changed
+
+- Thermal Predictor raw forecast and stabilization lag diagnostics with unchanged cooling safety limits.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Rozszerzona diagnostyka Thermal Predictora: surowa prognoza i opóźnienie filtracji, bez zmian zabezpieczeń chłodzenia.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.1 — 2026-11-09
 
 ### English
