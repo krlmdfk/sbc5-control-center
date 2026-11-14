@@ -1,0 +1,82 @@
+name: SBC5 3.2.2 field-test candidate (no publication)
+on:
+  push:
+    branches:
+      - release/3-2-2-field-test-candidate
+    paths:
+      - '.github/workflows/field-test-3-2-2-candidate.yml'
+      - 'scripts/**'
+      - 'local_apps/sbc5_control_center/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-field-test-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Reject unintended branch
+        run: test "$GITHUB_REF_NAME" = "release/3-2-2-field-test-candidate"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install validation dependencies
+        run: python -m pip install --disable-pip-version-check pyyaml jinja2
+      - name: Check current App and unchanged HACS parity
+        run: |
+          python scripts/validate_release.py
+          python scripts/check_companion_parity.py --role app
+      - name: Thermal behavior and safety regression
+        run: |
+          python scripts/test_thermal_predictor_stability_3_1_30.py
+          python scripts/test_thermal_guidance_context_reset.py
+          python scripts/test_adaptive_trim_recovery_3_1_31.py
+          python scripts/test_setpoint_stability_3_1_32.py
+          python scripts/test_thermal_forecast_observability.py
+          python scripts/test_ai_model_integrity.py
+          python scripts/test_upgrade_3_2_1_model_preservation.py
+      - name: Prepare 3.2.2 metadata only in isolated CI checkout
+        run: |
+          python scripts/release_prepare.py \
+            --version 3.2.2 \
+            --release-date 2026-11-13 \
+            --restart-required home_assistant \
+            --summary-en "Field-test: raw/stabilized Thermal Predictor diagnostics; unchanged fan-control authority." \
+            --summary-pl "Wersja testowa: diagnostyka surowej i filtrowanej prognozy Thermal Predictora bez zmian sterowania wentylatorem." \
+            --added-en "Thermal Predictor raw weighted forecast and signed stabilization lag in runtime logs." \
+            --added-pl "Surowa prognoza ważona Thermal Predictora i opóźnienie stabilizacji ze znakiem w logach." \
+            --security-en "No changes to thermal emergency handoff, actuator slew, reversal guard or AI PWM authority limits." \
+            --security-pl "Bez zmian w zabezpieczeniach termicznych, ograniczeniach szybkości PWM, reversal guard i limitach AI."
+          python scripts/validate_release.py --strict-manifest-hashes
+      - name: Build, verify, and security-scan local update ZIP
+        run: |
+          mkdir -p dist
+          python scripts/build_local_update.py --output dist/SBC5_UPDATE_3.2.2_FIELD_TEST_CANDIDATE.zip
+          python scripts/build_local_update.py --verify-only --output dist/SBC5_UPDATE_3.2.2_FIELD_TEST_CANDIDATE.zip
+          python local_apps/sbc5_control_center/zip_security_preflight.py dist/SBC5_UPDATE_3.2.2_FIELD_TEST_CANDIDATE.zip
+          cd dist
+          sha256sum SBC5_UPDATE_3.2.2_FIELD_TEST_CANDIDATE.zip > SBC5_UPDATE_3.2.2_FIELD_TEST_CANDIDATE.zip.sha256
+          cat > README_FIELD_TEST.txt <<'TEXT'
+          SBC5 3.2.2 FIELD-TEST CANDIDATE — NOT AN OFFICIAL GITHUB RELEASE.
+          Contains diagnostic-only thermal predictor modifications.
+          Requires independent RPi5 hardware and rollback checks.
+          Before installing, create and verify OFF-DEVICE backups of Home Assistant,
+          SBC5 app configuration and learned AI model. Do not treat the
+          presence of this artifact as proof of hardware validation.
+          HACS integration 3.2.2 release is NOT published by this workflow.
+          TEXT
+      - name: Upload non-published candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SBC5-3.2.2-FIELD-TEST-CANDIDATE
+          path: |
+            dist/*
+            RELEASE_NOTES_3.2.2.md
+          retention-days: 7
+          if-no-files-found: error
