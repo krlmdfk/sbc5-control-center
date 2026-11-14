@@ -152,6 +152,9 @@ jobs:
       - name: Test 3.2.1 manual release publication gates
         run: python scripts/test_release_workflow_3_2_1_gates.py
 
+      - name: Test 3.2.2 guarded field-test release gates
+        run: python scripts/test_release_workflow_3_2_2_gates.py
+
       - name: Test isolated 3.2.1 diagnostic Canary safety
         run: python scripts/test_canary_3_2_1_shadow_isolation.py
 
