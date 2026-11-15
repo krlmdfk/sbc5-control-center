@@ -94,6 +94,8 @@ def _cpu_usage_percent(data: SBC5CoordinatorData) -> float | None:
 
 
 SENSOR_SPECS: tuple[SensorSpec, ...] = (
+    SensorSpec(unique_id="sbc5_app_release_downloads", name="SBC5 App ZIP Downloads", value_fn=lambda d: d.release_downloads.get("app"), icon="mdi:download"),
+    SensorSpec(unique_id="sbc5_hacs_release_downloads", name="SBC5 HACS ZIP Downloads", value_fn=lambda d: d.release_downloads.get("hacs"), icon="mdi:download"),
     SensorSpec(unique_id="sbc5_ai_thermal_forecast_30s", name="SBC5 AI Thermal Forecast 30s", value_fn=lambda d: _predictor_number(d, "forecast_30s_c"), icon="mdi:thermometer-chevron-up", unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
     SensorSpec(unique_id="sbc5_ai_thermal_forecast_60s", name="SBC5 AI Thermal Forecast 60s", value_fn=lambda d: _predictor_number(d, "forecast_60s_c"), icon="mdi:thermometer-chevron-up", unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
     SensorSpec(unique_id="sbc5_ai_thermal_forecast_120s", name="SBC5 AI Thermal Forecast 120s", value_fn=lambda d: _predictor_number(d, "forecast_120s_c"), icon="mdi:thermometer-chevron-up", unit=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),

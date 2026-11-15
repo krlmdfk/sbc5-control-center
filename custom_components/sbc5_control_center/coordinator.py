@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import APP_VERSION, DOMAIN
+from .download_counts import fetch_download_counts
 from .telemetry import RealtimeCoolingSnapshot, TelemetrySnapshot, build_snapshot, read_realtime_cooling, read_shared_telemetry, read_telemetry
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,6 +56,7 @@ class SBC5CoordinatorData:
     app_update: AppUpdateInfo
     thermal_predictor: dict[str, Any]
     ethernet_health: dict[str, Any]
+    release_downloads: dict[str, int | None]
 
 
 def _read_ethernet_health(hass: HomeAssistant) -> dict[str, Any]:
@@ -193,6 +195,9 @@ class SBC5Coordinator(DataUpdateCoordinator[SBC5CoordinatorData]):
             update_interval=timedelta(seconds=15),
             always_update=False,
         )
+        # Reuse the existing coordinator; never fetch GitHub during 15 s telemetry polls.
+        self._release_downloads: dict[str, int | None] = {"app": None, "hacs": None}
+        self._downloads_refresh_at = 0.0
 
     async def _async_update_data(self) -> SBC5CoordinatorData:
         # 2.8.22: prefer the shared JSON transport. It avoids coupling native
@@ -217,6 +222,19 @@ class SBC5Coordinator(DataUpdateCoordinator[SBC5CoordinatorData]):
 
         ethernet_health = await self.hass.async_add_executor_job(_read_ethernet_health, self.hass)
 
+        # Optional public download counters; failures cannot block telemetry or cooling.
+        if time.monotonic() >= self._downloads_refresh_at:
+            self._downloads_refresh_at = time.monotonic() + 6 * 3600
+            try:
+                fresh = await self.hass.async_add_executor_job(fetch_download_counts)
+                if isinstance(fresh, dict):
+                    for source in ("app", "hacs"):
+                        value = fresh.get(source)
+                        if isinstance(value, int) and value >= 0:
+                            self._release_downloads[source] = value
+            except Exception as exc:  # read-only optional external service
+                _LOGGER.debug("SBC5 release counters unavailable: %s", exc)
+
         app_update = AppUpdateInfo(
             state=state,
             installed_version=installed,
@@ -237,7 +255,8 @@ class SBC5Coordinator(DataUpdateCoordinator[SBC5CoordinatorData]):
             card_ui_latest_version=str(attrs.get("card_ui_latest_version") or ""),
         )
         return SBC5CoordinatorData(
-            telemetry=telemetry, app_update=app_update, thermal_predictor=thermal_predictor, ethernet_health=ethernet_health
+            telemetry=telemetry, app_update=app_update, thermal_predictor=thermal_predictor, ethernet_health=ethernet_health,
+            release_downloads=dict(self._release_downloads),
         )
 
 class SBC5RealtimeCoordinator(DataUpdateCoordinator[RealtimeCoolingSnapshot]):
