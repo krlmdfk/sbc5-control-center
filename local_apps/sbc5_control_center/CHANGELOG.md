@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.4 — 2026-11-15
+
+### English
+
+#### Changed
+
+- SBC5 Control Center 3.2.4 — download counters, improved release validation and synchronized HACS integration.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- SBC5 Control Center 3.2.4 — liczniki pobrań, usprawniona walidacja wydań i synchronizacja integracji HACS.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.3 — 2026-11-15
 
 ### English

@@ -24,7 +24,7 @@ def _release_version():
             return version
     except Exception:
         pass
-    return '3.2.3'
+    return '3.2.4'
 
 APP_VERSION = _release_version()
 

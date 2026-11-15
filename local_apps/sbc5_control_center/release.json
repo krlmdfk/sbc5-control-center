@@ -1,14 +1,14 @@
 {
-  "version": "3.2.3",
+  "version": "3.2.4",
   "release_date": "2026-11-15",
   "restart_required": "home_assistant",
-  "summary": "Minimal GitHub Release ZIP download counters for App and HACS",
-  "package_version": "3.2.3",
-  "card_ui_version": "3.2.3",
+  "summary": "SBC5 Control Center 3.2.4 — download counters, improved release validation and synchronized HACS integration.",
+  "package_version": "3.2.4",
+  "card_ui_version": "3.2.4",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Liczniki pobrań ZIP aplikacji i integracji HACS"
+  "summary_pl": "SBC5 Control Center 3.2.4 — liczniki pobrań, usprawniona walidacja wydań i synchronizacja integracji HACS."
 }
