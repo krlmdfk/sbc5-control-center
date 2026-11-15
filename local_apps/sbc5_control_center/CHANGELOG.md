@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.3 — 2026-11-15
+
+### English
+
+#### Changed
+
+- Minimal GitHub Release ZIP download counters for App and HACS
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Liczniki pobrań ZIP aplikacji i integracji HACS
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.2 — 2026-11-14
 
 ### English

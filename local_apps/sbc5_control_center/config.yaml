@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.2.2
+version: 3.2.3
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.2.2 — Thermal Predictor raw forecast and stabilization lag diagnostics with unchanged cooling safety limits."
+description: "SBC5 Control Center 3.2.3 — Minimal GitHub Release ZIP download counters for App and HACS"
 arch:
 - aarch64
 machine:
