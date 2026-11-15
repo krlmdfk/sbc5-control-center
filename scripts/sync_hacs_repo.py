@@ -51,14 +51,15 @@ def main() -> int:
     notes = render((tmpl_dir / "RELEASE_NOTES.md.template").read_text(encoding="utf-8"), values)
     (dest / f"RELEASE_NOTES_{args.version}.md").write_text(notes, encoding="utf-8")
 
-    # Keep HACS metadata stable, but create it when bootstrapping a new clone.
+    # Release 3.2.3+ ships an explicit integration ZIP so GitHub can count
+    # HACS package downloads. Preserve earlier release behavior.
     hacs_json = dest / "hacs.json"
-    if not hacs_json.exists():
-        hacs_json.write_text(json.dumps({"name": "SBC5 Control Center", "homeassistant": values["HA_CORE_MIN"]}, indent=2) + "\n", encoding="utf-8")
-    else:
-        h = json.loads(hacs_json.read_text(encoding="utf-8"))
-        h["homeassistant"] = values["HA_CORE_MIN"]
-        hacs_json.write_text(json.dumps(h, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    h = json.loads(hacs_json.read_text(encoding="utf-8")) if hacs_json.exists() else {"name": "SBC5 Control Center"}
+    h["homeassistant"] = values["HA_CORE_MIN"]
+    if tuple(map(int, args.version.split("."))) >= (3, 2, 3):
+        h["zip_release"] = True
+        h["filename"] = "SBC5_Control_Center_Integration.zip"
+    hacs_json.write_text(json.dumps(h, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     print(f"Synchronized HACS repo to {args.version}: {dest}")
     return 0
