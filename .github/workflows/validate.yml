@@ -162,6 +162,9 @@ jobs:
       - name: Test 3.2.3 ZIP release and HACS installation gates
         run: python scripts/test_release_workflow_3_2_3_gates.py
 
+      - name: Test 3.2.4 stable release safeguards
+        run: python scripts/test_release_workflow_3_2_4_gates.py
+
       - name: Test isolated 3.2.1 diagnostic Canary safety
         run: python scripts/test_canary_3_2_1_shadow_isolation.py
 
