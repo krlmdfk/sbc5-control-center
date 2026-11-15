@@ -42,8 +42,8 @@ jobs:
 
       - name: Test download counters
         run: python scripts/test_download_counts.py
-      - name: Verify strict HACS code parity (download counter candidate)
-        run: python scripts/check_companion_parity.py --role app --hacs-ref feature/minimal-release-download-counters
+      - name: Verify strict HACS code parity (main)
+        run: python scripts/check_companion_parity.py --role app --hacs-ref main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
