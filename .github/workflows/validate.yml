@@ -42,6 +42,9 @@ jobs:
 
       - name: Test download counters
         run: python scripts/test_download_counts.py
+
+      - name: Test 3.2.4 download counters offline failure modes
+        run: python scripts/test_download_counts_3_2_4.py
       - name: Verify strict HACS code parity (main)
         run: python scripts/check_companion_parity.py --role app --hacs-ref main
         env:
