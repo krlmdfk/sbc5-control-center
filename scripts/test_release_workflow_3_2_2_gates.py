@@ -14,8 +14,8 @@ workflow = yaml.safe_load(source)
 steps = {step["name"]: step for step in workflow["jobs"]["release"]["steps"] if "name" in step}
 guard = steps["Block unverified publication"]
 
-assert "3.2.1|3.2.2)" in guard["run"], "3.2.2 must be explicitly allowlisted"
-assert "Only the audited 3.2.1 and 3.2.2 release paths" in guard["run"]
+assert "3.2.1|3.2.2|3.2.3)" in guard["run"], "3.2.2 and 3.2.3 must be explicitly allowlisted"
+assert "Only the audited 3.2.1, 3.2.2 and 3.2.3 release paths" in guard["run"]
 assert 'test "$HARDWARE_VERIFIED" = "true"' in guard["run"]
 assert 'test "$FIELD_TEST_ACKNOWLEDGED" = "true"' in guard["run"]
 assert 'if [ "$RELEASE_CHANNEL" = "stable" ]; then' in guard["run"]
