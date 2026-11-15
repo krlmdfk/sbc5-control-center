@@ -89,9 +89,9 @@ jobs:
         run: |
           # Explicit allowlist: do not silently allow an arbitrary future release.
           case "$VERSION" in
-            3.2.1|3.2.2) ;;
+            3.2.1|3.2.2|3.2.3) ;;
             *)
-              echo "Only the audited 3.2.1 and 3.2.2 release paths are supported." >&2
+              echo "Only the audited 3.2.1, 3.2.2 and 3.2.3 release paths are supported." >&2
               exit 1
               ;;
           esac
@@ -276,6 +276,37 @@ jobs:
           echo "Timed out waiting for HACS validation" >&2
           exit 1
 
+      # The artifact is the exact file HACS downloads; its GitHub download_count
+      # is therefore an honest download signal (not unique installations).
+      - name: Build and verify HACS installation ZIP
+        if: ${{ !inputs.dry_run }}
+        env:
+          HACS_ASSET: ${{ runner.temp }}/SBC5_Control_Center_Integration.zip
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+          root = Path('/tmp/sbc5-hacs/custom_components/sbc5_control_center')
+          output = Path(os.environ['HACS_ASSET'])
+          assert root.is_dir(), 'Missing HACS integration directory'
+          members = {}
+          for path in sorted(root.rglob('*')):
+              if path.is_symlink():
+                  raise SystemExit(f'Unsafe HACS integration symlink: {path}')
+              if not path.is_file() or '__pycache__' in path.parts or path.suffix == '.pyc':
+                  continue
+              members[path.relative_to(root).as_posix()] = path.read_bytes()
+          for mandatory in ('manifest.json', '__init__.py', 'sensor.py', 'download_counts.py'):
+              assert mandatory in members, f'Missing HACS ZIP member: {mandatory}'
+          with ZipFile(output, 'w', compression=ZIP_DEFLATED, compresslevel=9) as archive:
+              for name, data in sorted(members.items()):
+                  archive.writestr(name, data)
+          with ZipFile(output) as archive:
+              assert archive.testzip() is None, 'HACS ZIP integrity failed'
+              assert set(archive.namelist()) == set(members), 'HACS ZIP content mismatch'
+          print(f'Verified HACS integration ZIP: {len(members)} files, {output.stat().st_size} bytes')
+          PY
       - name: Commit and push main release metadata
         if: ${{ !inputs.dry_run }}
         env:
@@ -327,7 +358,8 @@ jobs:
             --target "$HACS_SHA" \
             --title "SBC5 Control Center Integration ${VERSION} (${{ inputs.release_channel }})" \
             --notes-file "/tmp/sbc5-hacs/RELEASE_NOTES_${VERSION}.md" \
-            "${release_flags[@]}"
+            "${release_flags[@]}" \
+            "$RUNNER_TEMP/SBC5_Control_Center_Integration.zip"
 
       - name: Publication summary
         if: ${{ !inputs.dry_run }}
