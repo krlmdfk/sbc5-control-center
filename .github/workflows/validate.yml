@@ -186,6 +186,9 @@ jobs:
       - name: Test Setpoint Stability and actuator reversal guard
         run: python scripts/test_setpoint_stability_3_1_32.py
 
+      - name: Test acoustic PWM ceiling safety and runtime patches
+        run: python scripts/test_acoustic_pwm_ceiling.py
+
       - name: Test AI runtime layer wiring
         run: python scripts/test_ai_runtime_wiring_3_1_20.py
 
