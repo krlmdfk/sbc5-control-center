@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.2.4
+version: 3.2.5
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.2.4 — SBC5 Control Center 3.2.4 — download counters, improved release validation and synchronized HACS integration."
+description: "SBC5 Control Center 3.2.5 — Acoustic PWM guard to reduce fan noise during backup workloads while preserving thermal safety."
 arch:
 - aarch64
 machine:

@@ -1,14 +1,14 @@
 {
-  "version": "3.2.4",
-  "release_date": "2026-11-15",
+  "version": "3.2.5",
+  "release_date": "2026-11-16",
   "restart_required": "home_assistant",
-  "summary": "SBC5 Control Center 3.2.4 — download counters, improved release validation and synchronized HACS integration.",
-  "package_version": "3.2.4",
-  "card_ui_version": "3.2.4",
+  "summary": "Acoustic PWM guard to reduce fan noise during backup workloads while preserving thermal safety.",
+  "package_version": "3.2.5",
+  "card_ui_version": "3.2.5",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "SBC5 Control Center 3.2.4 — liczniki pobrań, usprawniona walidacja wydań i synchronizacja integracji HACS."
+  "summary_pl": "Ograniczenie hałasu wentylatora podczas kopii zapasowej z zachowaniem zabezpieczeń termicznych."
 }

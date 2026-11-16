@@ -1,6 +1,6 @@
 #!/bin/bash
 set -u
-VERSION="3.2.4"
+VERSION="3.2.5"
 MIG="/homeassistant/sbc5_control_center/migration"
 TARGET="local_sbc5_control_center"
 LEGACY="local_rpi5_fan_manager"

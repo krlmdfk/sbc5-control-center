@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.5 — 2026-11-16
+
+### English
+
+#### Changed
+
+- Acoustic PWM guard to reduce fan noise during backup workloads while preserving thermal safety.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Ograniczenie hałasu wentylatora podczas kopii zapasowej z zachowaniem zabezpieczeń termicznych.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.4 — 2026-11-15
 
 ### English
