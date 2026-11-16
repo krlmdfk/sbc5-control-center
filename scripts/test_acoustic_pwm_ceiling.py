@@ -38,19 +38,28 @@ cases = [
     # Raw safety sensor may override filtered temperature.
     ((60200, 54500, 0), 100),
     ((54000, 60100, 0), 100),
-    # Fast heating bypasses quiet ceiling.
-    ((53000, 53000, 2500), 83),
+    # Extreme heating (>=6C/min) bypasses acoustic ceiling; moderate heating gets headroom.
+    ((53000, 53000, 2500), 81),
     ((53000, 53000, 2499), 75),
-    ((55300, 54800, 4295), 90),  # Real backup heat ramp in logs
-    ((57300, 56800, 3340), 92),  # Peak before 3.2.6
+    ((56800, 58300, 1780, "transient"), 92), # 21:35:25 case, <60C
+    ((57900, 58400, 1064, "transient"), 92), # 21:35:58 case, <60C
+    ((59000, 58700, 1820, "transient"), 92),
+    ((66000, 66000, 0), 100),
+    ((65900, 65900, 100), 97),
+    ((63000, 63000, 3100), 100),  # projected 66.1C in 60s
+    ((63000, 63000, 2500), 97),  # projected 65.5C; 97% max
+    ((54000, 54000, 0, "transient"), 86),
+    ((55000, 55000, 6400), 100),
+    ((55300, 54800, 4295), 88),  # Real backup heat ramp in logs
+    ((57300, 56800, 3340), 94),  # Peak before 3.2.6
     ((53000, 53000, 6000), 100),  # Severe trend safety bypass
-    ((59999, 59999, 5999), 92),
+    ((59999, 59999, 5999), 94),
     # If sensor/thermal filter state is unknown, fail open.
     ((53000, 53000, 0, "warming_up"), 100),
     ((53000, 53000, 0, "spike_filtered"), 100),
     ((53000, 53000, 0, "fallback_raw"), 100),
     ((53000, 53000, 0, "unknown"), 100),
-    ((53000, 53000, 0, "transient"), 100),
+    ((53000, 53000, 0, "transient"), 79),
     ((0, 0, 0), 100),
     (("invalid", 53000, 0), 100),
     ((53000, "invalid", 0), 100),
