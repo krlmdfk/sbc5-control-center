@@ -8911,6 +8911,45 @@ ai_cooling_suggestion_allowed() {
   return 0
 }
 
+# 3.2.5 candidate — acoustic ceiling for ordinary automatic Adaptive PWM.
+# This is a *soft requested-target cap*, not a hardware maximum. Existing
+# emergency 100%, kernel handoff, calibration, and slew limits remain intact.
+# The cap is disabled if sensor/trend quality is uncertain or heating is fast.
+adaptive_pwm_acoustic_ceiling() {
+  local raw="${1:-}" conditioned="${2:-}" trend="${3:-}" quality="${4:-}" max_state="${5:-100}"
+  local effective_temp ceiling
+  [[ "$max_state" =~ ^[0-9]+$ ]] || max_state=100
+  if ! [[ "$raw" =~ ^[0-9]+$ && "$conditioned" =~ ^[0-9]+$ && "$trend" =~ ^-?[0-9]+$ ]]; then
+    printf '%s\n' "$max_state"
+    return 0
+  fi
+  case "$quality" in
+    good) ;;
+    *) printf '%s\n' "$max_state"; return 0 ;;
+  esac
+  # A missing/implausible sensor or large filter lag must not quiet the fan.
+  if [ "$raw" -le 0 ] || [ "$conditioned" -le 0 ] || [ $((raw - conditioned)) -gt 2000 ]; then
+    printf '%s\n' "$max_state"
+    return 0
+  fi
+
+  # Fail open: raw CPU safety, conditioned temperature, and rapid heating
+  # all take precedence over acoustic comfort.
+  effective_temp="$raw"
+  [ "$conditioned" -gt "$effective_temp" ] && effective_temp="$conditioned"
+  if [ "$effective_temp" -ge 60000 ] || [ "$trend" -ge 2500 ]; then
+    ceiling="$max_state"
+  elif [ "$effective_temp" -ge 57000 ]; then
+    ceiling=92
+  elif [ "$effective_temp" -ge 54000 ]; then
+    ceiling=82
+  else
+    ceiling=75
+  fi
+  [ "$ceiling" -gt "$max_state" ] && ceiling="$max_state"
+  printf '%s\n' "$ceiling"
+}
+
 adaptive_pwm_controller_loop() {
   sleep 8
   trap 'fan_control_shutdown_or_handoff controller_exit' EXIT
@@ -9266,6 +9305,23 @@ adaptive_pwm_controller_loop() {
       [ "$final_high" -gt "$max_state" ] && final_high="$max_state"
       [ "$desired" -lt "$final_low" ] && desired="$final_low"
       [ "$desired" -gt "$final_high" ] && desired="$final_high"
+
+      # Quiet acoustic guard: cap only the *normal requested target* BEFORE
+      # slew and reversal protections. safety_max and kernel emergency handoff
+      # explicitly bypass this block. Never cap manual or hybrid modes.
+      if [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$reentry_cycle" != "true" ]; then
+        local acoustic_ceiling acoustic_quality
+        acoustic_quality="${thermal_signal_quality:-unknown}"
+        acoustic_ceiling="$(adaptive_pwm_acoustic_ceiling "$temp_milli" "${temp_control_milli:-$temp_milli}" "${thermal_trend_fused_milli:-}" "$acoustic_quality" "$max_state")"
+        if [[ "$acoustic_ceiling" =~ ^[0-9]+$ ]]; then
+          # Respect a calibrated minimum RPM / minimum safe fan floor.
+          [ "$acoustic_ceiling" -lt "$min_run_floor" ] && acoustic_ceiling="$min_run_floor"
+          if [ "$desired" -gt "$acoustic_ceiling" ] 2>/dev/null; then
+            desired="$acoustic_ceiling"
+            action="${action}_acoustic_ceiling_${acoustic_ceiling}"
+          fi
+        fi
+      fi
       before_slew="$desired"
       step_up="$slew_up_step"; step_down="$slew_down_step"
       if [ "$error" -ge "$thermal_critical_delta" ] 2>/dev/null; then
