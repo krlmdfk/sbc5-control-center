@@ -39,19 +39,20 @@ cases = [
     ((60200, 54500, 0), 100),
     ((54000, 60100, 0), 100),
     # Fast heating bypasses quiet ceiling.
-    ((53000, 53000, 3500), 100),
-    ((53000, 53000, 3499), 75),
+    ((53000, 53000, 2500), 100),
+    ((53000, 53000, 2499), 75),
     # If sensor/thermal filter state is unknown, fail open.
     ((53000, 53000, 0, "warming_up"), 100),
     ((53000, 53000, 0, "spike_filtered"), 100),
     ((53000, 53000, 0, "fallback_raw"), 100),
     ((53000, 53000, 0, "unknown"), 100),
-    ((53000, 53000, 0, "transient"), 75),
-    ((0, 0, 0), 75),
+    ((53000, 53000, 0, "transient"), 100),
+    ((0, 0, 0), 100),
     (("invalid", 53000, 0), 100),
     ((53000, "invalid", 0), 100),
     ((53000, 53000, "invalid"), 100),
     ((53000, 53000, 0, "good", 65), 65),
+    ((55001, 53000, 0), 100),  # Raw vs filtered lag > 2C,
 ]
 for args, expected in cases:
     actual = ceiling(*args)
