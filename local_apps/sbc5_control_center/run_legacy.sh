@@ -8924,15 +8924,20 @@ adaptive_pwm_acoustic_ceiling() {
     return 0
   fi
   case "$quality" in
-    good|transient) ;;
+    good) ;;
     *) printf '%s\n' "$max_state"; return 0 ;;
   esac
+  # A missing/implausible sensor or large filter lag must not quiet the fan.
+  if [ "$raw" -le 0 ] || [ "$conditioned" -le 0 ] || [ $((raw - conditioned)) -gt 2000 ]; then
+    printf '%s\n' "$max_state"
+    return 0
+  fi
 
   # Fail open: raw CPU safety, conditioned temperature, and rapid heating
   # all take precedence over acoustic comfort.
   effective_temp="$raw"
   [ "$conditioned" -gt "$effective_temp" ] && effective_temp="$conditioned"
-  if [ "$effective_temp" -ge 60000 ] || [ "$trend" -ge 3500 ]; then
+  if [ "$effective_temp" -ge 60000 ] || [ "$trend" -ge 2500 ]; then
     ceiling="$max_state"
   elif [ "$effective_temp" -ge 57000 ]; then
     ceiling=92
