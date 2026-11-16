@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.6 — 2026-11-16
+
+### English
+
+#### Changed
+
+- Improved acoustic PWM control during backup workloads, with faster fan recovery and preserved thermal safety.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Usprawnione ograniczanie hałasu wentylatora podczas kopii zapasowych, szybsze zmniejszanie obrotów i zachowane zabezpieczenia termiczne.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.5 — 2026-11-16
 
 ### English

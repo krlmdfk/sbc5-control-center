@@ -1,11 +1,11 @@
 #!/bin/bash
 set -u
 
-# SBC5 Control Center 3.2.5 native runtime bootstrap.
+# SBC5 Control Center 3.2.6 native runtime bootstrap.
 # These constants are intentionally retained in the package entrypoint because the
 # SBC5 package validator verifies them before accepting local/update packages.
-APP_VERSION="3.2.5"
-REQUIRED_PACKAGE_VERSION="3.2.5"
+APP_VERSION="3.2.6"
+REQUIRED_PACKAGE_VERSION="3.2.6"
 export SBC5CC_APP_VERSION="$APP_VERSION"
 
 # The Rust core owns lightweight host telemetry and health state. The proven 2.8.x
