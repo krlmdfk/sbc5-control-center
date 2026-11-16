@@ -73,7 +73,7 @@ for args, expected in cases:
 
 # Safety gates must remain ordered, uninterrupted, and unaffected.
 assert runtime.index("emergency_temperature_handoff") < runtime.index("adaptive_pwm_acoustic_ceiling \"")
-assert runtime.index('if [ "$action" = "safety_max" ]; then') < runtime.index("acoustic_quality=")
+assert runtime.index('if [ "$action" = "safety_max" ]; then') < runtime.index('acoustic_ceiling="$(adaptive_pwm_acoustic_ceiling')
 assert 'if [ "$action" != "safety_max" ]; then' in runtime
 assert 'if [ "$COOLING_CONTROL_MODE" = "automatic" ]' in runtime
 assert "reentry_cycle" in runtime
