@@ -8923,8 +8923,11 @@ adaptive_pwm_acoustic_ceiling() {
     printf '%s\n' "$max_state"
     return 0
   fi
+  # A transient trend is not a failed CPU sensor. Use the raw CPU reading
+  # alongside the conditioned reading; keep a larger margin on a transient.
+  # Warm-up, rejected spikes and unknown quality still fail open.
   case "$quality" in
-    good) ;;
+    good|transient) ;;
     *) printf '%s\n' "$max_state"; return 0 ;;
   esac
   # A missing/implausible sensor or large filter lag must not quiet the fan.
@@ -8940,20 +8943,38 @@ adaptive_pwm_acoustic_ceiling() {
   # Backup-like CPU bursts at ~55-57C may rise faster than 2.5C/min.
   # Preserve a thermal headroom ceiling up to 60C, but bypass completely
   # for severe heating >=6C/min (or any CPU/control temperature >=60C).
-  if [ "$effective_temp" -ge 60000 ] || [ "$trend" -ge 6000 ]; then
+  # 3.2.7 absolute thermal budget. Values describe a conservative acoustic
+  # policy, NOT manufacturer limits. Do not confuse a 49C comfort setpoint
+  # with the SoC hardware throttling threshold (~80C).
+  # At >=66C or a strongly projected rapid rise, cooling is unrestricted.
+  # The independent 70C kernel handoff remains untouched.
+  if [ "$effective_temp" -ge 66000 ]; then
     ceiling="$max_state"
+  elif [ "$effective_temp" -ge 62000 ]; then
+    ceiling=97
+  elif [ "$effective_temp" -ge 60000 ]; then
+    ceiling=94
   elif [ "$effective_temp" -ge 57000 ]; then
-    ceiling=92
+    ceiling=88
   elif [ "$effective_temp" -ge 54000 ]; then
     ceiling=82
   else
     ceiling=75
   fi
-  # Moderately fast heating receives additional cooling headroom, without
-  # bypassing the acoustic ceiling as 3.2.5 did.
-  if [ "$trend" -ge 2500 ] && [ "$ceiling" -lt "$max_state" ]; then
-    ceiling=$((ceiling + 8))
-    [ "$ceiling" -gt 92 ] && ceiling=92
+  # Predict a worst-case 60s excursion from the measured fused trend.
+  # A potential approach to 66C or a physically implausible >6C/min trend
+  # causes unrestricted cooling rather than risking delayed response.
+  if [ "$trend" -ge 6000 ] || [ $((effective_temp + trend)) -ge 66000 ]; then
+    ceiling="$max_state"
+  elif [ "$trend" -ge 2500 ] && [ "$ceiling" -lt "$max_state" ]; then
+    ceiling=$((ceiling + 6))
+    [ "$ceiling" -gt 97 ] && ceiling=97
+  fi
+  # Transient filter disagreement gets extra headroom, but is not itself an
+  # emergency when both valid temperatures are well below the safety zone.
+  if [ "$quality" = "transient" ] && [ "$ceiling" -lt "$max_state" ]; then
+    ceiling=$((ceiling + 4))
+    [ "$ceiling" -gt 97 ] && ceiling=97
   fi
   [ "$ceiling" -gt "$max_state" ] && ceiling="$max_state"
   printf '%s\n' "$ceiling"
@@ -9152,7 +9173,9 @@ adaptive_pwm_controller_loop() {
     # never reconstructed from controller_state-curve_state (which could flip
     # +12 -> -12 when the curve point moved faster than the slewed actuator).
     sign_guard=""
-    if [ "$temp_milli" -ge 80000 ] 2>/dev/null || [ "$error" -ge "$safety_delta" ] 2>/dev/null; then
+    # Absolute equipment protection: a configurable comfort target is never
+    # a thermal alarm. 66C invokes full fan; 70C remains kernel handoff.
+    if [ "$temp_milli" -ge 66000 ] 2>/dev/null || [ "${temp_control_milli:-0}" -ge 66000 ] 2>/dev/null; then
       adaptive_trim="$adaptive_trim_limit"; action="safety_max"; low_count=0; up_count=0; up_hold=0; deadband_count=0
     elif [ "$error" -ge "$fast_delta" ] 2>/dev/null; then
       if [ "$adaptive_trim" -lt 0 ] 2>/dev/null; then adaptive_trim=0; sign_guard="_sign_guard"; fi
