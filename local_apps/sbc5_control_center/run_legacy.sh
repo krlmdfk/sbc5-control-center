@@ -8996,6 +8996,7 @@ adaptive_pwm_controller_loop() {
   local trim_sign_decay_step=2 trim_sign_threshold=250 sign_guard=""
   local down_direct_delta=1000 down_fast_delta=2000 up_direct_delta=2000
   local up_confirm_cycles=2 up_hold_cycles=3
+  local acoustic_ceiling=100 acoustic_quality="unknown"
   local ai_cycle="$AI_COOLING_EVAL_CYCLES" ai_result="" ai_output="" ai_state="" ai_reason="" ai_conf=0 ai_prediction=-1 ai_qualified_samples=0 ai_correction=0 ai_bucket="" ai_observations_total=0 ai_bin_observations=0 ai_qualified_total=0 ai_qualified_flag=0 ai_qualification_reason="" ai_stable_streak=0 ai_last_log="" ai_log_tick=0 ai_direct_conf=0 ai_global_conf=0 ai_effective_conf=0 ai_direct_prediction=-1 ai_global_prediction=-1 ai_effective_prediction=-1 ai_transfer_source="legacy" ai_effective_coverage=0 tp_mode="" tp_f30="" tp_f60="" tp_f120="" tp_conf=0 tp_mae="" tp_weighted="" tp_error="" tp_gain="" tp_weights="" tp_accepted=0 tp_rejected=0 tp_req=0 tp_applied=0 tp_gate_mode="" tp_gate_reason="" tp_decision_reason="" tp_weighted_raw="" tp_filter_lag=""
   local reload_token="" reload_now=""
   local ai_eval_empty_warned=false
@@ -9166,6 +9167,8 @@ adaptive_pwm_controller_loop() {
     [ "$curve_state" -lt "$min_run_floor" ] 2>/dev/null && curve_state="$min_run_floor"
     [ "$curve_state" -gt "$max_state" ] 2>/dev/null && curve_state="$max_state"
     action="curve_hold"
+    acoustic_ceiling="$max_state"
+    acoustic_quality="${thermal_signal_quality:-unknown}"
 
     # v2.7.2 Adaptive Trim Sign Guard + faster deadband decay. custom1(T) remains the absolute base.
     # The trim may only reinforce the current temperature error: positive above
@@ -9342,7 +9345,7 @@ adaptive_pwm_controller_loop() {
       # slew and reversal protections. safety_max and kernel emergency handoff
       # explicitly bypass this block. Never cap manual or hybrid modes.
       if [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$reentry_cycle" != "true" ]; then
-        local acoustic_ceiling="" acoustic_quality=""
+        acoustic_ceiling="$max_state"
         acoustic_quality="${thermal_signal_quality:-unknown}"
         acoustic_ceiling="$(adaptive_pwm_acoustic_ceiling "$temp_milli" "${temp_control_milli:-$temp_milli}" "${thermal_trend_fused_milli:-}" "$acoustic_quality" "$max_state")"
         if [[ "$acoustic_ceiling" =~ ^[0-9]+$ ]]; then
