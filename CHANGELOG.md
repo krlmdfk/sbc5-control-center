@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.7 — 2026-11-16
+
+### English
+
+#### Changed
+
+- Smarter thermal-aware PWM control with reduced fan noise, monitored temperature headroom and preserved hardware safety.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Inteligentne sterowanie PWM z ograniczeniem hałasu, nadzorowanym zapasem temperaturowym i zachowaniem pełnych zabezpieczeń sprzętowych.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.6 — 2026-11-16
 
 ### English

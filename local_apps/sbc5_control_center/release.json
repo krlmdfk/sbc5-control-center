@@ -1,14 +1,14 @@
 {
-  "version": "3.2.6",
+  "version": "3.2.7",
   "release_date": "2026-11-16",
   "restart_required": "home_assistant",
-  "summary": "Improved acoustic PWM control during backup workloads, with faster fan recovery and preserved thermal safety.",
-  "package_version": "3.2.6",
-  "card_ui_version": "3.2.6",
+  "summary": "Smarter thermal-aware PWM control with reduced fan noise, monitored temperature headroom and preserved hardware safety.",
+  "package_version": "3.2.7",
+  "card_ui_version": "3.2.7",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Usprawnione ograniczanie hałasu wentylatora podczas kopii zapasowych, szybsze zmniejszanie obrotów i zachowane zabezpieczenia termiczne."
+  "summary_pl": "Inteligentne sterowanie PWM z ograniczeniem hałasu, nadzorowanym zapasem temperaturowym i zachowaniem pełnych zabezpieczeń sprzętowych."
 }

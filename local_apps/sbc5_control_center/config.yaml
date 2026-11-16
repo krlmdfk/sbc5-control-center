@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.2.6
+version: 3.2.7
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.2.6 — Improved acoustic PWM control during backup workloads, with faster fan recovery and preserved thermal safety."
+description: "SBC5 Control Center 3.2.7 — Smarter thermal-aware PWM control with reduced fan noise, monitored temperature headroom and preserved hardware safety."
 arch:
 - aarch64
 machine:
