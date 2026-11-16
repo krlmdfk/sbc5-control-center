@@ -95,6 +95,7 @@ for name in (
     "patch_adaptive_trim_3_1_31.py",
     "patch_setpoint_stability_3_1_32.py",
     "patch_acoustic_post_slew_3_2_6.py",
+    "patch_thermal_budget_monitor_3_2_7.py",
 ):
     rendered = load_patch(name)(rendered)
 assert "adaptive_pwm_acoustic_ceiling() {" in rendered
@@ -102,6 +103,7 @@ assert "thermal_trend_fused_milli" in rendered
 assert "acoustic_quality=" in rendered
 assert "safety_max" in rendered
 assert "last_actuator_direction" in rendered
+assert "budget=${acoustic_ceiling:-100}% quality=${thermal_signal_quality:-unknown}" in rendered
 assert "3.2.6: post-slew acoustic enforcement" in rendered
 assert "acoustic_post_slew" in rendered
 syntax = subprocess.run(["bash", "-n"], input=rendered, capture_output=True, text=True, timeout=8)
