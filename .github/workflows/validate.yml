@@ -171,6 +171,12 @@ jobs:
       - name: Test 3.2.5 guarded acoustic field-test release
         run: python scripts/test_release_workflow_3_2_5_gates.py
 
+      - name: Test 3.2.6 guarded backup acoustic release
+        run: python scripts/test_release_workflow_3_2_6_gates.py
+
+      - name: Test 3.2.6 post-slew acoustic actuator behavior
+        run: python scripts/test_acoustic_pwm_post_slew_3_2_6.py
+
       - name: Test isolated 3.2.1 diagnostic Canary safety
         run: python scripts/test_canary_3_2_1_shadow_isolation.py
 
