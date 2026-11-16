@@ -41,6 +41,8 @@ COPY patch_adaptive_trim_3_1_31.py /patch_adaptive_trim_3_1_31.py
 # 3.1.32 Setpoint Stability: graded near-target trim recovery, a bounded
 # reversal guard and explicit physical/requested PWM diagnostics.
 COPY patch_setpoint_stability_3_1_32.py /patch_setpoint_stability_3_1_32.py
+# 3.2.6: second-stage acoustic post-slew cap for short backup bursts.
+COPY patch_acoustic_post_slew_3_2_6.py /patch_acoustic_post_slew_3_2_6.py
 # 3.1.28 AI stack: every module imported by the public v5.2 runtime must be
 # present in the container image. Keep each layer on a distinct runtime path.
 COPY ai_model_lock.py /ai_model_lock.py
@@ -75,7 +77,8 @@ RUN sed -i \
   && python3 /patch_thermal_stability_3_1_29.py /run_legacy.sh \
   && python3 /patch_adaptive_trim_3_1_31.py /run_legacy.sh \
   && python3 /patch_setpoint_stability_3_1_32.py /run_legacy.sh \
-  && rm -f /patch_thermal_stability_3_1_29.py /patch_adaptive_trim_3_1_31.py /patch_setpoint_stability_3_1_32.py
+  && python3 /patch_acoustic_post_slew_3_2_6.py /run_legacy.sh \
+  && rm -f /patch_thermal_stability_3_1_29.py /patch_adaptive_trim_3_1_31.py /patch_setpoint_stability_3_1_32.py /patch_acoustic_post_slew_3_2_6.py
 
 RUN mkdir -p /usr/share/licenses/sbc5-control-center
 COPY LICENSE /usr/share/licenses/sbc5-control-center/LICENSE

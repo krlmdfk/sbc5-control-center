@@ -39,8 +39,12 @@ cases = [
     ((60200, 54500, 0), 100),
     ((54000, 60100, 0), 100),
     # Fast heating bypasses quiet ceiling.
-    ((53000, 53000, 2500), 100),
+    ((53000, 53000, 2500), 83),
     ((53000, 53000, 2499), 75),
+    ((55300, 54800, 4295), 90),  # Real backup heat ramp in logs
+    ((57300, 56800, 3340), 92),  # Peak before 3.2.6
+    ((53000, 53000, 6000), 100),  # Severe trend safety bypass
+    ((59999, 59999, 5999), 92),
     # If sensor/thermal filter state is unknown, fail open.
     ((53000, 53000, 0, "warming_up"), 100),
     ((53000, 53000, 0, "spike_filtered"), 100),
@@ -81,6 +85,7 @@ for name in (
     "patch_thermal_stability_3_1_29.py",
     "patch_adaptive_trim_3_1_31.py",
     "patch_setpoint_stability_3_1_32.py",
+    "patch_acoustic_post_slew_3_2_6.py",
 ):
     rendered = load_patch(name)(rendered)
 assert "adaptive_pwm_acoustic_ceiling() {" in rendered
@@ -88,6 +93,8 @@ assert "thermal_trend_fused_milli" in rendered
 assert "acoustic_quality=" in rendered
 assert "safety_max" in rendered
 assert "last_actuator_direction" in rendered
+assert "3.2.6: post-slew acoustic enforcement" in rendered
+assert "acoustic_post_slew" in rendered
 syntax = subprocess.run(["bash", "-n"], input=rendered, capture_output=True, text=True, timeout=8)
 assert syntax.returncode == 0, syntax.stderr
 print("SBC5 acoustic ceiling safety and build-time composition: PASS")

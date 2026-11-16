@@ -8937,7 +8937,10 @@ adaptive_pwm_acoustic_ceiling() {
   # all take precedence over acoustic comfort.
   effective_temp="$raw"
   [ "$conditioned" -gt "$effective_temp" ] && effective_temp="$conditioned"
-  if [ "$effective_temp" -ge 60000 ] || [ "$trend" -ge 2500 ]; then
+  # Backup-like CPU bursts at ~55-57C may rise faster than 2.5C/min.
+  # Preserve a thermal headroom ceiling up to 60C, but bypass completely
+  # for severe heating >=6C/min (or any CPU/control temperature >=60C).
+  if [ "$effective_temp" -ge 60000 ] || [ "$trend" -ge 6000 ]; then
     ceiling="$max_state"
   elif [ "$effective_temp" -ge 57000 ]; then
     ceiling=92
@@ -8945,6 +8948,12 @@ adaptive_pwm_acoustic_ceiling() {
     ceiling=82
   else
     ceiling=75
+  fi
+  # Moderately fast heating receives additional cooling headroom, without
+  # bypassing the acoustic ceiling as 3.2.5 did.
+  if [ "$trend" -ge 2500 ] && [ "$ceiling" -lt "$max_state" ]; then
+    ceiling=$((ceiling + 8))
+    [ "$ceiling" -gt 92 ] && ceiling=92
   fi
   [ "$ceiling" -gt "$max_state" ] && ceiling="$max_state"
   printf '%s\n' "$ceiling"
@@ -9310,7 +9319,7 @@ adaptive_pwm_controller_loop() {
       # slew and reversal protections. safety_max and kernel emergency handoff
       # explicitly bypass this block. Never cap manual or hybrid modes.
       if [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$reentry_cycle" != "true" ]; then
-        local acoustic_ceiling acoustic_quality
+        local acoustic_ceiling="" acoustic_quality=""
         acoustic_quality="${thermal_signal_quality:-unknown}"
         acoustic_ceiling="$(adaptive_pwm_acoustic_ceiling "$temp_milli" "${temp_control_milli:-$temp_milli}" "${thermal_trend_fused_milli:-}" "$acoustic_quality" "$max_state")"
         if [[ "$acoustic_ceiling" =~ ^[0-9]+$ ]]; then
