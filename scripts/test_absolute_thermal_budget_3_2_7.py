@@ -45,7 +45,8 @@ checks = [
     # Safety: robust 60 second extrapolation predicts >=66C.
     ((64000, 64000, 2500), 100),
     # Conservatively fail open if sensor quality is invalid.
-    ((56800, 58300, 1780, "spike_filtered"), 100),
+    ((56800, 58300, 1780, "spike_filtered"), 92),  # safe downward glitch
+    ((58300, 56800, 1780, "spike_filtered"), 100),  # upward raw spike bypass
     ((56800, 58300, 1780, "warming_up"), 100),
     ((56800, 58300, 1780, "unknown"), 100),
     ((56000, 53000, 0, "good"), 100),  # raw > filtered by 3C
