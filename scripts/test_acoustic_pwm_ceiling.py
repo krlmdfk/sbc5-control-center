@@ -57,6 +57,18 @@ cases = [
     # If sensor/thermal filter state is unknown, fail open.
     ((53000, 53000, 0, "warming_up"), 100),
     ((53000, 53000, 0, "spike_filtered"), 100),
+    # 3.2.8: falling raw CPU samples filtered by median3, both safely below 60C
+    ((53500, 56400, -109, "spike_filtered"), 86),   # 05:16:05, former 94% PWM
+    ((54000, 55600, 1823, "spike_filtered"), 88),   # 05:14:41, former 91% PWM
+    ((51300, 54100, -1485, "spike_filtered"), 86),  # 05:16:47
+    # A rising CPU spike must retain unrestricted emergency headroom.
+    ((58400, 55600, 1460, "spike_filtered"), 100),  # 05:14:51
+    ((60000, 57000, 0, "spike_filtered"), 100),
+    ((53000, 56501, 0, "spike_filtered"), 100),     # >3.5C disagreement
+    ((53000, 60000, 0, "spike_filtered"), 100),     # filtered >=60C
+    ((55000, 57000, 6000, "spike_filtered"), 100),  # fast heating
+    ((55000, 57000, 2500, "spike_filtered"), 94),   # 88 + 6 headroom
+    ((54000, 56000, 2499, "spike_filtered"), 88),
     ((53000, 53000, 0, "fallback_raw"), 100),
     ((53000, 53000, 0, "unknown"), 100),
     ((53000, 53000, 0, "transient"), 79),
