@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.8 — 2026-11-17
+
+### English
+
+#### Changed
+
+- Quieter backup-time cooling with improved CPU temperature spike handling, monitored PWM headroom and preserved thermal safety.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Cichsze chłodzenie podczas kopii zapasowej dzięki ulepszonemu filtrowaniu skoków temperatury CPU, nadzorowaniu PWM i zachowaniu zabezpieczeń termicznych.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.7 — 2026-11-16
 
 ### English

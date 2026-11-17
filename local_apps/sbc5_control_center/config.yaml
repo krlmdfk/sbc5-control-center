@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.2.7
+version: 3.2.8
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.2.7 — Smarter thermal-aware PWM control with reduced fan noise, monitored temperature headroom and preserved hardware safety."
+description: "SBC5 Control Center 3.2.8 — Quieter backup-time cooling with improved CPU temperature spike handling, monitored PWM headroom and preserved thermal safety."
 arch:
 - aarch64
 machine:
