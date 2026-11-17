@@ -8914,7 +8914,7 @@ ai_cooling_suggestion_allowed() {
 # 3.2.5 candidate — acoustic ceiling for ordinary automatic Adaptive PWM.
 # This is a *soft requested-target cap*, not a hardware maximum. Existing
 # emergency 100%, kernel handoff, calibration, and slew limits remain intact.
-# The cap is disabled if sensor/trend quality is uncertain or heating is fast.
+# The cap fails open on dangerous temperatures, upward spikes or invalid sensors.
 adaptive_pwm_acoustic_ceiling() {
   local raw="${1:-}" conditioned="${2:-}" trend="${3:-}" quality="${4:-}" max_state="${5:-100}"
   local effective_temp ceiling
@@ -8923,11 +8923,21 @@ adaptive_pwm_acoustic_ceiling() {
     printf '%s\n' "$max_state"
     return 0
   fi
-  # A transient trend is not a failed CPU sensor. Use the raw CPU reading
-  # alongside the conditioned reading; keep a larger margin on a transient.
-  # Warm-up, rejected spikes and unknown quality still fail open.
+  # Valid transient trends are handled with additional PWM headroom.
+  # A filtered *downward* spike at moderate temperatures is different from
+  # a rising raw CPU reading: hold the hotter conditioned temperature as the
+  # safety reference and allow a conservative monitored acoustic budget.
+  # Upward spikes, large discrepancies and uncertain quality FAIL OPEN.
   case "$quality" in
     good|transient) ;;
+    spike_filtered)
+      if [ "$raw" -ge "$conditioned" ] ||
+         [ "$conditioned" -ge 60000 ] ||
+         [ $((conditioned - raw)) -gt 3500 ]; then
+        printf '%s\n' "$max_state"
+        return 0
+      fi
+      ;;
     *) printf '%s\n' "$max_state"; return 0 ;;
   esac
   # A missing/implausible sensor or large filter lag must not quiet the fan.
@@ -8975,6 +8985,18 @@ adaptive_pwm_acoustic_ceiling() {
   if [ "$quality" = "transient" ] && [ "$ceiling" -lt "$max_state" ]; then
     ceiling=$((ceiling + 4))
     [ "$ceiling" -gt 97 ] && ceiling=97
+  fi
+  # 3.2.8: downward sensor excursions (<60C conditioned, <=3.5C delta)
+  # receive explicit conservative headroom. A cooling or nearly steady trend
+  # adds 4pp; a rising trend adds 6pp. An *upward* rejected spike is never
+  # quieted. The 66C absolute and projected protections bypass this block.
+  if [ "$quality" = "spike_filtered" ] && [ "$ceiling" -lt "$max_state" ]; then
+    if [ "$trend" -ge 1500 ]; then
+      ceiling=$((ceiling + 6))
+    else
+      ceiling=$((ceiling + 4))
+    fi
+    [ "$ceiling" -gt 94 ] && ceiling=94
   fi
   [ "$ceiling" -gt "$max_state" ] && ceiling="$max_state"
   printf '%s\n' "$ceiling"
