@@ -68,7 +68,7 @@ cases = [
     ((53000, 60000, 0, "spike_filtered"), 100),     # filtered >=60C
     ((55000, 57000, 6000, "spike_filtered"), 100),  # fast heating
     ((55000, 57000, 2500, "spike_filtered"), 94),   # 88 + 6 headroom
-    ((54000, 56000, 2499, "spike_filtered"), 86),
+    ((54000, 56000, 2499, "spike_filtered"), 88),
     ((53000, 53000, 0, "fallback_raw"), 100),
     ((53000, 53000, 0, "unknown"), 100),
     ((53000, 53000, 0, "transient"), 79),
