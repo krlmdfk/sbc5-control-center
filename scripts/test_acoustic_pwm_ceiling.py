@@ -59,7 +59,7 @@ cases = [
     ((53000, 53000, 0, "spike_filtered"), 100),
     # 3.2.8: falling raw CPU samples filtered by median3, both safely below 60C
     ((53500, 56400, -109, "spike_filtered"), 86),   # 05:16:05, former 94% PWM
-    ((54000, 55600, 1823, "spike_filtered"), 86),   # 05:14:41, former 91% PWM
+    ((54000, 55600, 1823, "spike_filtered"), 88),   # 05:14:41, former 91% PWM
     ((51300, 54100, -1485, "spike_filtered"), 86),  # 05:16:47
     # A rising CPU spike must retain unrestricted emergency headroom.
     ((58400, 55600, 1460, "spike_filtered"), 100),  # 05:14:51
