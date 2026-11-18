@@ -243,6 +243,9 @@ jobs:
       - name: Test AI Cooling v5.1 transient learning guards
         run: python scripts/test_ai_v5_1_transient_learning.py
 
+      - name: Test 3.2.9 independent dynamic thermal quality and safety gates
+        run: python scripts/test_ai_dynamic_quality_3_2_9.py
+
       - name: Test AI Cooling v5.1 sparse-bucket direct diagnostics
         run: python scripts/test_ai_v5_1_direct_diagnostics.py
 

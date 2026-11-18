@@ -254,6 +254,156 @@ def _augment_transient_diagnostics(status: dict[str, Any], target_state: dict[st
         meta["transient_anchor_count"] = len(anchors) if isinstance(anchors, dict) else 0
 
 
+# 3.2.9: independent *observational* quality for short medium/high bursts.
+# These samples describe measured thermal response; they do NOT train the
+# quasi-steady equilibrium EMA, increment bin_qualified_samples, change model
+# confidence/assist readiness, or produce actuator commands.
+DYNAMIC_MIN_PAIR_SECONDS = 20.0
+DYNAMIC_MAX_PAIR_SECONDS = 120.0
+DYNAMIC_MAX_TEMP_C = 65.0
+DYNAMIC_MAX_ABS_RATE_C_PER_MIN = 8.0
+DYNAMIC_MAX_PWM_DELTA_PP = 18.0
+DYNAMIC_MAX_LOAD_DELTA_PP = 16.0
+DYNAMIC_MIN_DELTA_TEMP_C = 0.15
+DYNAMIC_MAX_TREND_DISAGREEMENT_C_PER_MIN = 4.0
+DYNAMIC_REASONS = (
+    "window_building", "bucket_changed", "load_change", "pwm_change",
+    "temperature_range", "temperature_trend", "sensor_or_trend_disagreement",
+    "no_temperature_response", "mode", "unsafe_action",
+)
+
+
+def _dynamic_quality_step(
+    target_state: dict[str, Any], status: dict[str, Any],
+    observations_total: int, now: float,
+) -> dict[str, Any]:
+    """Validate measured temperature response for a *pair* of observations.
+
+    Counter is independent of steady-state qualified_n. Evidence is descriptive
+    only and must never feed the PWM prediction or confidence.
+    """
+    state = target_state.setdefault("dynamic_quality_v1", {})
+    if not isinstance(state, dict):
+        state = {}
+        target_state["dynamic_quality_v1"] = state
+    bins = state.setdefault("bins", {})
+    if not isinstance(bins, dict):
+        bins = {}
+        state["bins"] = bins
+    bucket = str(status.get("workload_bucket") or "unknown")
+    entry = bins.setdefault(bucket, {})
+    if not isinstance(entry, dict):
+        entry = {}
+        bins[bucket] = entry
+    entry.setdefault("validated_pairs", 0)
+    entry.setdefault("rejection_counts", {})
+    entry.setdefault("response_warming", 0)
+    entry.setdefault("response_cooling", 0)
+    entry.setdefault("temperature_rate_ema_c_per_min", 0.0)
+
+    result = {
+        "policy": "dynamic_response_observe_only_v1",
+        "bucket": bucket,
+        "validated_pairs": int(_num(entry.get("validated_pairs"), 0)),
+        "warming_pairs": int(_num(entry.get("response_warming"), 0)),
+        "cooling_pairs": int(_num(entry.get("response_cooling"), 0)),
+        "last_reason": str(entry.get("last_reason") or "window_building"),
+        "rejection_counts": dict(entry.get("rejection_counts") or {}),
+        "qualified_sample": False,
+        "control_output_enabled": False,
+        "independent_of_steady_samples": True,
+        "temperature_rate_ema_c_per_min": _num(entry.get("temperature_rate_ema_c_per_min"), 0.0),
+    }
+    # Legacy samples are recorded at 30s intervals. Don't add multiple
+    # "validated" samples on evaluator/relay cycles that reuse an observation.
+    if observations_total <= int(_num(state.get("last_observations_total"), -1)):
+        return result
+    state["last_observations_total"] = observations_total
+    if bucket not in TRANSIENT_BUCKETS:
+        # Clear the pair on exit; do not compare a new morning's burst with
+        # yesterday's observation from a different workload regime.
+        state["previous"] = None
+        return result
+    if str(status.get("mode")) not in {"learning", "assist"}:
+        state["previous"] = None
+        result["last_reason"] = "mode"
+        return result
+
+    candidate = {
+        "time": float(now),
+        "bucket": bucket,
+        "load": _num(status.get("cpu_load_smoothed_percent"), -1.0),
+        "temperature": _num(status.get("temperature_c"), -273.0),
+        "pwm": _num(status.get("current_pwm_percent"), -1.0),
+    }
+    previous = state.get("previous")
+    state["previous"] = candidate
+    reasons = []
+    if not isinstance(previous, dict):
+        reasons.append("window_building")
+    elif str(previous.get("bucket")) != bucket:
+        reasons.append("bucket_changed")
+    else:
+        dt = now - _num(previous.get("time"), now)
+        if not DYNAMIC_MIN_PAIR_SECONDS <= dt <= DYNAMIC_MAX_PAIR_SECONDS:
+            reasons.append("window_building")
+        if abs(candidate["load"] - _num(previous.get("load"))) > DYNAMIC_MAX_LOAD_DELTA_PP:
+            reasons.append("load_change")
+        if abs(candidate["pwm"] - _num(previous.get("pwm"))) > DYNAMIC_MAX_PWM_DELTA_PP:
+            reasons.append("pwm_change")
+        older_temp = _num(previous.get("temperature"), -273.0)
+        if not (0.0 < candidate["temperature"] < DYNAMIC_MAX_TEMP_C and
+                0.0 < older_temp < DYNAMIC_MAX_TEMP_C):
+            reasons.append("temperature_range")
+        if dt > 0:
+            rate = 60.0 * (candidate["temperature"] - older_temp) / dt
+            if abs(rate) > DYNAMIC_MAX_ABS_RATE_C_PER_MIN:
+                reasons.append("temperature_trend")
+            # The rolling 60-second estimate is independent support that the
+            # paired readings represent an actual heating/cooling response.
+            rolling = _num(status.get("temperature_slope_c_per_min"), 99.0)
+            if (not math.isfinite(rolling) or
+                    abs(rolling - rate) > DYNAMIC_MAX_TREND_DISAGREEMENT_C_PER_MIN):
+                reasons.append("sensor_or_trend_disagreement")
+            if abs(candidate["temperature"] - older_temp) < DYNAMIC_MIN_DELTA_TEMP_C:
+                reasons.append("no_temperature_response")
+    action = str(status.get("controller_action") or "")
+    if any(token in action for token in ("safety_max", "emergency", "sensor_invalid", "fan_fault")):
+        reasons.append("unsafe_action")
+    if not 0 <= candidate["load"] <= 100 or not 0 <= candidate["pwm"] <= 100:
+        reasons.append("load_change")
+
+    # Count all failed gates, not just the first priority reason; existing
+    # legacy qualifier and its 0/30 maturity counter remain unchanged.
+    if reasons:
+        counts = entry.setdefault("rejection_counts", {})
+        for reason in dict.fromkeys(reasons):
+            counts[reason] = int(_num(counts.get(reason), 0)) + 1
+        entry["last_reason"] = reasons[0]
+    else:
+        rate = 60.0 * (candidate["temperature"] - older_temp) / dt
+        entry["validated_pairs"] = int(_num(entry.get("validated_pairs"), 0)) + 1
+        if rate > 0:
+            entry["response_warming"] = int(_num(entry.get("response_warming"), 0)) + 1
+        else:
+            entry["response_cooling"] = int(_num(entry.get("response_cooling"), 0)) + 1
+        old_rate = _num(entry.get("temperature_rate_ema_c_per_min"), rate)
+        entry["temperature_rate_ema_c_per_min"] = round(0.2 * rate + 0.8 * old_rate, 3)
+        entry["last_reason"] = "validated"
+        entry["last_validated_epoch"] = int(now)
+        result["qualified_sample"] = True
+
+    result.update({
+        "validated_pairs": int(_num(entry.get("validated_pairs"), 0)),
+        "warming_pairs": int(_num(entry.get("response_warming"), 0)),
+        "cooling_pairs": int(_num(entry.get("response_cooling"), 0)),
+        "last_reason": entry["last_reason"],
+        "rejection_counts": dict(entry.get("rejection_counts") or {}),
+        "temperature_rate_ema_c_per_min": _num(entry.get("temperature_rate_ema_c_per_min"), 0.0),
+    })
+    return result
+
+
 def _normalize_direct_diagnostics(status: dict[str, Any], fields: list[str]) -> None:
     """Keep direct diagnostics tied strictly to direct qualified evidence.
 
@@ -293,6 +443,10 @@ def _apply_hierarchical_step(model: dict[str, Any], status: dict[str, Any], fiel
     target_state["last_transient_observations_total"] = observations_total
 
     _augment_transient_diagnostics(status, target_state, load, weight)
+    dynamic = _dynamic_quality_step(target_state, status, observations_total, time.time())
+    status["dynamic_quality"] = dynamic
+    # Keep the legacy direct 0/30 counter untouched: it means steady-state
+    # quality and must not be repurposed as dynamic response maturity.
     _normalize_direct_diagnostics(status, fields)
 
     # Keep the 22-field v5 stdout ABI intact. The existing transfer-source field
@@ -302,6 +456,17 @@ def _apply_hierarchical_step(model: dict[str, Any], status: dict[str, Any], fiel
         token = _transient_token(target_state, load)
         if token and "+transient[" not in source:
             source += token
+        # Reuse existing transfer-source telemetry instead of adding polling,
+        # an output column, or new relay parsers. Dynamic quality is explicitly
+        # separate from the steady 0/30 samples.
+        if str(dynamic.get("bucket")) in TRANSIENT_BUCKETS:
+            tag = (
+                f"+dyn[q={int(dynamic['validated_pairs'])},"
+                f"w={int(dynamic['warming_pairs'])},"
+                f"c={int(dynamic['cooling_pairs'])},"
+                f"r={dynamic['last_reason']}]"
+            )
+            source += tag
         fields[20] = source
         status["transfer_source"] = source
     return model, status, fields
