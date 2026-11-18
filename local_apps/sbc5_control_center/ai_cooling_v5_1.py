@@ -456,6 +456,17 @@ def _apply_hierarchical_step(model: dict[str, Any], status: dict[str, Any], fiel
         token = _transient_token(target_state, load)
         if token and "+transient[" not in source:
             source += token
+        # Reuse existing transfer-source telemetry instead of adding polling,
+        # an output column, or new relay parsers. Dynamic quality is explicitly
+        # separate from the steady 0/30 samples.
+        if str(dynamic.get("bucket")) in TRANSIENT_BUCKETS:
+            tag = (
+                f"+dyn[q={int(dynamic['validated_pairs'])},"
+                f"w={int(dynamic['warming_pairs'])},"
+                f"c={int(dynamic['cooling_pairs'])},"
+                f"r={dynamic['last_reason']}]"
+            )
+            source += tag
         fields[20] = source
         status["transfer_source"] = source
     return model, status, fields
