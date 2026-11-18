@@ -76,4 +76,5 @@ assert model["qualified_samples_total"] == 2349
 assert model["bins"]["49.0|medium"]["qualified_n"] == 0
 assert mod.POLICY == "hierarchical_continuous_v5_1"
 assert "fields[20]" in path.read_text(encoding="utf-8")  # ABI still intact
+assert "f\"+dyn[q={int(dynamic['validated_pairs'])}" in path.read_text(encoding="utf-8")
 print("SBC5 3.2.9 dynamic quality separate learning, restart, safety: PASS")
