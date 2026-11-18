@@ -32,7 +32,7 @@
     return el;
   };
   function render(items){
-    const root=$('sbc5DiagnosticsGroups');if(!root;
+    const root=$('sbc5DiagnosticsGroups');if(!root)return;
     // Preserve open groups during background refresh, including user choices.
     const opened=new Map(Array.from(root.querySelectorAll('details[data-group]'))
       .map(section=>[section.dataset.group,section.open]));
