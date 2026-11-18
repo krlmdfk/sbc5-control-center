@@ -1,14 +1,14 @@
 {
-  "version": "3.2.8",
-  "release_date": "2026-11-17",
+  "version": "3.2.9",
+  "release_date": "2026-11-18",
   "restart_required": "home_assistant",
-  "summary": "Quieter backup-time cooling with improved CPU temperature spike handling, monitored PWM headroom and preserved thermal safety.",
-  "package_version": "3.2.8",
-  "card_ui_version": "3.2.8",
+  "summary": "Improved AI Cooling with validated dynamic learning for medium/high workloads, enhanced diagnostics and preserved thermal safety.",
+  "package_version": "3.2.9",
+  "card_ui_version": "3.2.9",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Cichsze chłodzenie podczas kopii zapasowej dzięki ulepszonemu filtrowaniu skoków temperatury CPU, nadzorowaniu PWM i zachowaniu zabezpieczeń termicznych."
+  "summary_pl": "Ulepszone AI Cooling z weryfikacją dynamicznych próbek obciążenia medium/high, rozszerzoną diagnostyką i zachowaniem zabezpieczeń termicznych."
 }

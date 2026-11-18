@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.2.9 — 2026-11-18
+
+### English
+
+#### Changed
+
+- Improved AI Cooling with validated dynamic learning for medium/high workloads, enhanced diagnostics and preserved thermal safety.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Ulepszone AI Cooling z weryfikacją dynamicznych próbek obciążenia medium/high, rozszerzoną diagnostyką i zachowaniem zabezpieczeń termicznych.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.8 — 2026-11-17
 
 ### English
