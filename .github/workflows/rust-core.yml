@@ -34,7 +34,7 @@ jobs:
         working-directory: local_apps/sbc5_control_center/rust-core
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust 1.85
         run: |
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Validate bootstrap shell
         run: |
           bash -n local_apps/sbc5_control_center/run.sh
