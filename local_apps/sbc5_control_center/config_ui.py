@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json, os, tempfile, time, copy, re, math, hashlib, shutil
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError, CARD_MARKER_VERSION_PATTERN
@@ -74,6 +75,7 @@ def _runtime_versioned_card(card):
 OPTIONS = Path('/data/options.json')
 RELOAD = Path('/data/config_ui_reload.request')
 HTML = Path('/config_ui/index.html')
+DIAGNOSTICS_JS = Path('/config_ui/diagnostics.js')
 PORT = int(os.environ.get('RPI5CC_CONFIG_UI_PORT', '8099'))
 # Browser dashboard backups can be larger than option saves; reject unbounded uploads.
 MAX_POST_BYTES = 8 * 1024 * 1024
@@ -639,6 +641,52 @@ def reset_ai_model_with_backup(
         return snapshot
 
 
+# Ingress-only diagnostic adapter. SUPERVISOR_TOKEN remains server-side.
+# No raw attributes, metadata or unrelated Home Assistant entities are exposed.
+SBC5_ENTITY_ID = re.compile(r'^(?:sensor|binary_sensor)\.sbc5_[a-z0-9_]{1,100}$')
+SBC5_DIAGNOSTICS_MAX_BYTES = 8 * 1024 * 1024
+SBC5_DIAGNOSTICS_MAX_ENTITIES = 600
+
+
+def read_sbc5_sensor_states():
+    """Fetch an allowlisted, bounded, read-only snapshot via Core API proxy."""
+    token = os.environ.get('SUPERVISOR_TOKEN', '')
+    if not token:
+        raise RuntimeError('Home Assistant API proxy unavailable')
+    request = urllib.request.Request(
+        'http://supervisor/core/api/states',
+        headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/json'},
+        method='GET',
+    )
+    with urllib.request.urlopen(request, timeout=5) as response:
+        data = response.read(SBC5_DIAGNOSTICS_MAX_BYTES + 1)
+    if len(data) > SBC5_DIAGNOSTICS_MAX_BYTES:
+        raise ValueError('State response is too large')
+    payload = json.loads(data)
+    if not isinstance(payload, list):
+        raise ValueError('State response is not a list')
+    selected = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        entity_id = item.get('entity_id')
+        if not isinstance(entity_id, str) or not SBC5_ENTITY_ID.fullmatch(entity_id):
+            continue
+        attributes = item.get('attributes')
+        attributes = attributes if isinstance(attributes, dict) else {}
+        name = attributes.get('friendly_name')
+        unit = attributes.get('unit_of_measurement')
+        selected.append({
+            'entity_id': entity_id,
+            'name': (name[:120] if isinstance(name, str) else entity_id),
+            'state': str(item.get('state') if item.get('state') is not None else 'unknown')[:120],
+            'unit': (unit[:24] if isinstance(unit, str) else ''),
+        })
+        if len(selected) >= SBC5_DIAGNOSTICS_MAX_ENTITIES:
+            break
+    return {'ok': True, 'entities': selected, 'count': len(selected)}
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
     def _require_ingress_peer(self):
@@ -687,6 +735,23 @@ class H(BaseHTTPRequestHandler):
         p=self.path.split('?',1)[0]
         if p in ('/','/index.html'):
             body=HTML.read_bytes(); self.send_response(200); self.send_header('Content-Type','text/html; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body); return
+        if p=='/diagnostics.js':
+            body=DIAGNOSTICS_JS.read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type','text/javascript; charset=utf-8')
+            self.send_header('Cache-Control','no-store')
+            self.send_header('X-Content-Type-Options','nosniff')
+            self.send_header('Content-Length',str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if p=='/api/diagnostics/entities':
+            try:
+                self.send_json(read_sbc5_sensor_states())
+            except (OSError, ValueError, RuntimeError):
+                # Do not leak sensitive Supervisor details to browser.
+                self.send_json({'ok':False,'error':'Nie udało się odczytać sensorów SBC5 z Home Assistant.'},502)
+            return
         if p=='/api/state': self.send_json({'version':APP_VERSION,'card_ui_version':current_card_ui_version(),'options':read_options(),'defaults':DEFAULTS,'runtime':runtime_summary()}); return
         if p=='/api/update_packages/status': self.send_json(update_package_cleanup_status()); return
         if p=='/api/dashboard_card/status':
