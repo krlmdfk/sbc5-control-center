@@ -1,4 +1,4 @@
-FROM rust:1.85-alpine3.21 AS rust-builder
+FROM rust:1.99-alpine3.21 AS rust-builder
 WORKDIR /build
 COPY rust-core/Cargo.toml ./Cargo.toml
 COPY rust-core/src ./src
