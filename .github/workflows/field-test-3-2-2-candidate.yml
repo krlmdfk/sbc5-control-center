@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
       - name: Reject unintended branch
         run: test "$GITHUB_REF_NAME" = "release/3-2-2-field-test-candidate"
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install validation dependencies
