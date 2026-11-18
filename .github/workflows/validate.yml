@@ -186,6 +186,9 @@ jobs:
       - name: Test 3.2.9 guarded AI dynamic-quality field test release
         run: python scripts/test_release_workflow_3_2_9_gates.py
 
+      - name: Test 3.3.0 guarded grouped diagnostics release
+        run: python scripts/test_release_workflow_3_3_0_gates.py
+
       - name: Test 3.2.6 post-slew acoustic actuator behavior
         run: python scripts/test_acoustic_pwm_post_slew_3_2_6.py
 
