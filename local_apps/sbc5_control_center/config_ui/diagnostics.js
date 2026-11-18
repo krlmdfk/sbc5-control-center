@@ -15,9 +15,14 @@
   const active=()=>document.body.dataset.sbc5Tab==='diagnostics';
   function classify(e){
     const id=String(e.entity_id||'').replace(/^(?:sensor|binary_sensor)\.sbc5_/,'');
-    for(const group of groups.slice(0,-1)){
-      if(group.patterns.some(re=>re.test(id)))return group.id;
-    }
+    // Prioritize predictive/AI entities: their names can contain "PWM",
+    // "CPU" or "fan", which must not move them into physical controls.
+    if(/^(?:ai_thermal_|thermal_predictor|thermal_shadow)|(?:forecast|predictor)/i.test(id))return 'predictor';
+    if(/^(?:ai_|workload_|dynamic_quality)|(?:qualified|learning)/i.test(id))return 'ai';
+    if(/(?:^|_)(?:pmic|power|supply|vdd|voltage|current|usb)(?:_|$)/i.test(id))return 'power';
+    if(/(?:fan|pwm|cooling|cooler|curve|calibrat)/i.test(id))return 'cooling';
+    if(/(?:cpu|core_[0-9]|clock|frequency|overclock|throttl)/i.test(id))return 'cpu';
+    if(/(?:network|ethernet|memory|swap|rootfs|disk|storage|uptime|firmware|operating|version|system|architecture|boot)/i.test(id))return 'system';
     return 'other';
   }
   const node=(tag,klass,txt)=>{
@@ -27,7 +32,10 @@
     return el;
   };
   function render(items){
-    const root=$('sbc5DiagnosticsGroups');if(!root)return;
+    const root=$('sbc5DiagnosticsGroups');if(!root;
+    // Preserve open groups during background refresh, including user choices.
+    const opened=new Map(Array.from(root.querySelectorAll('details[data-group]'))
+      .map(section=>[section.dataset.group,section.open]));
     const grouped=new Map(groups.map(g=>[g.id,[]]));
     for(const e of items){
       if(!e||typeof e.entity_id!=='string'||! /^(sensor|binary_sensor)\.sbc5_[a-z0-9_]+$/.test(e.entity_id))continue;
@@ -39,7 +47,8 @@
       if(!entries.length)continue;
       entries.sort((a,b)=>String(a.name||a.entity_id).localeCompare(String(b.name||b.entity_id),'pl'));
       const section=node('details','sbc5-diag-section');
-      section.open=g.id==='cpu'||g.id==='cooling';
+      section.dataset.group=g.id;
+      section.open=opened.has(g.id)?opened.get(g.id):g.id==='cpu'||g.id==='cooling';
       const summary=node('summary','sbc5-diag-summary');
       summary.append(node('span','sbc5-diag-group-name',g.icon+' '+g.name),node('span','sbc5-diag-count',entries.length));
       section.append(summary);
@@ -68,6 +77,8 @@
       if(!response.ok)throw Error('HTTP '+response.status);
       const payload=await response.json();
       if(!payload||payload.ok!==true||!Array.isArray(payload.entities))throw Error('Nieprawidłowa odpowiedź');
+      // A request started in Diagnostics may finish after switching tabs.
+      if(!active())return;
       render(payload.entities);
       lastLoaded=Date.now();
       status.textContent='Ostatni odczyt: '+new Date().toLocaleTimeString('pl-PL');
