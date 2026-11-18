@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json, os, tempfile, time, copy, re, math, hashlib, shutil
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from dashboard_sync import dashboard_status, sync_dashboard_card, DashboardSyncError, CARD_MARKER_VERSION_PATTERN
@@ -74,6 +75,7 @@ def _runtime_versioned_card(card):
 OPTIONS = Path('/data/options.json')
 RELOAD = Path('/data/config_ui_reload.request')
 HTML = Path('/config_ui/index.html')
+DIAGNOSTICS_JS = Path('/config_ui/diagnostics.js')
 PORT = int(os.environ.get('RPI5CC_CONFIG_UI_PORT', '8099'))
 # Browser dashboard backups can be larger than option saves; reject unbounded uploads.
 MAX_POST_BYTES = 8 * 1024 * 1024
@@ -637,6 +639,191 @@ def reset_ai_model_with_backup(
             except FileNotFoundError:
                 pass
         return snapshot
+
+
+# Ingress-only diagnostic adapter. SUPERVISOR_TOKEN remains server-side.
+# Return only entity ID, friendly name, current value and unit: no extra attrs.
+SBC5_ENTITY_ID = re.compile(r'^(?:sensor|binary_sensor)\\.sbc5_[a-z0-9_]{1,100}
+    def log_message(self,*args): pass
+    def _require_ingress_peer(self):
+        # Request headers (including X-Ingress-Path) can be forged. Use the
+        # TCP peer address, which the Supervisor documents for Ingress traffic.
+        if not self.client_address or self.client_address[0] != INGRESS_PROXY_ADDRESS:
+            self.send_error(403, 'Dostęp tylko przez Home Assistant Ingress')
+            return False
+        return True
+    def _read_json_request(self):
+        # Explicit limits prevent slow/unbounded reads and memory exhaustion in
+        # this privileged App's Ingress server. No change to Ingress routing.
+        if self.headers.get('Transfer-Encoding'):
+            raise JsonRequestError('Transfer-Encoding nie jest obsługiwane')
+        mime = self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower()
+        if mime != 'application/json':
+            raise JsonRequestError('Oczekiwano Content-Type: application/json', 415)
+        length = self.headers.get('Content-Length')
+        if length is None:
+            raise JsonRequestError('Wymagany Content-Length', 411)
+        if not re.fullmatch(r'[0-9]{1,10}', length):
+            raise JsonRequestError('Nieprawidłowy Content-Length')
+        size = int(length)
+        if size > MAX_POST_BYTES:
+            raise JsonRequestError('Zbyt duże żądanie JSON', 413)
+        if size == 0:
+            raise JsonRequestError('Puste żądanie JSON')
+        raw = self.rfile.read(size)
+        if len(raw) != size:
+            raise JsonRequestError('Niekompletna treść żądania JSON')
+        # Python's JSON decoder accepts non-standard NaN/Infinity by default.
+        # Reject those constants in every nested field, not just numeric options.
+        def reject_constant(value):
+            raise ValueError(f'Niedozwolona stała JSON: {value}')
+        try:
+            data = json.loads(raw, parse_constant=reject_constant)
+        except (UnicodeError, json.JSONDecodeError, ValueError):
+            raise JsonRequestError('Niepoprawna treść JSON') from None
+        if not isinstance(data, dict):
+            raise JsonRequestError('Żądanie JSON musi być obiektem')
+        return data
+    def send_json(self,obj,status=200):
+        body=json.dumps(obj,ensure_ascii=False).encode(); self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body)
+    def do_GET(self):
+        if not self._require_ingress_peer(): return
+        p=self.path.split('?',1)[0]
+        if p in ('/','/index.html'):
+            body=HTML.read_bytes(); self.send_response(200); self.send_header('Content-Type','text/html; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body); return
+        if p=='/diagnostics.js':
+            body=DIAGNOSTICS_JS.read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type','text/javascript; charset=utf-8')
+            self.send_header('Cache-Control','no-store')
+            self.send_header('X-Content-Type-Options','nosniff')
+            self.send_header('Content-Length',str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if p=='/api/diagnostics/entities':
+            try:
+                self.send_json(read_sbc5_sensor_states())
+            except (OSError, ValueError, RuntimeError):
+                self.send_json({'ok':False,'error':'Nie udało się odczytać sensorów SBC5 z Home Assistant.'},502)
+            return
+        if p=='/api/state': self.send_json({'version':APP_VERSION,'card_ui_version':current_card_ui_version(),'options':read_options(),'defaults':DEFAULTS,'runtime':runtime_summary()}); return
+        if p=='/api/update_packages/status': self.send_json(update_package_cleanup_status()); return
+        if p=='/api/dashboard_card/status':
+            try: self.send_json(dashboard_status()); return
+            except Exception as e: self.send_json({'ok':False,'error':str(e)},500); return
+        if p=='/api/dashboard_card/template':
+            try:
+                card=_runtime_versioned_card(json.loads(current_card_json_path().read_text(encoding='utf-8')))
+                self.send_json({'ok':True,'packaged_version':current_card_ui_version(),'card':card}); return
+            except Exception as e: self.send_json({'ok':False,'error':f'Nie można odczytać wzorca karty: {e}'},500); return
+        if p=='/api/update_card/template':
+            try:
+                card=_runtime_versioned_card(json.loads(current_update_card_json_path().read_text(encoding='utf-8')))
+                self.send_json({'ok':True,'packaged_version':current_card_ui_version(),'card':card}); return
+            except Exception as e: self.send_json({'ok':False,'error':f'Nie można odczytać wzorca karty update: {e}'},500); return
+        self.send_error(404)
+    def do_POST(self):
+        if not self._require_ingress_peer(): return
+        try:
+            payload = self._read_json_request()
+            if self.path=='/api/save':
+                o=validate(payload.get('options',{}))
+                atomic_write(o,notify=False)
+                persist_cpu_state(o,source='config_ui',explicit=True)
+                persist_gpu_state(o,source='config_ui',explicit=True)
+                persist_ethernet_state(o,source='config_ui',explicit=True)
+                RELOAD.write_text(str(int(time.time())))
+                self.send_json({'ok':True,'options':o,'cpu_profile_state':read_cpu_state(),'gpu_profile_state':read_gpu_state()}); return
+            if self.path=='/api/reset_section':
+                sec=str(payload.get('section','')); confirm=bool(payload.get('confirm',False))
+                if not confirm: self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
+                if sec not in SECTION_KEYS: self.send_json({'ok':False,'error':'Nieznana sekcja'},400); return
+                o=read_options()
+                for k in SECTION_KEYS[sec]: o[k]=json.loads(json.dumps(DEFAULTS[k]))
+                if sec in SECTION_TOGGLE: o[SECTION_TOGGLE[sec]]=DEFAULTS[SECTION_TOGGLE[sec]]
+                if sec=='config_manager': o['config_txt_manager']['enabled']=False
+                o=validate(o)
+                atomic_write(o,notify=False)
+                if sec=='cpu': persist_cpu_state(o,source='config_ui_reset',explicit=True)
+                if sec=='gpu': persist_gpu_state(o,source='config_ui_reset',explicit=True)
+                if sec=='ethernet': persist_ethernet_state(o,source='config_ui_reset',explicit=True)
+                RELOAD.write_text(str(int(time.time())))
+                self.send_json({'ok':True,'options':o,'cpu_profile_state':read_cpu_state(),'gpu_profile_state':read_gpu_state()}); return
+            if self.path=='/api/update_packages/cleanup':
+                if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
+                self.send_json(cleanup_update_packages()); return
+            if self.path=='/api/reset_ai_model':
+                if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
+                try:
+                    snapshot = reset_ai_model_with_backup()
+                except (OSError, ValueError, RuntimeError) as exc:
+                    self.send_json({'ok':False,'error':f'Reset modelu AI anulowany: {exc}'},409); return
+                self.send_json({'ok':True,'model_backup':snapshot}); return
+            if self.path=='/api/dashboard_card/backup':
+                if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
+                cfg=payload.get('config')
+                if not isinstance(cfg,dict) or not isinstance(cfg.get('views'),list): self.send_json({'ok':False,'error':'Nieprawidłowa konfiguracja dashboardu'},400); return
+                LOVELACE_BACKUP_DIR.mkdir(parents=True,exist_ok=True)
+                stamp=time.strftime('%Y%m%d-%H%M%S')
+                url=str(payload.get('url_path') or 'default').replace('/','_').replace('\\','_')[:80]
+                path=LOVELACE_BACKUP_DIR/f'{stamp}_{url}_browser.json'
+                path.write_text(json.dumps(cfg,ensure_ascii=False,indent=2),encoding='utf-8')
+                self.send_json({'ok':True,'backup':str(path)}); return
+            if self.path=='/api/dashboard_card/sync':
+                if not bool(payload.get('confirm',False)): self.send_json({'ok':False,'error':'Wymagane potwierdzenie'},400); return
+                try: self.send_json(sync_dashboard_card(confirm=True)); return
+                except DashboardSyncError as e: self.send_json({'ok':False,'error':str(e)},409); return
+                except Exception as e: self.send_json({'ok':False,'error':str(e)},500); return
+            self.send_json({'ok':False,'error':'Nieznana akcja'},404)
+        except JsonRequestError as e: self.send_json({'ok':False,'error':str(e)},e.status)
+        except ValueError as e: self.send_json({'ok':False,'error':str(e)},400)
+        except Exception as e: self.send_json({'ok':False,'error':'Błąd zapisu konfiguracji'},500)
+
+if __name__=='__main__':
+    ThreadingHTTPServer(('0.0.0.0',PORT),H).serve_forever()
+)
+SBC5_DIAGNOSTICS_MAX_BYTES = 8 * 1024 * 1024
+SBC5_DIAGNOSTICS_MAX_ENTITIES = 600
+
+
+def read_sbc5_sensor_states():
+    """Fetch an allowlisted, bounded, read-only snapshot via Core API proxy."""
+    token = os.environ.get('SUPERVISOR_TOKEN', '')
+    if not token:
+        raise RuntimeError('Home Assistant API proxy unavailable')
+    request = urllib.request.Request(
+        'http://supervisor/core/api/states',
+        headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/json'},
+        method='GET',
+    )
+    with urllib.request.urlopen(request, timeout=5) as response:
+        data = response.read(SBC5_DIAGNOSTICS_MAX_BYTES + 1)
+    if len(data) > SBC5_DIAGNOSTICS_MAX_BYTES:
+        raise ValueError('State response is too large')
+    payload = json.loads(data)
+    if not isinstance(payload, list):
+        raise ValueError('State response is not a list')
+    selected = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        entity_id = item.get('entity_id')
+        if not isinstance(entity_id, str) or not SBC5_ENTITY_ID.fullmatch(entity_id):
+            continue
+        attributes = item.get('attributes')
+        attributes = attributes if isinstance(attributes, dict) else {}
+        name = attributes.get('friendly_name')
+        unit = attributes.get('unit_of_measurement')
+        selected.append({
+            'entity_id': entity_id,
+            'name': (name[:120] if isinstance(name, str) else entity_id),
+            'state': str(item.get('state') if item.get('state') is not None else 'unknown')[:120],
+            'unit': (unit[:24] if isinstance(unit, str) else ''),
+        })
+        if len(selected) >= SBC5_DIAGNOSTICS_MAX_ENTITIES:
+            break
+    return {'ok': True, 'entities': selected, 'count': len(selected)}
 
 
 class H(BaseHTTPRequestHandler):
