@@ -8,7 +8,7 @@ w = yaml.safe_load((root / ".github/workflows/release.yml").read_text(encoding="
 inputs = w.get("on", w.get(True))["workflow_dispatch"]["inputs"]
 steps = {s["name"]: s for s in w["jobs"]["release"]["steps"] if "name" in s}
 g = steps["Block unverified publication"]
-assert "3.2.1|3.2.2|3.2.3|3.2.4|3.2.5|3.2.6|3.2.7|3.2.8)" in g["run"]
+assert "3.2.1|3.2.2|3.2.3|3.2.4|3.2.5|3.2.6|3.2.7|3.2.8|3.2.9)" in g["run"]
 assert 'test "$FIELD_TEST_ACKNOWLEDGED" = "true"' in g["run"]
 assert 'test "$HARDWARE_VERIFIED" = "true"' in g["run"]
 assert g["if"] == "${{ !inputs.dry_run }}"
