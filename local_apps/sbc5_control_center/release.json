@@ -1,14 +1,14 @@
 {
-  "version": "3.2.9",
-  "release_date": "2026-11-18",
+  "version": "3.3.0",
+  "release_date": "2026-11-19",
   "restart_required": "home_assistant",
-  "summary": "Improved AI Cooling with validated dynamic learning for medium/high workloads, enhanced diagnostics and preserved thermal safety.",
-  "package_version": "3.2.9",
-  "card_ui_version": "3.2.9",
+  "summary": "Grouped Diagnostics tab for SBC5 sensors, improved monitoring and security checks.",
+  "package_version": "3.3.0",
+  "card_ui_version": "3.3.0",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Ulepszone AI Cooling z weryfikacją dynamicznych próbek obciążenia medium/high, rozszerzoną diagnostyką i zachowaniem zabezpieczeń termicznych."
+  "summary_pl": "Nowa zakładka Diagnostyka z grupowaniem sensorów SBC5, lepszym monitoringiem i kontrolą bezpieczeństwa."
 }

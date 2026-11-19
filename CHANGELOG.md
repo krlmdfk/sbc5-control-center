@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.3.0 — 2026-11-19
+
+### English
+
+#### Changed
+
+- Grouped Diagnostics tab for SBC5 sensors, improved monitoring and security checks.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Nowa zakładka Diagnostyka z grupowaniem sensorów SBC5, lepszym monitoringiem i kontrolą bezpieczeństwa.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.2.9 — 2026-11-18
 
 ### English

@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.2.9
+version: 3.3.0
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.2.9 — Improved AI Cooling with validated dynamic learning for medium/high workloads, enhanced diagnostics and preserved thermal safety."
+description: "SBC5 Control Center 3.3.0 — Grouped Diagnostics tab for SBC5 sensors, improved monitoring and security checks."
 arch:
 - aarch64
 machine:
