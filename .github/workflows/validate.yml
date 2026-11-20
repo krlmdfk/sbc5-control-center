@@ -141,6 +141,9 @@ jobs:
       - name: Test 3.3.0 grouped Ingress diagnostics and read-only sensor isolation
         run: python scripts/test_grouped_diagnostics_3_3_0.py
 
+      - name: Test 3.3.1 modern responsive diagnostics UX and read-only boundaries
+        run: python scripts/test_modern_diagnostics_3_3_1.py
+
       - name: Test Thermal Predictor Shadow Assist
         run: python scripts/test_thermal_predictor_shadow.py
 
