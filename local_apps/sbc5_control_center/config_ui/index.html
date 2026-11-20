@@ -15,6 +15,38 @@ body[data-sbc5-tab="diagnostics"] .save{display:none}
 .sbc5-diag-row:last-child{border-bottom:0}
 .sbc5-diag-label{flex:1;min-width:0;overflow-wrap:anywhere}
 .sbc5-diag-value{text-align:right;font-weight:650;overflow-wrap:anywhere;max-width:50%}
+
+/* 3.3.1 modern diagnostics, scoped to avoid touching Config UI. */
+.sbc5-diag-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}
+.sbc5-diag-metric{display:flex;min-width:0;flex-direction:column;gap:8px;padding:12px 10px;background:linear-gradient(155deg,#123240,#0a2029);border:1px solid #285263;border-radius:15px}
+.sbc5-diag-metric-label{font-size:11px;color:#b5d0db;overflow-wrap:anywhere}
+.sbc5-diag-metric-value{font-size:clamp(16px,3.3vw,22px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:#effdff}
+.sbc5-diag-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:12px 0}
+.sbc5-diag-controls input{margin:0;min-width:0}
+.sbc5-diag-mode{display:flex;gap:5px;align-items:center}
+.sbc5-diag-mode button{padding:10px;font-size:12px;white-space:nowrap}
+.sbc5-diag-mode button[aria-pressed="true"]{background:#0c4556;border-color:#23b9ce;color:#e6ffff}
+.sbc5-diag-heading{display:flex;min-width:0;flex-direction:column;gap:4px}
+.sbc5-diag-group-preview{color:#adc7d2;font-size:11px;font-weight:450;line-height:1.35;overflow-wrap:anywhere}
+.sbc5-diag-summary{align-items:center}
+.sbc5-diag-count{white-space:nowrap;border:1px solid #294957;padding:4px 8px;border-radius:999px}
+.sbc5-diag-row{align-items:center;min-height:47px;gap:12px}
+.sbc5-diag-short{font-size:13px;line-height:1.4}
+.sbc5-diag-entity{display:block;color:#8da4b0;margin-top:4px;font-size:10px;overflow-wrap:anywhere}
+.sbc5-diag-pill{display:inline-block;max-width:100%;padding:5px 8px;border-radius:9px;border:1px solid #39505b;background:#14232b;font-size:12px;line-height:1.35;white-space:normal;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.sbc5-diag-pill.tone-good{border-color:#286a50;background:#102b22;color:#a3edc0}
+.sbc5-diag-pill.tone-info{border-color:#285d72;background:#102c39;color:#a4e8fa}
+.sbc5-diag-pill.tone-warning{border-color:#7c602c;background:#302512;color:#ffd898}
+.sbc5-diag-pill.tone-danger{border-color:#8f414b;background:#3b1c25;color:#ffacb5}
+.sbc5-diag-pill.tone-missing{border-color:#4e5660;background:#23282e;color:#b4bec5}
+.sbc5-diag-progress{display:block;width:100%;height:3px;margin-top:5px;border-radius:5px;background:#2e414b;overflow:hidden}
+.sbc5-diag-progress-fill{display:block;height:100%;border-radius:5px;background:#26bcd0}
+.sbc5-diag-footer{padding:8px 12px;color:var(--muted);font-size:12px}
+.sbc5-diag-show-all{padding:5px 9px;font-size:12px}
+.sbc5-diag-empty{padding:18px;color:var(--muted);text-align:center}
+@media(max-width:580px){.sbc5-diag-highlights{grid-template-columns:repeat(2,minmax(0,1fr))}.sbc5-diag-controls{grid-template-columns:1fr}.sbc5-diag-mode button{flex:1}.sbc5-diag-value{max-width:54%}}
+@media(max-width:340px){.sbc5-diag-highlights{grid-template-columns:1fr 1fr}.sbc5-diag-summary{padding:11px}.sbc5-diag-row{padding:9px}}
+
 [hidden]{display:none!important}
 </style></head><body><main><div class="hero"><h1>SBC5 Control Center</h1><p>Dynamiczna konfiguracja · <span id="appVersion">—</span></p><div class="status"><span class="pill" id="modePill">Tryb —</span><span class="pill" id="tempPill">Cel —</span><span class="pill" id="calPill">Kalibracja —</span><span class="pill" id="aiPill">AI —</span></div><div id="msg" class="msg"></div></div><nav class="sbc5-tabs" role="tablist" aria-label="SBC5 Control Center"><button type="button" role="tab" id="sbc5TabConfig" aria-controls="sbc5ConfigTab" aria-selected="true">Konfiguracja</button><button type="button" role="tab" id="sbc5TabDiagnostics" aria-controls="sbc5DiagnosticsTab" aria-selected="false">Diagnostyka</button></nav>
 <div id="sbc5ConfigTab" role="tabpanel" aria-labelledby="sbc5TabConfig">
@@ -28,7 +60,7 @@ body[data-sbc5-tab="diagnostics"] .save{display:none}
 <div class="section mode-section" data-only="manual" data-sec="manual"><div class="head"><div class="title"><b>Ręczny</b><small>Sztywna charakterystyka, bez Adaptive PWM.</small></div><button class="reset" onclick="resetSec('manual')">Domyślne</button></div><div class="body"><div class="grid"><div><label>Histereza °C</label><input type="number" step="0.25" min="0.25" max="5" data-k="manual_hysteresis_c"></div><div><label>Minimalne PWM %</label><input type="number" min="9" max="70" data-k="custom_min_pwm_percent"></div><div><label>PWM przy celu %</label><input type="number" min="15" max="90" data-k="custom_target_pwm_percent"></div><div><label>Maksymalne PWM %</label><input type="number" min="50" max="100" data-k="custom_max_pwm_percent"></div></div></div></div>
 <div id="sections"></div>
 <details class="section expert"><summary>Zaawansowane SBC5 / config.txt <span style="color:#82939c;font-weight:500;font-size:12px">— rozwiń sekcje tylko wtedy, gdy ich potrzebujesz</span></summary><div id="expert"></div></details>
-</div><section id="sbc5DiagnosticsTab" role="tabpanel" aria-labelledby="sbc5TabDiagnostics" hidden><div class="section"><div class="head"><div class="title"><b>Diagnostyka sensorów SBC5</b><small>Podział tematyczny, odczyt tylko do wyświetlania. Oryginalne encje i automatyzacje pozostają bez zmian.</small></div></div><div class="body"><div class="sbc5-diag-toolbar"><span id="sbc5DiagnosticsCount">— encji</span><button type="button" id="sbc5DiagnosticsRefresh">Odśwież sensory</button></div><div class="note" id="sbc5DiagnosticsStatus" role="status" aria-live="polite">Otwórz zakładkę, aby pobrać sensory.</div><div id="sbc5DiagnosticsGroups"></div></div></div></section></main><div class="save"><button id="saveConfigBtn" data-default-label="Zapisz konfigurację" onclick="save()">Zapisz konfigurację</button><button id="refreshConfigBtn" data-default-label="Odśwież" onclick="load(true)">Odśwież</button></div><div class="modal" id="resetModal"><div class="modalbox"><h3>Przywrócić ustawienia domyślne?</h3><p id="resetText">Czy na pewno chcesz przywrócić domyślne ustawienia tej sekcji?</p><div class="modalactions"><button class="no" onclick="closeReset()">Nie — anuluj</button><button class="yes" onclick="confirmReset()">Tak — przywróć</button></div></div></div><script>
+</div><section id="sbc5DiagnosticsTab" role="tabpanel" aria-labelledby="sbc5TabDiagnostics" hidden><div class="section"><div class="head"><div class="title"><b>Diagnostyka sensorów SBC5</b><small>Podział tematyczny, odczyt tylko do wyświetlania. Oryginalne encje i automatyzacje pozostają bez zmian.</small></div></div><div class="body"><div id="sbc5DiagnosticsHighlights" class="sbc5-diag-highlights" aria-label="Najważniejsze parametry" hidden></div><div class="sbc5-diag-toolbar"><span id="sbc5DiagnosticsCount">— encji</span><button type="button" id="sbc5DiagnosticsRefresh">Odśwież sensory</button></div><div class="sbc5-diag-controls"><input type="search" id="sbc5DiagnosticsSearch" placeholder="Szukaj sensora, statusu, identyfikatora…" aria-label="Szukaj sensorów SBC5" autocomplete="off"><div class="sbc5-diag-mode" role="group" aria-label="Gęstość widoku"><button type="button" id="sbc5DiagnosticsCompact" aria-pressed="true">Kompaktowy</button><button type="button" id="sbc5DiagnosticsFull" aria-pressed="false">Pełny</button></div></div><div class="note" id="sbc5DiagnosticsStatus" role="status" aria-live="polite">Otwórz zakładkę, aby pobrać sensory.</div><div id="sbc5DiagnosticsGroups"></div></div></div></section></main><div class="save"><button id="saveConfigBtn" data-default-label="Zapisz konfigurację" onclick="save()">Zapisz konfigurację</button><button id="refreshConfigBtn" data-default-label="Odśwież" onclick="load(true)">Odśwież</button></div><div class="modal" id="resetModal"><div class="modalbox"><h3>Przywrócić ustawienia domyślne?</h3><p id="resetText">Czy na pewno chcesz przywrócić domyślne ustawienia tej sekcji?</p><div class="modalactions"><button class="no" onclick="closeReset()">Nie — anuluj</button><button class="yes" onclick="confirmReset()">Tak — przywróć</button></div></div></div><script>
 let S={}; const toggleKey={ai_cooling:'section_ai_cooling_enabled',adaptive_advanced:'section_adaptive_advanced_enabled',notifications:'section_notifications_enabled',updates:'section_updates_enabled',telemetry:'section_telemetry_enabled',cpu:'section_cpu_enabled',gpu:'section_gpu_enabled',power_usb:'section_power_usb_enabled',pcie_rp1:'section_pcie_rp1_enabled',boot_kernel:'section_boot_kernel_enabled',hardware:'section_hardware_enabled',uart_debug:'section_uart_debug_enabled',video:'section_video_enabled',device_tree:'section_device_tree_enabled',compatibility:'section_compatibility_enabled',custom_parameters:'section_custom_parameters_enabled'};
 const specs=[
 ['ai_cooling','AI Cooling (Preview)','Lokalne uczenie punktu pracy. Assist działa tylko w trybie Automatycznym.','ai_cooling', [['ai_cooling_mode','Tryb','select:learning|assist'],['ai_cooling_assist_limit_percent','Limit korekty ±%','number'],['ai_cooling_min_samples','Minimum próbek','number']],true],
