@@ -1,14 +1,14 @@
 {
-  "version": "3.3.0",
-  "release_date": "2026-11-19",
+  "version": "3.3.1",
+  "release_date": "2026-11-20",
   "restart_required": "home_assistant",
-  "summary": "Grouped Diagnostics tab for SBC5 sensors, improved monitoring and security checks.",
-  "package_version": "3.3.0",
-  "card_ui_version": "3.3.0",
+  "summary": "Modern Diagnostics dashboard with metric cards, sensor search, clear status indicators and compact/full views.",
+  "package_version": "3.3.1",
+  "card_ui_version": "3.3.1",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Nowa zakładka Diagnostyka z grupowaniem sensorów SBC5, lepszym monitoringiem i kontrolą bezpieczeństwa."
+  "summary_pl": "Nowoczesna Diagnostyka z kafelkami parametrów, wyszukiwarką sensorów, czytelnymi statusami i dwoma trybami widoku."
 }

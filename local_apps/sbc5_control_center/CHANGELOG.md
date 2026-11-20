@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.3.1 — 2026-11-20
+
+### English
+
+#### Changed
+
+- Modern Diagnostics dashboard with metric cards, sensor search, clear status indicators and compact/full views.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Nowoczesna Diagnostyka z kafelkami parametrów, wyszukiwarką sensorów, czytelnymi statusami i dwoma trybami widoku.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.3.0 — 2026-11-19
 
 ### English
