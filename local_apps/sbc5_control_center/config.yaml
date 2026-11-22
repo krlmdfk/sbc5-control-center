@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.3.1
+version: 3.3.2
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.3.1 — Modern Diagnostics dashboard with metric cards, sensor search, clear status indicators and compact/full views."
+description: "SBC5 Control Center 3.3.2 — Fix AI Cooling and Thermal Predictor assist boundary."
 arch:
 - aarch64
 machine:

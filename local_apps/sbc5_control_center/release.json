@@ -1,14 +1,14 @@
 {
-  "version": "3.3.1",
-  "release_date": "2026-11-20",
+  "version": "3.3.2",
+  "release_date": "2026-11-22",
   "restart_required": "home_assistant",
-  "summary": "Modern Diagnostics dashboard with metric cards, sensor search, clear status indicators and compact/full views.",
-  "package_version": "3.3.1",
-  "card_ui_version": "3.3.1",
+  "summary": "Fix AI Cooling and Thermal Predictor assist boundary.",
+  "package_version": "3.3.2",
+  "card_ui_version": "3.3.2",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Nowoczesna Diagnostyka z kafelkami parametrów, wyszukiwarką sensorów, czytelnymi statusami i dwoma trybami widoku."
+  "summary_pl": "Poprawa współpracy AI Cooling i Thermal Predictor."
 }

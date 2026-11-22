@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.3.2 — 2026-11-22
+
+### English
+
+#### Changed
+
+- Fix AI Cooling and Thermal Predictor assist boundary.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Poprawa współpracy AI Cooling i Thermal Predictor.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.3.1 — 2026-11-20
 
 ### English
