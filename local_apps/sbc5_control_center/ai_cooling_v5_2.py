@@ -153,10 +153,17 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
     requested_delta = int(guidance["requested_delta_pp"])
     applied_delta = 0
 
-    # Keep the existing AI result authoritative, then apply only the bounded
-    # predictor nudge. The final value remains inside the existing AI assist
-    # envelope; Adaptive PWM/safety logic downstream remains authoritative.
-    if str(status.get("mode")) == "assist" and requested_delta:
+    # The shell boundary accepts changed PWM only with state=assist. A ready
+    # result (for example outside_assist_window) is observation-only: predictor
+    # guidance must not change its PWM output or correction field.
+    # Keep the existing AI result authoritative and the final nudge bounded.
+    can_guide_output = (
+        str(status.get("mode")) == "assist"
+        and str(status.get("state")) == "assist"
+        and str(base._argv_value("--control-mode", "automatic")) == "automatic"
+        and guidance.get("gate_mode") in {"active", "probation"}
+    )
+    if can_guide_output and requested_delta:
         baseline = int(round(_num(status.get("baseline_pwm_percent"), status.get("output_pwm_percent", 0))))
         output = int(round(_num(status.get("output_pwm_percent"), baseline)))
         assist_limit = max(0, int(round(_num(base._argv_value("--assist-limit", "5"), 5.0))))
