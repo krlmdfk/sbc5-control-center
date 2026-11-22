@@ -202,7 +202,8 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
     active = str(status.get("mode")) == "assist"
     predictor["guided_assist"] = {
         "mode": guidance.get("gate_mode", "observe"),
-        "control_output_enabled": active and guidance.get("gate_mode") in {"active", "probation"},
+        # Reflect true actuator eligibility, not just the predictor quality gate.
+        "control_output_enabled": bool(can_guide_output),
         "stability_context_reset_reason": guidance.get("stability_context_reset_reason", "none"),
         "stability_context_reset_count": guidance.get("stability_context_reset_count", 0),
         "weighted_forecast_raw_c": guidance.get("weighted_forecast_raw_c"),
