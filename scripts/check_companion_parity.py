@@ -14,6 +14,8 @@ import json
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -27,17 +29,59 @@ APP_RELEASE = "local_apps/sbc5_control_center/release.json"
 IGNORED = {".hacs_managed", ".DS_Store"}
 
 
+MAX_ATTEMPTS = 3
+MAX_RETRY_DELAY = 60
+
+
+def retry_delay(exc: urllib.error.HTTPError, attempt: int) -> float | None:
+    headers = exc.headers or {}
+    remaining = headers.get("X-RateLimit-Remaining")
+    retry_after = headers.get("Retry-After")
+    limited = exc.code == 429 or (exc.code == 403 and (
+        remaining == "0" or retry_after is not None
+        or "rate limit" in str(exc.reason).lower()
+    ))
+    if not limited and exc.code not in (500, 502, 503, 504):
+        return None
+    delay = float(2 ** (attempt + 1))
+    try:
+        if retry_after is not None:
+            delay = max(delay, float(retry_after))
+        elif limited and remaining == "0" and headers.get("X-RateLimit-Reset"):
+            delay = max(delay, float(headers["X-RateLimit-Reset"]) - time.time() + 1)
+        elif limited:
+            delay = MAX_RETRY_DELAY
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return delay if delay <= MAX_RETRY_DELAY else None
+
+
 def request_json(url: str) -> dict:
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "sbc5-companion-parity",
+        "X-GitHub-Api-Version": "2022-11-28",
     }
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    if token:
+    token = os.getenv("GITHUB_TOKEN", "").strip()
+    if token and urllib.parse.urlsplit(url).netloc == "api.github.com":
         headers["Authorization"] = f"Bearer {token}"
     req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=30) as response:
-        return json.load(response)
+    for attempt in range(MAX_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as exc:
+            delay = retry_delay(exc, attempt)
+            exc.close()
+            if delay is None or attempt == MAX_ATTEMPTS - 1:
+                raise
+        except (urllib.error.URLError, TimeoutError):
+            if attempt == MAX_ATTEMPTS - 1:
+                raise
+            delay = float(2 ** (attempt + 1))
+        print(f"GitHub API temporarily unavailable; retrying in {delay:g}s.", file=sys.stderr)
+        time.sleep(delay)
+    raise AssertionError("Unreachable retry state")
 
 
 def remote_tree(repo: str, ref: str) -> dict:
@@ -162,10 +206,12 @@ def main() -> int:
 
     try:
         errors = audit(args.role, args.app_ref, args.hacs_ref)
+        status = "DRIFT" if errors else "PASS"
     except Exception as exc:
         errors = [f"Parity check incomplete: {type(exc).__name__}: {exc}"]
+        status = "INCOMPLETE"
 
-    print("Companion parity PASS" if not errors else f"Companion parity DRIFT: {len(errors)} finding(s)")
+    print(f"Companion parity {status}" + (f": {len(errors)} finding(s)" if errors else ""))
     for error in errors:
         print(f" - {error}")
         print(f"::{'warning' if args.advisory else 'error'}::{error}")
@@ -174,9 +220,9 @@ def main() -> int:
     if summary:
         with open(summary, "a", encoding="utf-8") as stream:
             stream.write("### Companion synchronization audit\n\n")
-            stream.write(f"Status: {'PASS' if not errors else 'DRIFT'} "
+            stream.write(f"Status: {status} "
                          f"({'advisory' if args.advisory else 'strict'})\n\n")
-            stream.write(f"App: \`{args.app_ref}\` · HACS: \`{args.hacs_ref}\`\n\n")
+            stream.write(f"App: `{args.app_ref}` · HACS: `{args.hacs_ref}`\n\n")
             for error in errors[:60]:
                 stream.write(f"- {error}\n")
     return int(bool(errors) and not args.advisory)

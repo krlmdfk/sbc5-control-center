@@ -76,6 +76,7 @@ jobs:
       - name: Enforce exact companion integration code parity
         if: steps.version.outputs.exists != 'true'
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           python scripts/check_companion_parity.py --role app

@@ -8,6 +8,7 @@ on:
       - 'local_apps/sbc5_control_center/bridge/**'
       - 'local_apps/sbc5_control_center/release.json'
       - 'scripts/check_companion_parity.py'
+      - 'tests/test_companion_parity.py'
       - '.github/workflows/companion-parity.yml'
   pull_request:
   schedule:
@@ -22,8 +23,14 @@ jobs:
     name: App / HACS integration parity
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Test companion audit without network
+        run: python -W error::SyntaxWarning -m unittest discover -s tests -p 'test_companion_parity.py' -v
       - name: Compare native code, embedded bridge and version markers
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "push" ] || [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             python scripts/check_companion_parity.py --role app --advisory
