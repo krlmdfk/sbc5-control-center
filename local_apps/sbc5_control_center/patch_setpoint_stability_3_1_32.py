@@ -49,6 +49,11 @@ def patch(text: str) -> str:
       elif [ "$adaptive_trim" -gt 0 ] 2>/dev/null && [ "$error" -gt 300 ] 2>/dev/null && [ "$error" -le 800 ] 2>/dev/null && [ "$thermal_trend_fused_milli" -le -300 ] 2>/dev/null; then
         adaptive_trim=$((adaptive_trim - 1)); [ "$adaptive_trim" -lt 0 ] 2>/dev/null && adaptive_trim=0
         action="deadband_trim_recovery_soft"; deadband_count=0
+      elif [ "$adaptive_trim" -gt 0 ] 2>/dev/null && [ "$error" -gt 300 ] 2>/dev/null && [ "$temp_milli" -gt $((target_milli + 300)) ] 2>/dev/null && [ "$thermal_trend_fused_milli" -gt -200 ] 2>/dev/null && [ "$thermal_signal_quality" = "good" ]; then
+        # Preserve useful steady-state offset while both raw and conditioned
+        # readings are above target, unless a meaningful cooling trend appears.
+        # No additional integral gain or change to the configured deadband.
+        action="deadband_trim_hold_warm"; deadband_count=0
       elif [ "$error" -le $((-trim_sign_threshold)) ] 2>/dev/null && [ "$adaptive_trim" -gt 0 ] 2>/dev/null; then
 '''
     text = replace_once(text, old_recovery, new_recovery, "setpoint trim recovery")
