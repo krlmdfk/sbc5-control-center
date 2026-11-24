@@ -25,6 +25,8 @@ COOL_SLOW_CONFIRM_C_PER_MIN = -0.04
 # 3.1.30 — Thermal Predictor Stability v2.
 FORECAST_HISTORY_SIZE = 3
 FORECAST_EMA_ALPHA = 0.35
+FORECAST_EMA_ALPHA_CONFIRMED = 0.65
+FORECAST_ACCELERATION_MIN_STEP_C = 1.0
 FORECAST_CONFIRM_CYCLES = 2
 FORECAST_FAST_PATH_ERROR_C = 2.50
 FORECAST_FAST_PATH_MIN_CONFIDENCE = 82
@@ -146,7 +148,23 @@ def stabilize_forecast(
 
     median_forecast = float(median(history))
     previous = num(state.get("stable_forecast_c"), median_forecast)
-    stable_forecast = previous + FORECAST_EMA_ALPHA * (median_forecast - previous)
+    # Accelerate only after two consecutive raw samples agree with the
+    # direction of the median step. A single outlier retains normal filtering.
+    alpha = FORECAST_EMA_ALPHA
+    step = median_forecast - previous
+    if (
+        len(history) >= 3
+        and confidence >= ACTIVE_MIN_CONFIDENCE
+        and average_mae <= ACTIVE_MAX_MAE_C
+        and abs(step) >= FORECAST_ACCELERATION_MIN_STEP_C
+        and all(
+            (value - previous) * step > 0
+            and abs(value - previous) >= FORECAST_ACCELERATION_MIN_STEP_C
+            for value in history[-2:]
+        )
+    ):
+        alpha = FORECAST_EMA_ALPHA_CONFIRMED
+    stable_forecast = previous + alpha * step
     stable_error = stable_forecast - target
 
     direction = "neutral"
@@ -179,6 +197,7 @@ def stabilize_forecast(
         "stable_forecast_c": round(stable_forecast, 3),
         "raw_forecast_c": round(raw_forecast, 3),
         "stable_error_c": round(stable_error, 3),
+        "forecast_ema_alpha": alpha,
         "direction": direction,
         "hot_confirm_cycles": hot_confirm,
         "cool_confirm_cycles": cool_confirm,
@@ -322,6 +341,14 @@ def decide(
         confirmation_reason = reason
     elif delta < 0 and fast_trend >= TREND_GUARD_C_PER_MIN and not override:
         delta, reason = 0, "trend_guard_heating"
+        confirmed = False
+        confirmation_reason = reason
+
+    # A lagging conditioned forecast must not command a correction opposite
+    # to the current raw forecast. This applies even to the fast/override path.
+    # The measured-temperature regulator and emergency limits remain separate.
+    if (delta > 0 and raw_weighted <= target) or (delta < 0 and raw_weighted >= target):
+        delta, reason = 0, "raw_forecast_direction_conflict"
         confirmed = False
         confirmation_reason = reason
 
