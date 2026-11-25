@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.3.3 — 2026-11-25
+
+### English
+
+#### Changed
+
+- Improved thermal prediction, PWM stability and critical cooling response. Field-test release.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Usprawniona predykcja termiczna, stabilizacja PWM i reakcja na wzrost temperatury. Wersja testowa.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.3.2 — 2026-11-22
 
 ### English

@@ -1,14 +1,14 @@
 {
-  "version": "3.3.2",
-  "release_date": "2026-11-22",
+  "version": "3.3.3",
+  "release_date": "2026-11-25",
   "restart_required": "home_assistant",
-  "summary": "Fix AI Cooling and Thermal Predictor assist boundary.",
-  "package_version": "3.3.2",
-  "card_ui_version": "3.3.2",
+  "summary": "Improved thermal prediction, PWM stability and critical cooling response. Field-test release.",
+  "package_version": "3.3.3",
+  "card_ui_version": "3.3.3",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Poprawa współpracy AI Cooling i Thermal Predictor."
+  "summary_pl": "Usprawniona predykcja termiczna, stabilizacja PWM i reakcja na wzrost temperatury. Wersja testowa."
 }
