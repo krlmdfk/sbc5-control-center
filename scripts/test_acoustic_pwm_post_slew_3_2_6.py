@@ -61,7 +61,8 @@ guard_end = raw.index("    # A mismatch while exclusive ownership", guard_start)
 guard = raw[guard_start:guard_end]
 
 def replay(current, request, curve, error, ceiling, *, action="normal",
-           mode="automatic", reentry="false", last_direction="up", hold=2):
+           mode="automatic", reentry="false", last_direction="up", hold=2,
+           critical_hold="false", return_hold=False):
     values = {
         "controller_state": current, "desired": request, "curve_state": curve,
         "error": error, "recorded_ceiling": ceiling, "action": action,
@@ -75,15 +76,17 @@ def replay(current, request, curve, error, ceiling, *, action="normal",
         "thermal_fast_up_step": 8, "thermal_critical_up_step": 12,
         "down_fast_delta": 2000, "reversal_hold": hold,
         "last_actuator_direction": last_direction, "reversal_guard_step": 1,
+        "critical_acoustic_hold": critical_hold,
     }
     script = ("test_case() {\n" +
               "\n".join(f"local {k}={v!r}" for k, v in values.items()) +
               '\nadaptive_pwm_acoustic_ceiling() { echo "$recorded_ceiling"; }\n' +
-              guard + '\nprintf "%s,%s,%s\\n" "$desired" "$action" "$acoustic_ceiling"\n}\ntest_case\n')
+              guard + '\nprintf "%s,%s,%s,%s\\n" "$desired" "$action" "$acoustic_ceiling" "$critical_acoustic_hold"\n}\ntest_case\n')
     result = subprocess.run(["bash", "-c", script], capture_output=True,
                             text=True, check=True, timeout=4)
-    pwm, action, budget = result.stdout.strip().split(",", 2)
-    return int(pwm), action, int(budget)
+    pwm, action, budget, latch = result.stdout.strip().split(",", 3)
+    output = (int(pwm), action, int(budget))
+    return (*output, latch) if return_hold else output
 
 # logs-13: 05:37:50; logs-16: 05:14:51, 05:15:17, 05:15:27.
 for case, expected in [
@@ -104,6 +107,26 @@ assert pwm == 86 and budget == 86 and "thermal_fast" in action, (pwm, action, bu
 assert replay(94, 100, 90, 8300, 82, action="safety_max")[0] == 100
 assert replay(94, 97, 85, 7500, 82, mode="manual")[2] == 100
 assert replay(94, 97, 85, 7500, 82, reentry="true")[2] == 100
+
+# 3.3.3 hysteresis: enter at +7 C, hold through +6.9/+6.6 C,
+# release at +6.5 C, and do not re-enter until +7 C.
+latch = "false"
+for error, expected, budget in [
+    (6900, "false", 86), (7000, "true", 100),
+    (6900, "true", 100), (6600, "true", 100),
+    (6500, "false", 86), (6900, "false", 86),
+    (7000, "true", 100),
+]:
+    pwm, action, actual_budget, latch = replay(
+        90, 95, 83, error, 86, critical_hold=latch, return_hold=True)
+    assert (latch, actual_budget) == (expected, budget), (error, pwm, action, latch, actual_budget)
+    if expected == "true" and error < 7000:
+        assert "critical_acoustic_hold" in action and "thermal_fast" in action, action
+
+for mode, reentry in [("manual", "false"), ("automatic", "true")]:
+    assert replay(90, 95, 83, 6900, 86, critical_hold="true",
+                  mode=mode, reentry=reentry, return_hold=True)[3] == "false"
+assert 'last_actuator_direction="none"; reversal_hold=0\n      critical_acoustic_hold=false' in raw
 
 # Confirm build uses this patch after reversal/slew patch.
 docker = (root / "Dockerfile").read_text(encoding="utf-8")
