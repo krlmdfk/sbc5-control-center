@@ -43,6 +43,33 @@ assert 'controller ${current}->${desired}/${max_state}' not in patched
 assert 'ACTIVE_MAX_DELTA_PP = 2' in (APP / "thermal_active_policy.py").read_text(encoding="utf-8")
 assert 'PROBATION_MAX_DELTA_PP = 1' in (APP / "thermal_active_policy.py").read_text(encoding="utf-8")
 
+# 3.3.3: execute the actual patched deadband decision in isolation.
+start = patched.index('      # 3.1.32 Setpoint Stability:')
+end = patched.index('    # Final invariant:', start)
+block = patched[start:end]
+def deadband_case(error, raw_error, trend, quality, trim=6):
+    setup = f"""
+target_milli=49000
+temp_milli={49000 + raw_error}
+error={error}
+thermal_trend_fused_milli={trend}
+thermal_direction=neutral
+thermal_signal_quality={quality}
+adaptive_trim={trim}
+trim_sign_threshold=300
+trim_sign_decay_step=1
+trim_decay_interval_cycles=1
+deadband_count=1
+"""
+    script = setup + "\nif true; then\n" + block + '\nprintf "%s:%s" "$action" "$adaptive_trim"'
+    return subprocess.check_output(["bash", "-c", script], text=True)
+
+assert deadband_case(600, 600, 0, "good") == "deadband_trim_hold_warm:6"
+assert deadband_case(600, 600, -350, "good") == "deadband_trim_recovery_soft:5"
+assert deadband_case(200, 200, 0, "good") == "deadband_trim_recovery_fast:4"
+assert deadband_case(600, 100, 0, "good") == "deadband_trim_leak_down:5"
+assert deadband_case(600, 600, 0, "transient") == "deadband_trim_leak_down:5"
+
 with tempfile.NamedTemporaryFile("w", suffix=".sh", encoding="utf-8", delete=False) as fh:
     fh.write(patched)
     tmp = Path(fh.name)

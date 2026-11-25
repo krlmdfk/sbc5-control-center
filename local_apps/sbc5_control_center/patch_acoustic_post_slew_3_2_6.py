@@ -48,7 +48,43 @@ def patch(text: str) -> str:
       fi
       [ "$desired" -lt "$min_run_floor" ] 2>/dev/null && desired="$min_run_floor"
 '''
-    return text.replace(anchor, replacement, 1)
+    text = text.replace(anchor, replacement, 1)
+    # 3.3.3: the critical path outranks the optional acoustic cap.
+    # The loop resets acoustic_ceiling to max_state each cycle; skipping
+    # the pre-slew cap consequently disables the post-slew cap as well.
+    pre_anchor = '''      if [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$reentry_cycle" != "true" ]; then
+        acoustic_ceiling="$max_state"
+        acoustic_quality="${thermal_signal_quality:-unknown}"
+'''
+    pre_replacement = '''      # 3.3.3: hysteresis applies only to the optional acoustic ceiling.
+      # Enter at the existing +7 C threshold; release at +6.5 C.
+      # The critical/fast slew thresholds and absolute safety remain unchanged.
+      if [ "$COOLING_CONTROL_MODE" != "automatic" ] || [ "$reentry_cycle" = "true" ]; then
+        critical_acoustic_hold=false
+      elif [ "$error" -ge "$thermal_critical_delta" ] 2>/dev/null; then
+        critical_acoustic_hold=true
+      elif [ "$error" -le $((thermal_critical_delta - 500)) ] 2>/dev/null; then
+        critical_acoustic_hold=false
+      fi
+      if [ "${critical_acoustic_hold:-false}" = "true" ] &&
+         [ "$error" -lt "$thermal_critical_delta" ] 2>/dev/null; then
+        action="${action}_critical_acoustic_hold"
+      fi
+      if [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$reentry_cycle" != "true" ] &&
+         [ "$error" -lt "$thermal_critical_delta" ] 2>/dev/null &&
+         [ "${critical_acoustic_hold:-false}" != "true" ]; then
+        acoustic_ceiling="$max_state"
+        acoustic_quality="${thermal_signal_quality:-unknown}"
+'''
+    if text.count(pre_anchor) != 1:
+        raise SystemExit("Expected exactly one pre-slew acoustic gate")
+    text = text.replace(pre_anchor, pre_replacement, 1)
+    init = '  local acoustic_ceiling=100 acoustic_quality="unknown"\n'
+    reset = '      last_actuator_direction="none"; reversal_hold=0\n'
+    if text.count(init) != 1 or text.count(reset) != 1:
+        raise SystemExit("Expected unique acoustic hysteresis lifecycle anchors")
+    text = text.replace(init, init + '  local critical_acoustic_hold=false\n', 1)
+    return text.replace(reset, reset + '      critical_acoustic_hold=false\n', 1)
 
 
 def main() -> None:
