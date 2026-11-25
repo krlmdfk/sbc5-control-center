@@ -48,7 +48,22 @@ def patch(text: str) -> str:
       fi
       [ "$desired" -lt "$min_run_floor" ] 2>/dev/null && desired="$min_run_floor"
 '''
-    return text.replace(anchor, replacement, 1)
+    text = text.replace(anchor, replacement, 1)
+    # 3.3.3: the critical path outranks the optional acoustic cap.
+    # The loop resets acoustic_ceiling to max_state each cycle; skipping
+    # the pre-slew cap consequently disables the post-slew cap as well.
+    pre_anchor = '''      if [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$reentry_cycle" != "true" ]; then
+        acoustic_ceiling="$max_state"
+        acoustic_quality="${thermal_signal_quality:-unknown}"
+'''
+    pre_replacement = '''      if [ "$COOLING_CONTROL_MODE" = "automatic" ] && [ "$reentry_cycle" != "true" ] &&
+         [ "$error" -lt "$thermal_critical_delta" ] 2>/dev/null; then
+        acoustic_ceiling="$max_state"
+        acoustic_quality="${thermal_signal_quality:-unknown}"
+'''
+    if text.count(pre_anchor) != 1:
+        raise SystemExit("Expected exactly one pre-slew acoustic gate")
+    return text.replace(pre_anchor, pre_replacement, 1)
 
 
 def main() -> None:
