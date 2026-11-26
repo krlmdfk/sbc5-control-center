@@ -139,7 +139,8 @@ def confirmed_hot_transition(
     Horizons share a model, so agreement alone is not independent evidence.
     Require measured control temperature and a rising measured trend as well.
     """
-    if (mode != "active" or temp < target + 0.85 or slope < 0.10
+    if (mode != "active" or not all(math.isfinite(v) for v in (temp, slope, target))
+            or temp < target + 0.85 or slope < 0.10
             or num(predictor.get("confidence_percent"), 0.0) < ACTIVE_MIN_CONFIDENCE
             or num(predictor.get("average_mae_c"), 99.0) > FORECAST_FAST_PATH_MAX_MAE_C):
         return False
@@ -173,7 +174,8 @@ def stabilize_forecast(
     history = history[-FORECAST_HISTORY_SIZE:]
 
     median_forecast = float(median(history))
-    previous = num(state.get("stable_forecast_c"), median_forecast)
+    previous = num(state.get("ema_baseline_forecast_c"),
+                   num(state.get("stable_forecast_c"), median_forecast))
     # Accelerate only after two consecutive raw samples agree with the
     # direction of the median step. A single outlier retains normal filtering.
     alpha = FORECAST_EMA_ALPHA
@@ -191,7 +193,8 @@ def stabilize_forecast(
     ):
         alpha = FORECAST_EMA_ALPHA_CONFIRMED
     stable_forecast = previous + alpha * step
-    normal_error = stable_forecast - target
+    ema_baseline = stable_forecast
+    normal_error = ema_baseline - target
     # 3.3.4: a bounded upward-only correction of severe filter lag.
     # Preserve the median/EMA baseline and require real measured corroboration.
     # Never accelerate downward release or promote the existing fast-path gate.
@@ -233,6 +236,7 @@ def stabilize_forecast(
         "forecast_history_c": [round(v, 3) for v in history],
         "median_forecast_c": round(median_forecast, 3),
         "stable_forecast_c": round(stable_forecast, 3),
+        "ema_baseline_forecast_c": round(ema_baseline, 3),
         "raw_forecast_c": round(raw_forecast, 3),
         "stable_error_c": round(stable_error, 3),
         "forecast_ema_alpha": alpha,
