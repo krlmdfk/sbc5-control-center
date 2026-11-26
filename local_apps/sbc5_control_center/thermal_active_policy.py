@@ -27,6 +27,9 @@ FORECAST_HISTORY_SIZE = 3
 FORECAST_EMA_ALPHA = 0.35
 FORECAST_EMA_ALPHA_CONFIRMED = 0.65
 FORECAST_ACCELERATION_MIN_STEP_C = 1.0
+FORECAST_LAG_ATTACK_MIN_C = 3.0
+FORECAST_LAG_ATTACK_MAX_STEP_C = 1.5
+FORECAST_LAG_ATTACK_HORIZON_SPREAD_C = 1.5
 FORECAST_CONFIRM_CYCLES = 2
 FORECAST_FAST_PATH_ERROR_C = 2.50
 FORECAST_FAST_PATH_MIN_CONFIDENCE = 82
@@ -127,9 +130,33 @@ def refresh_stability_context(
     return reason
 
 
+def confirmed_hot_transition(
+    *, predictor: dict[str, Any], target: float, temp: float, slope: float,
+    mode: str,
+) -> bool:
+    """Corroborated hot transition; no authority for observe/probation.
+
+    Horizons share a model, so agreement alone is not independent evidence.
+    Require measured control temperature and a rising measured trend as well.
+    """
+    if (mode != "active" or not all(math.isfinite(v) for v in (temp, slope, target))
+            or temp < target + 0.85 or slope < 0.10
+            or num(predictor.get("confidence_percent"), 0.0) < ACTIVE_MIN_CONFIDENCE
+            or num(predictor.get("average_mae_c"), 99.0) > FORECAST_FAST_PATH_MAX_MAE_C):
+        return False
+    values = [num(predictor.get(f"forecast_{h}s_c"), float("nan"))
+              for h in (30, 60, 120)]
+    return (
+        all(math.isfinite(value) and value >= target + FORECAST_FAST_PATH_ERROR_C
+            for value in values)
+        and max(values) - min(values) <= FORECAST_LAG_ATTACK_HORIZON_SPREAD_C
+    )
+
+
 def stabilize_forecast(
     state: dict[str, Any], *, raw_forecast: float, target: float,
     confidence: float, average_mae: float,
+    hot_transition_confirmed: bool = False,
 ) -> dict[str, Any]:
     """Median-of-3 + EMA forecast conditioner with persistent confirmation state.
 
@@ -147,7 +174,8 @@ def stabilize_forecast(
     history = history[-FORECAST_HISTORY_SIZE:]
 
     median_forecast = float(median(history))
-    previous = num(state.get("stable_forecast_c"), median_forecast)
+    previous = num(state.get("ema_baseline_forecast_c"),
+                   num(state.get("stable_forecast_c"), median_forecast))
     # Accelerate only after two consecutive raw samples agree with the
     # direction of the median step. A single outlier retains normal filtering.
     alpha = FORECAST_EMA_ALPHA
@@ -165,6 +193,18 @@ def stabilize_forecast(
     ):
         alpha = FORECAST_EMA_ALPHA_CONFIRMED
     stable_forecast = previous + alpha * step
+    ema_baseline = stable_forecast
+    normal_error = ema_baseline - target
+    # 3.3.4: a bounded upward-only correction of severe filter lag.
+    # Preserve the median/EMA baseline and require real measured corroboration.
+    # Never accelerate downward release or promote the existing fast-path gate.
+    lag_attack = 0.0
+    if (hot_transition_confirmed and confidence >= ACTIVE_MIN_CONFIDENCE
+            and average_mae <= FORECAST_FAST_PATH_MAX_MAE_C
+            and raw_forecast - stable_forecast >= FORECAST_LAG_ATTACK_MIN_C):
+        lag_attack = min(FORECAST_LAG_ATTACK_MAX_STEP_C,
+                         0.5 * (raw_forecast - stable_forecast))
+        stable_forecast += lag_attack
     stable_error = stable_forecast - target
 
     direction = "neutral"
@@ -186,7 +226,8 @@ def stabilize_forecast(
         cool_confirm = 0
 
     fast_path = (
-        abs(stable_error) >= FORECAST_FAST_PATH_ERROR_C
+        abs(normal_error) >= FORECAST_FAST_PATH_ERROR_C
+        and (lag_attack == 0.0 or normal_error >= FORECAST_FAST_PATH_ERROR_C)
         and confidence >= FORECAST_FAST_PATH_MIN_CONFIDENCE
         and average_mae <= FORECAST_FAST_PATH_MAX_MAE_C
     )
@@ -195,9 +236,12 @@ def stabilize_forecast(
         "forecast_history_c": [round(v, 3) for v in history],
         "median_forecast_c": round(median_forecast, 3),
         "stable_forecast_c": round(stable_forecast, 3),
+        "ema_baseline_forecast_c": round(ema_baseline, 3),
         "raw_forecast_c": round(raw_forecast, 3),
         "stable_error_c": round(stable_error, 3),
         "forecast_ema_alpha": alpha,
+        "forecast_lag_attack_c": round(lag_attack, 3),
+        "forecast_lag_attack_confirmed": bool(hot_transition_confirmed),
         "direction": direction,
         "hot_confirm_cycles": hot_confirm,
         "cool_confirm_cycles": cool_confirm,

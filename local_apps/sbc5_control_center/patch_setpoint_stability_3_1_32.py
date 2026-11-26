@@ -58,6 +58,77 @@ def patch(text: str) -> str:
 '''
     text = replace_once(text, old_recovery, new_recovery, "setpoint trim recovery")
 
+    # 3.3.4: slow, volatile warm-side trim floor; never add a second
+    # integrator to Adaptive Trim or expand its configured envelope.
+    text = replace_once(
+        text,
+        '  local last_actuator_direction="none" reversal_hold=0 reversal_guard_cycles=2 reversal_guard_step=1 requested_before_actuator=0 reversal_limit=0\n',
+        '  local last_actuator_direction="none" reversal_hold=0 reversal_guard_cycles=2 reversal_guard_step=1 requested_before_actuator=0 reversal_limit=0\n'
+        '  local steady_bias=0 steady_since=-1 steady_last_step=-1 steady_last_tick=-1 steady_now=0 effective_trim=0\n',
+        "steady bias lifecycle variables",
+    )
+    text = replace_once(
+        text,
+        '      last_actuator_direction="none"; reversal_hold=0\n',
+        '      last_actuator_direction="none"; reversal_hold=0\n'
+        '      steady_bias=0; steady_since=-1; steady_last_step=-1; steady_last_tick=-1\n',
+        "steady bias ownership reset",
+    )
+    text = replace_once(
+        text,
+        '    if [ "$action" = "safety_max" ]; then\n      target_state="$max_state"\n    else\n      target_state=$((curve_state + adaptive_trim))\n',
+        '''    # 3.3.4 Steady-State Bias Compensation (monotonic elapsed seconds).
+    # Learn a small floor only with sustained, measured warm-side error.
+    # No learned AI data is modified; the normal trim remains authoritative.
+    steady_now="$SECONDS"
+    if [ "$steady_last_tick" -lt 0 ] || [ "$steady_now" -lt "$steady_last_tick" ] ||
+       [ $((steady_now - steady_last_tick)) -gt $((2 * ADAPTIVE_PWM_INTERVAL_SECONDS + 5)) ]; then
+      steady_bias=0; steady_since=-1; steady_last_step=-1
+    fi
+    steady_last_tick="$steady_now"
+    effective_trim="$adaptive_trim"
+    if [ "$COOLING_CONTROL_MODE" != "automatic" ] || [ "$reentry_cycle" = "true" ] ||
+       [ "$action" = "safety_max" ] || [ "$thermal_signal_quality" != "good" ] ||
+       [ "$error" -le 0 ] || [ "$temp_milli" -le "$target_milli" ]; then
+      steady_bias=0; steady_since=-1; steady_last_step=-1
+    elif [ "$error" -ge 800 ] && [ "$error" -lt 2000 ] &&
+         [ "$temp_milli" -ge $((target_milli + 800)) ] &&
+         [ "$thermal_trend_fused_milli" -ge -200 ] &&
+         [ "$thermal_trend_fused_milli" -le 200 ]; then
+      if [ "$steady_since" -lt 0 ]; then
+        steady_since="$steady_now"; steady_last_step="$steady_now"
+      elif [ $((steady_now - steady_since)) -ge 120 ] &&
+           [ $((steady_now - steady_last_step)) -ge 60 ]; then
+        [ "$steady_bias" -lt 4 ] && steady_bias=$((steady_bias + 1))
+        steady_last_step="$steady_now"
+      fi
+    else
+      steady_since=-1
+      if [ "$steady_last_step" -lt 0 ]; then steady_last_step="$steady_now"; fi
+      if [ $((steady_now - steady_last_step)) -ge 30 ]; then
+        [ "$steady_bias" -gt 0 ] && steady_bias=$((steady_bias - 1))
+        steady_last_step="$steady_now"
+      fi
+    fi
+    # Apply only on the warm side with no significant cooling trend.
+    # A floor, not an additive offset: max(normal trim, learned floor).
+    if [ "$error" -gt 300 ] && [ "$error" -lt 2000 ] &&
+       [ "$temp_milli" -gt $((target_milli + 300)) ] &&
+       [ "$thermal_trend_fused_milli" -ge -200 ] &&
+       [ "$thermal_trend_fused_milli" -le 200 ] &&
+       [ "$steady_bias" -gt "$effective_trim" ] && [ "$steady_bias" -gt 0 ]; then
+      effective_trim="$steady_bias"
+      [ "$effective_trim" -gt "$adaptive_trim_limit" ] && effective_trim="$adaptive_trim_limit"
+      action="${action}_steady_bias_${effective_trim}"
+    fi
+    if [ "$action" = "safety_max" ]; then
+      target_state="$max_state"
+    else
+      target_state=$((curve_state + effective_trim))
+''',
+        "bounded steady-state bias floor",
+    )
+
     marker = '''    # v2.6.9 final actuator guard. AI Assist may nudge the classic target, but
 '''
     text = replace_once(
