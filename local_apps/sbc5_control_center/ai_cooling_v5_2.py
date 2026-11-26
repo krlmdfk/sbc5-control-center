@@ -74,14 +74,6 @@ def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, 
         ai_mode=str(status.get("mode") or "observe"),
         control_mode=str(base._argv_value("--control-mode", "automatic") or "automatic"),
     )
-    stability = policy.stabilize_forecast(
-        stability_state,
-        raw_forecast=raw_weighted,
-        target=target,
-        confidence=confidence,
-        average_mae=avg_mae,
-    )
-
     ai_mode = str(status.get("mode") or "observe")
     control_mode = str(base._argv_value("--control-mode", "automatic") or "automatic")
     controller_action = str(status.get("controller_action") or status.get("reason") or "none")
@@ -106,6 +98,21 @@ def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, 
         status.get("temperature_trend_30s_c_per_min"),
         _num(status.get("temperature_slope_c_per_min"), 0.0),
     )
+    hot_transition = (
+        str(status.get("state")) == "assist"
+        and policy.confirmed_hot_transition(
+            predictor=predictor, target=target, temp=control_temp,
+            slope=control_trend, mode=gate_mode,
+        )
+    )
+    stability = policy.stabilize_forecast(
+        stability_state,
+        raw_forecast=raw_weighted,
+        target=target,
+        confidence=confidence,
+        average_mae=avg_mae,
+        hot_transition_confirmed=hot_transition,
+    )
     decision = policy.decide(
         predictor=predictor,
         target=target,
@@ -126,6 +133,9 @@ def _guided_runtime(model: dict[str, Any], status: dict[str, Any]) -> dict[str, 
         "weighted_forecast_error_c": round(stabilized_forecast - target, 2),
         "forecast_filter_lag_c": filter_lag,
         "forecast_filter_lag_significant": abs(filter_lag) >= 1.0,
+        "forecast_lag_attack_c": stability.get("forecast_lag_attack_c", 0.0),
+        "forecast_lag_attack_confirmed": hot_transition,
+        "ema_baseline_forecast_c": stability.get("ema_baseline_forecast_c"),
         "horizon_weights": weights,
         "candidate_gain": round(gain, 3),
         "gate_mode": gate_mode,
@@ -212,6 +222,9 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         "weighted_forecast_error_c": guidance.get("weighted_forecast_error_c"),
         "forecast_filter_lag_c": guidance.get("forecast_filter_lag_c"),
         "forecast_filter_lag_significant": guidance.get("forecast_filter_lag_significant", False),
+        "forecast_lag_attack_c": guidance.get("forecast_lag_attack_c", 0.0),
+        "forecast_lag_attack_confirmed": guidance.get("forecast_lag_attack_confirmed", False),
+        "ema_baseline_forecast_c": guidance.get("ema_baseline_forecast_c"),
         "horizon_weights": guidance.get("horizon_weights", {}),
         "candidate_gain": guidance.get("candidate_gain", 0.0),
         "requested_delta_pp": requested_delta,
