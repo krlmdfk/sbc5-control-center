@@ -1,14 +1,14 @@
 {
-  "version": "3.3.3",
-  "release_date": "2026-11-25",
+  "version": "3.3.4",
+  "release_date": "2026-11-26",
   "restart_required": "home_assistant",
-  "summary": "Improved thermal prediction, PWM stability and critical cooling response. Field-test release.",
-  "package_version": "3.3.3",
-  "card_ui_version": "3.3.3",
+  "summary": "Improved thermal prediction, steady-state temperature compensation and PWM stability.",
+  "package_version": "3.3.4",
+  "card_ui_version": "3.3.4",
   "name": "SBC5 Control Center",
   "minimum_home_assistant_os": "18.3",
   "minimum_home_assistant_core": "2026.10.1",
   "older_versions_status": "not_tested_or_supported",
   "versioning_policy": "unified",
-  "summary_pl": "Usprawniona predykcja termiczna, stabilizacja PWM i reakcja na wzrost temperatury. Wersja testowa."
+  "summary_pl": "Usprawniona predykcja termiczna, kompensacja błędu ustalonego i stabilizacja PWM."
 }
