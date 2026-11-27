@@ -283,6 +283,14 @@ def _apply_guided_step(model: dict[str, Any], status: dict[str, Any], fields: li
         fields.extend(diagnostic_fields)
     else:
         fields[22:41] = diagnostic_fields
+    # 3.3.5: append three non-empty diagnostic fields, never move old indices.
+    # Do not let an absent baseline appear as a valid zero-degree forecast.
+    baseline = guidance.get("ema_baseline_forecast_c")
+    fields[41:44] = [
+        str(_num(guidance.get("forecast_lag_attack_c"), 0.0)),
+        "true" if guidance.get("forecast_lag_attack_confirmed") else "false",
+        str(baseline) if baseline is not None else "unknown",
+    ]
     return model, status, fields
 
 
