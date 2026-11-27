@@ -64,7 +64,7 @@ def patch(text: str) -> str:
         text,
         '  local last_actuator_direction="none" reversal_hold=0 reversal_guard_cycles=2 reversal_guard_step=1 requested_before_actuator=0 reversal_limit=0\n',
         '  local last_actuator_direction="none" reversal_hold=0 reversal_guard_cycles=2 reversal_guard_step=1 requested_before_actuator=0 reversal_limit=0\n'
-        '  local steady_bias=0 steady_since=-1 steady_last_step=-1 steady_last_tick=-1 steady_now=0 effective_trim=0\n',
+        '  local steady_bias=0 steady_since=-1 steady_last_step=-1 steady_last_tick=-1 steady_now=0 effective_trim=0 steady_reason=init steady_elapsed=0 steady_log_tick=-1\n',
         "steady bias lifecycle variables",
     )
     text = replace_once(
@@ -81,6 +81,7 @@ def patch(text: str) -> str:
     # Learn a small floor only with sustained, measured warm-side error.
     # No learned AI data is modified; the normal trim remains authoritative.
     steady_now="$SECONDS"
+    steady_reason=waiting
     if [ "$steady_last_tick" -lt 0 ] || [ "$steady_now" -lt "$steady_last_tick" ] ||
        [ $((steady_now - steady_last_tick)) -gt $((2 * ADAPTIVE_PWM_INTERVAL_SECONDS + 5)) ]; then
       steady_bias=0; steady_since=-1; steady_last_step=-1
@@ -91,10 +92,16 @@ def patch(text: str) -> str:
        [ "$action" = "safety_max" ] || [ "$thermal_signal_quality" != "good" ] ||
        [ "$error" -le 0 ] || [ "$temp_milli" -le "$target_milli" ]; then
       steady_bias=0; steady_since=-1; steady_last_step=-1
+      if [ "$COOLING_CONTROL_MODE" != "automatic" ]; then steady_reason=mode
+      elif [ "$reentry_cycle" = "true" ]; then steady_reason=reentry
+      elif [ "$action" = "safety_max" ]; then steady_reason=safety
+      elif [ "$thermal_signal_quality" != "good" ]; then steady_reason=quality
+      else steady_reason=at_or_below_target; fi
     elif [ "$error" -ge 800 ] && [ "$error" -lt 2000 ] &&
          [ "$temp_milli" -ge $((target_milli + 800)) ] &&
          [ "$thermal_trend_fused_milli" -ge -200 ] &&
          [ "$thermal_trend_fused_milli" -le 200 ]; then
+      steady_reason=qualifying
       if [ "$steady_since" -lt 0 ]; then
         steady_since="$steady_now"; steady_last_step="$steady_now"
       elif [ $((steady_now - steady_since)) -ge 120 ] &&
@@ -102,7 +109,12 @@ def patch(text: str) -> str:
         [ "$steady_bias" -lt 4 ] && steady_bias=$((steady_bias + 1))
         steady_last_step="$steady_now"
       fi
+      if [ "$steady_bias" -ge 4 ]; then steady_reason=ceiling
+      elif [ "$steady_bias" -gt 0 ]; then steady_reason=qualified; fi
     else
+      if [ "$error" -ge 2000 ]; then steady_reason=large_error
+      elif [ "$error" -lt 800 ] || [ "$temp_milli" -lt $((target_milli + 800)) ]; then steady_reason=small_error
+      else steady_reason=trend; fi
       steady_since=-1
       if [ "$steady_last_step" -lt 0 ]; then steady_last_step="$steady_now"; fi
       if [ $((steady_now - steady_last_step)) -ge 30 ]; then
@@ -120,6 +132,14 @@ def patch(text: str) -> str:
       effective_trim="$steady_bias"
       [ "$effective_trim" -gt "$adaptive_trim_limit" ] && effective_trim="$adaptive_trim_limit"
       action="${action}_steady_bias_${effective_trim}"
+    fi
+    # 3.3.5: observe qualification even if PWM is unchanged or normal trim masks the floor.
+    steady_elapsed=0
+    [ "$steady_since" -ge 0 ] && steady_elapsed=$((steady_now - steady_since))
+    if [ "$steady_log_tick" -lt 0 ] || [ "$steady_now" -lt "$steady_log_tick" ] ||
+       [ $((steady_now - steady_log_tick)) -ge 60 ]; then
+      log "Steady Bias: floor=${steady_bias}pp base=${adaptive_trim}pp effective=${effective_trim}pp qualified=${steady_elapsed}s reason=${steady_reason}; error=${error}mC trend=${thermal_trend_fused_milli}mC/min quality=${thermal_signal_quality}."
+      steady_log_tick="$steady_now"
     fi
     if [ "$action" = "safety_max" ]; then
       target_state="$max_state"
