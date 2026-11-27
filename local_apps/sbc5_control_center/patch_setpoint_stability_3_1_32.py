@@ -218,6 +218,22 @@ def patch(text: str) -> str:
             esac
             log "Thermal Predictor: mode=${tp_mode}; F30=${tp_f30}C F60=${tp_f60}C F120=${tp_f120}C; confidence=${tp_conf}%; MAE_avg=${tp_mae}C; weighted=${tp_weighted}C raw_weighted=${tp_weighted_raw}C filter_lag=${tp_filter_lag}C error=${tp_error}C; weights=${tp_weights}; gain=${tp_gain}; accepted/rejected=${tp_accepted}/${tp_rejected}; AI_corr=${ai_correction}pp; TP_req=${tp_req}pp; TP_applied=${tp_applied}pp; gate=${tp_gate_mode:-observe}/${tp_gate_reason:-unknown}; decision=${tp_log_reason}; guard=${ai_reason}."
 '''
+    # 3.3.5: extend the reader, keeping all 41 original columns intact.
+    text = replace_once(
+        text, 'tp_weighted_raw="" tp_filter_lag=""',
+        'tp_weighted_raw="" tp_filter_lag="" tp_lag_attack="" tp_lag_confirmed="" tp_ema_baseline=""',
+        "forecast attack local diagnostics",
+    )
+    text = replace_once(
+        text, 'tp_decision_reason tp_weighted_raw tp_filter_lag <<< "$ai_result"',
+        'tp_decision_reason tp_weighted_raw tp_filter_lag tp_lag_attack tp_lag_confirmed tp_ema_baseline <<< "$ai_result"',
+        "append-only forecast attack TSV reader",
+    )
+    new_tp_log = new_tp_log.replace(
+        'guard=${ai_reason}."',
+        'guard=${ai_reason}; lag_attack=${tp_lag_attack:-unknown}C lag_confirmed=${tp_lag_confirmed:-unknown} ema_baseline=${tp_ema_baseline:-unknown}C."',
+        1,
+    )
     text = replace_once(text, old_tp_log, new_tp_log, "thermal predictor diagnostic reason")
 
     text = replace_once(
