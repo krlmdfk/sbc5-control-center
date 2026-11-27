@@ -76,6 +76,8 @@ bias_end = patched.index('    if [ "$action" = "safety_max" ]; then', bias_start
 bias_block = patched[bias_start:bias_end].replace('steady_now="$SECONDS"', 'steady_now="$test_now"')
 setup = """
 steady_bias=0; steady_since=-1; steady_last_step=-1; steady_last_tick=-1
+steady_log_tick=-1
+log() { printf '%s\n' "$*" >&2; }
 ADAPTIVE_PWM_INTERVAL_SECONDS=10
 target_milli=49000
 adaptive_trim_limit=12
@@ -104,9 +106,18 @@ bias_tick(410, mode="hybrid")
 bias_tick(420, quality="transient")
 bias_tick(430, action="safety_max", trim=12)
 bias_tick(440, reentry="true")
-bias_results = subprocess.check_output(
-    ["bash", "-c", setup + "\n".join(cases)], text=True, timeout=10
-).splitlines()
+bias_run = subprocess.run(
+    ["bash", "-u", "-c", setup + "\n".join(cases)], text=True,
+    capture_output=True, check=True, timeout=10
+)
+bias_results = bias_run.stdout.splitlines()
+diagnostics = bias_run.stderr.splitlines()
+assert len(diagnostics) == 8, diagnostics
+assert "floor=0pp base=0pp effective=0pp qualified=0s reason=qualifying" in diagnostics[0]
+assert "floor=1pp base=0pp effective=1pp qualified=120s reason=qualified" in diagnostics[2]
+assert "floor=4pp base=0pp effective=4pp qualified=300s reason=ceiling" in diagnostics[5]
+assert "reason=at_or_below_target" in diagnostics[6]
+assert "reason=quality" in diagnostics[7]
 assert bias_results[:12] == ["0:0"] * 12
 assert bias_results[12] == "1:1"
 assert bias_results[18] == "2:2"
