@@ -107,7 +107,7 @@ bias_tick(420, quality="transient")
 bias_tick(430, action="safety_max", trim=12)
 bias_tick(440, reentry="true")
 bias_run = subprocess.run(
-    ["bash", "-u", "-c", setup + "\n".join(cases)], text=True,
+    ["bash", "-u", "-s"], input=setup + "\n".join(cases), text=True,
     capture_output=True, check=True, timeout=10
 )
 bias_results = bias_run.stdout.splitlines()
