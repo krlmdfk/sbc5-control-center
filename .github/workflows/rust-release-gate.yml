@@ -91,7 +91,7 @@ jobs:
           cp update-manifest.json dist/update-manifest-3.0.0.json
 
       - name: Upload preflight artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbc5-rust-3.0.0-preflight
           path: |

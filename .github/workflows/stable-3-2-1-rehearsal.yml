@@ -80,7 +80,7 @@ jobs:
           PY
 
       - name: Upload rehearsal-only results (7 days)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SBC5-3.2.1-STABLE-REHEARSAL-NOT-INSTALLABLE
           path: dist/
