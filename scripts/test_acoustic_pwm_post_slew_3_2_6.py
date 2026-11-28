@@ -25,10 +25,11 @@ assert "controller_state - 8" in fragment
 assert '[ "$COOLING_CONTROL_MODE" = "automatic" ]' in fragment
 assert '[ "$acoustic_ceiling" -lt "$max_state" ]' in fragment
 
-def apply(current, desired, ceiling, *, mode="automatic", reentry="false", max_state=100):
+def apply(current, desired, ceiling, *, mode="automatic", reentry="false", max_state=100, recovering="false"):
     variables = ("desired", "controller_state", "acoustic_ceiling", "max_state",
-                 "min_run_floor", "COOLING_CONTROL_MODE", "reentry_cycle", "action")
-    values = (desired, current, ceiling, max_state, 20, mode, reentry, "normal")
+                 "min_run_floor", "COOLING_CONTROL_MODE", "reentry_cycle", "action",
+                 "critical_acoustic_recover")
+    values = (desired, current, ceiling, max_state, 20, mode, reentry, "normal", recovering)
     script = ("test_case() {\n" +
               "\n".join(f"local {k}={v!r}" for k,v in zip(variables, values)) +
               "\n" + fragment +
@@ -62,7 +63,7 @@ guard = raw[guard_start:guard_end]
 
 def replay(current, request, curve, error, ceiling, *, action="normal",
            mode="automatic", reentry="false", last_direction="up", hold=2,
-           critical_hold="false", return_hold=False):
+           critical_hold="false", return_hold=False, recovering="false", return_recovery=False):
     values = {
         "controller_state": current, "desired": request, "curve_state": curve,
         "error": error, "recorded_ceiling": ceiling, "action": action,
@@ -76,16 +77,18 @@ def replay(current, request, curve, error, ceiling, *, action="normal",
         "thermal_fast_up_step": 8, "thermal_critical_up_step": 12,
         "down_fast_delta": 2000, "reversal_hold": hold,
         "last_actuator_direction": last_direction, "reversal_guard_step": 1,
-        "critical_acoustic_hold": critical_hold,
+        "critical_acoustic_hold": critical_hold, "critical_acoustic_recover": recovering,
     }
     script = ("test_case() {\n" +
               "\n".join(f"local {k}={v!r}" for k, v in values.items()) +
               '\nadaptive_pwm_acoustic_ceiling() { echo "$recorded_ceiling"; }\n' +
-              guard + '\nprintf "%s,%s,%s,%s\\n" "$desired" "$action" "$acoustic_ceiling" "$critical_acoustic_hold"\n}\ntest_case\n')
+              guard + '\nprintf "%s,%s,%s,%s,%s\\n" "$desired" "$action" "$acoustic_ceiling" "$critical_acoustic_hold" "$critical_acoustic_recover"\n}\ntest_case\n')
     result = subprocess.run(["bash", "-c", script], capture_output=True,
                             text=True, check=True, timeout=4)
-    pwm, action, budget, latch = result.stdout.strip().split(",", 3)
+    pwm, action, budget, latch, recovery = result.stdout.strip().split(",", 4)
     output = (int(pwm), action, int(budget))
+    if return_recovery:
+        return (*output, latch, recovery)
     return (*output, latch) if return_hold else output
 
 # logs-13: 05:37:50; logs-16: 05:14:51, 05:15:17, 05:15:27.
@@ -127,6 +130,31 @@ for mode, reentry in [("manual", "false"), ("automatic", "true")]:
     assert replay(90, 95, 83, 6900, 86, critical_hold="true",
                   mode=mode, reentry=reentry, return_hold=True)[3] == "false"
 assert 'last_actuator_direction="none"; reversal_hold=0\n      critical_acoustic_hold=false' in raw
+
+# 3.3.5: observed recovery from 95% with an 86% acoustic ceiling.
+# Isolate acoustic enforcement from ordinary thermal decisions.
+for current, expected in ((95, 91), (91, 87), (87, 86)):
+    pwm, reason = apply(current, current, 86, recovering="true")
+    assert pwm == expected, (current, pwm, reason)
+    assert reason.endswith("critical_acoustic_slow_release"), reason
+assert apply(95, 95, 86)[0] == 87
+assert apply(95, 90, 100, recovering="true")[0] == 90
+assert apply(95, 80, 86, recovering="true")[0] == 80
+assert apply(95, 95, 86, mode="manual", recovering="true")[0] == 95
+
+# Full guard: release latch, continue recovery, clear after reaching the cap,
+# and re-enter critical without acoustic restrictions.
+pwm, action, budget, latch, recovery = replay(
+    95, 94, 82, 5700, 86, critical_hold="true", return_recovery=True)
+assert (pwm, budget, latch, recovery) == (91, 86, "false", "true"), (pwm, action, budget, latch, recovery)
+assert replay(91, 94, 82, 5700, 86, recovering="true", return_recovery=True)[0] == 87
+assert replay(87, 94, 82, 5700, 86, recovering="true", return_recovery=True)[0] == 86
+assert replay(86, 94, 82, 5700, 86, recovering="true", return_recovery=True)[4] == "false"
+assert replay(95, 100, 88, 8000, 86, recovering="true", return_recovery=True)[2:] == (100, "true", "false")
+assert replay(95, 100, 88, 8000, 86, action="safety_max", recovering="true")[0] == 100
+for mode, reentry in (("manual", "false"), ("automatic", "true")):
+    assert replay(95, 94, 82, 5700, 86, mode=mode, reentry=reentry,
+                  recovering="true", return_recovery=True)[4] == "false"
 
 # Confirm build uses this patch after reversal/slew patch.
 docker = (root / "Dockerfile").read_text(encoding="utf-8")

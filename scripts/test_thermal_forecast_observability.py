@@ -59,6 +59,42 @@ assert "tp_decision_reason tp_weighted_raw tp_filter_lag <<<" in legacy
 assert 'tp_weighted_raw="" tp_filter_lag=""' in legacy
 assert 'raw_weighted=${tp_weighted_raw}C filter_lag=${tp_filter_lag}C' in patch32
 
+# 3.3.5: appended fields keep original 41 positions intact.
+import subprocess
+suffix = next(n for n in ast.walk(apply) if isinstance(n, ast.Assign)
+              and any(isinstance(t, ast.Subscript) and isinstance(t.value, ast.Name)
+                      and t.value.id == "fields" and isinstance(t.slice, ast.Slice)
+                      and isinstance(t.slice.lower, ast.Constant)
+                      and t.slice.lower.value == 41 for t in n.targets))
+assert isinstance(suffix.value, ast.List) and len(suffix.value.elts) == 3
+assert 'fields[41:44]' in runtime
+assert 'tp_filter_lag tp_lag_attack tp_lag_confirmed tp_ema_baseline <<< "$ai_result"' in patch32
+assert 'lag_attack=${tp_lag_attack:-unknown}C' in patch32
+assert 'lag_confirmed=${tp_lag_confirmed:-unknown}' in patch32
+assert 'ema_baseline=${tp_ema_baseline:-unknown}C' in patch32
+
+# Execute the actual appended Python assignment and the patched Bash reader
+# for a new producer and an older one with no appended columns.
+fields = [str(i) for i in range(41)]
+guidance = {"forecast_lag_attack_c": 1.5, "forecast_lag_attack_confirmed": True,
+            "ema_baseline_forecast_c": 49.2}
+baseline = guidance["ema_baseline_forecast_c"]
+_num = lambda value, default: default if value is None else float(value)
+exec(compile(ast.Module(body=[suffix], type_ignores=[]), "<diagnostic suffix>", "exec"))
+assert fields[:41] == [str(i) for i in range(41)]
+assert fields[41:] == ["1.5", "true", "49.2"]
+reader = next(line.strip() for line in legacy.splitlines()
+              if "tp_decision_reason tp_weighted_raw tp_filter_lag <<<" in line)
+reader = reader.replace("tp_filter_lag <<<", "tp_filter_lag tp_lag_attack tp_lag_confirmed tp_ema_baseline <<<")
+for sample, expected in ((fields, "40|1.5|true|49.2"),
+                         (fields[:41], "40|unknown|unknown|unknown")):
+    shell = reader + '\nprintf "%s|%s|%s|%s" "$tp_filter_lag" "${tp_lag_attack:-unknown}" "${tp_lag_confirmed:-unknown}" "${tp_ema_baseline:-unknown}"'
+    import os
+    result = subprocess.run(["bash", "-u", "-c", shell], text=True,
+                            env=dict(os.environ, ai_result="\t".join(sample)),
+                            capture_output=True, check=True, timeout=5)
+    assert result.stdout == expected, result.stdout
+
 # No new control authority or change to emergency limits.
 assert policy.ACTIVE_MAX_DELTA_PP == 2
 assert policy.PROBATION_MAX_DELTA_PP == 1
