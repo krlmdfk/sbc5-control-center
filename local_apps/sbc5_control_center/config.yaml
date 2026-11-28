@@ -1,7 +1,7 @@
 name: SBC5 Control Center
-version: 3.3.4
+version: 3.3.5
 slug: sbc5_control_center
-description: "SBC5 Control Center 3.3.4 — Improved thermal prediction, steady-state temperature compensation and PWM stability."
+description: "SBC5 Control Center 3.3.5 — Improved thermal diagnostics and smoother PWM recovery after critical cooling."
 arch:
 - aarch64
 machine:

@@ -1,5 +1,27 @@
 # Changelog — SBC5 Control Center
 
+## 3.3.5 — 2026-11-28
+
+### English
+
+#### Changed
+
+- Improved thermal diagnostics and smoother PWM recovery after critical cooling.
+
+#### Upgrade notes
+
+- Restart Home Assistant after installation/update.
+
+### Polski
+
+#### Zmieniono
+
+- Rozszerzona diagnostyka termiczna i płynniejsza redukcja PWM po stanie krytycznym.
+
+#### Informacje o aktualizacji
+
+- Po instalacji/aktualizacji uruchom ponownie Home Assistant.
+
 ## 3.3.4 — 2026-11-26
 
 ### English
