@@ -36,6 +36,11 @@ def patch(text: str) -> str:
           # At most 8 percentage points down per cycle; avoid abrupt fan
           # deceleration and respect minimum calibrated running floor.
           acoustic_down_target=$((controller_state - 8))
+          # 3.3.5: during recovery from critical override, the acoustic
+          # layer may not force a faster drop than 4 pp per cycle.
+          if [ "${critical_acoustic_recover:-false}" = "true" ]; then
+            acoustic_down_target=$((controller_state - 4))
+          fi
           [ "$acoustic_down_target" -lt "$acoustic_ceiling" ] &&
             acoustic_down_target="$acoustic_ceiling"
         else
@@ -44,7 +49,17 @@ def patch(text: str) -> str:
         if [ "$desired" -gt "$acoustic_down_target" ] 2>/dev/null; then
           desired="$acoustic_down_target"
           action="${action}_acoustic_post_slew"
+          if [ "${critical_acoustic_recover:-false}" = "true" ]; then
+            action="${action}_critical_acoustic_slow_release"
+          fi
         fi
+      fi
+      # Once the physical actuator has returned to the ordinary ceiling,
+      # future acoustic-only adjustments use the original 8 pp policy.
+      if [ "${critical_acoustic_recover:-false}" = "true" ] &&
+         [ "$acoustic_ceiling" -lt "$max_state" ] &&
+         [ "$controller_state" -le "$acoustic_ceiling" ]; then
+        critical_acoustic_recover=false
       fi
       [ "$desired" -lt "$min_run_floor" ] 2>/dev/null && desired="$min_run_floor"
 '''
@@ -60,10 +75,13 @@ def patch(text: str) -> str:
       # Enter at the existing +7 C threshold; release at +6.5 C.
       # The critical/fast slew thresholds and absolute safety remain unchanged.
       if [ "$COOLING_CONTROL_MODE" != "automatic" ] || [ "$reentry_cycle" = "true" ]; then
-        critical_acoustic_hold=false
+        critical_acoustic_hold=false; critical_acoustic_recover=false
       elif [ "$error" -ge "$thermal_critical_delta" ] 2>/dev/null; then
-        critical_acoustic_hold=true
+        critical_acoustic_hold=true; critical_acoustic_recover=false
       elif [ "$error" -le $((thermal_critical_delta - 500)) ] 2>/dev/null; then
+        if [ "${critical_acoustic_hold:-false}" = "true" ]; then
+          critical_acoustic_recover=true
+        fi
         critical_acoustic_hold=false
       fi
       if [ "${critical_acoustic_hold:-false}" = "true" ] &&
@@ -83,8 +101,8 @@ def patch(text: str) -> str:
     reset = '      last_actuator_direction="none"; reversal_hold=0\n'
     if text.count(init) != 1 or text.count(reset) != 1:
         raise SystemExit("Expected unique acoustic hysteresis lifecycle anchors")
-    text = text.replace(init, init + '  local critical_acoustic_hold=false\n', 1)
-    return text.replace(reset, reset + '      critical_acoustic_hold=false\n', 1)
+    text = text.replace(init, init + '  local critical_acoustic_hold=false critical_acoustic_recover=false\n', 1)
+    return text.replace(reset, reset + '      critical_acoustic_hold=false\n      critical_acoustic_recover=false\n', 1)
 
 
 def main() -> None:
